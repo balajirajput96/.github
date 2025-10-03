@@ -7,8 +7,14 @@ function App() {
 
   useEffect(() => {
     fetch('/api/hello')
-      .then(response => response.json())
-      .then(data => setMessage(data.message));
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch message');
+        }
+        return response.json();
+      })
+      .then(data => setMessage(data.message))
+      .catch(error => setMessage(error.message));
   }, []);
 
   return (
