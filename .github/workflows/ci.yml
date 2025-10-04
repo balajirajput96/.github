@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, cursor/*, copilot/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: web-app/client/package-lock.json
+    
+    - name: Install client dependencies
+      working-directory: web-app/client
+      run: npm ci
+    
+    - name: Run client tests
+      working-directory: web-app/client
+      run: npm test -- --watchAll=false --coverage
+    
+    - name: Build client
+      working-directory: web-app/client
+      run: npm run build
+    
+    - name: Install server dependencies
+      working-directory: web-app/server
+      run: npm ci
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v4
+      if: matrix.node-version == '20.x'
+      with:
+        directory: web-app/client/coverage
+        flags: client
+        fail_ci_if_error: false
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
