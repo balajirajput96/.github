@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import ContactForm from './components/ContactForm';
 
 function App() {
   const [message, setMessage] = useState('');
@@ -28,6 +29,7 @@ function App() {
         </a>
         <p>{message}</p>
       </header>
+      <ContactForm />
     </div>
   );
 }
