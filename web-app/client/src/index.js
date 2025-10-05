@@ -1,3 +1,8 @@
+/**
+ * @fileoverview This is the entry point for the React application.
+ * It renders the root App component.
+ */
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
