@@ -1,0 +1,39 @@
+# Boundary credentials and sensitive files
+credentials.env
+*.token
+*.key
+.boundary/
+
+# Terraform files
+terraform/
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Logs
+*.log
+logs/
+
+# Docker volumes
+docker-volumes/
+
+# Environment files
+.env
+.env.local
+
+# Temporary files
+tmp/
+*.tmp
+*.bak
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
