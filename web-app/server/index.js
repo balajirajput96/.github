@@ -9,6 +9,26 @@ app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello gamer!' });
 });
 
+app.get('/api/atlassian', (req, res) => {
+  res.json({ message: 'Atlassian API endpoint' });
+});
+
+app.get('/api/slack', (req, res) => {
+  res.json({ message: 'Slack API endpoint' });
+});
+
+app.get('/api/claude-ai', (req, res) => {
+  res.json({ message: 'Claude AI API endpoint' });
+});
+
+app.get('/api/youtube', (req, res) => {
+  res.json({ message: 'YouTube API endpoint' });
+});
+
+app.get('/api/google-drive', (req, res) => {
+  res.json({ message: 'Google Drive API endpoint' });
+});
+
 // Serve static files from the React app build
 const clientBuildPath = path.join(__dirname, '..', 'client', 'build');
 app.use(express.static(clientBuildPath));
