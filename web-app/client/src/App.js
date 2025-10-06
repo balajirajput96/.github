@@ -1,40 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Home from './pages/Home';
+import Atlassian from './pages/Atlassian';
+import Slack from './pages/Slack';
+import ClaudeAI from './pages/ClaudeAI';
+import YouTube from './pages/YouTube';
+import GoogleDrive from './pages/GoogleDrive';
 
 function App() {
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    fetch('/api/hello')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch message');
-        }
-        return response.json();
-      })
-      .then(data => setMessage(data.message))
-      .catch(error => setMessage(error.message));
-  }, []);
-
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <p>{message}</p>
-      </header>
-    </div>
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/atlassian" element={<Atlassian />} />
+        <Route path="/slack" element={<Slack />} />
+        <Route path="/claude-ai" element={<ClaudeAI />} />
+        <Route path="/youtube" element={<YouTube />} />
+        <Route path="/google-drive" element={<GoogleDrive />} />
+      </Routes>
+    </Layout>
   );
 }
 
