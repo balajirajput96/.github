@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boundary Test Application</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 HashiCorp Boundary Test Application</h1>
+            <p class="subtitle">Successfully connected through Boundary!</p>
+        </header>
+
+        <div class="status-card">
+            <h2>✓ Connection Status</h2>
+            <div class="status-info">
+                <p><strong>Status:</strong> <span class="success">Connected</span></p>
+                <p><strong>Service:</strong> Web Application</p>
+                <p><strong>Port:</strong> 80/8080</p>
+                <p><strong>Protocol:</strong> HTTP</p>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>📊 System Info</h3>
+                <ul>
+                    <li>Container: boundary-web-app</li>
+                    <li>Image: nginx:alpine</li>
+                    <li>Network: boundary-net</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>🔐 Security</h3>
+                <ul>
+                    <li>Zero trust network access</li>
+                    <li>Identity-based access</li>
+                    <li>Session recording enabled</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>🚀 Features</h3>
+                <ul>
+                    <li>Dynamic host discovery</li>
+                    <li>Credential management</li>
+                    <li>Session management</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="commands-section">
+            <h2>📝 Test Commands</h2>
+            <div class="command-box">
+                <p><strong>Connect to this service:</strong></p>
+                <code>boundary connect -target-id ttcp_xxxxxxxxxx</code>
+            </div>
+            <div class="command-box">
+                <p><strong>SSH through Boundary:</strong></p>
+                <code>boundary connect ssh -target-id ttcp_xxxxxxxxxx</code>
+            </div>
+            <div class="command-box">
+                <p><strong>Database connection:</strong></p>
+                <code>boundary connect postgres -target-id ttcp_xxxxxxxxxx</code>
+            </div>
+        </div>
+
+        <footer>
+            <p>HashiCorp Boundary Automation Suite</p>
+            <p class="small">For more information, visit <a href="https://developer.hashicorp.com/boundary" target="_blank">developer.hashicorp.com/boundary</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // Display current timestamp
+        document.addEventListener('DOMContentLoaded', function() {
+            const timestamp = new Date().toLocaleString();
+            const statusInfo = document.querySelector('.status-info');
+            const timeElement = document.createElement('p');
+            timeElement.innerHTML = '<strong>Connected at:</strong> ' + timestamp;
+            statusInfo.appendChild(timeElement);
+        });
+    </script>
+</body>
+</html>
