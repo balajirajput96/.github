@@ -8,6 +8,11 @@ import ClaudeAI from './pages/ClaudeAI';
 import YouTube from './pages/YouTube';
 import GoogleDrive from './pages/GoogleDrive';
 
+/**
+ * @description The main application component. It sets up the routing for the entire application,
+ * wrapping all pages within the main `Layout` component.
+ * @returns {JSX.Element} The rendered application component.
+ */
 function App() {
   return (
     <Layout>
