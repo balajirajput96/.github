@@ -4,6 +4,11 @@ import { Link } from 'react-router-dom';
 
 const drawerWidth = 240;
 
+/**
+ * @description The Sidebar component provides navigation links to the main pages of the application.
+ * It is displayed as a permanent drawer on the side of the layout.
+ * @returns {JSX.Element} The rendered sidebar component.
+ */
 const Sidebar = () => {
   return (
     <Drawer
