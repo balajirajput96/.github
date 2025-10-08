@@ -58,7 +58,7 @@ app.use('/api/', rateLimiter);
  * @returns {object} 200 - A JSON object with a "Hello gamer!" message.
  */
 app.get('/api/hello', (req, res) => {
-  res.json({ message: 'Hello gamer!' });
+  res.json({ message: 'Hello from the AI Assistant Platform API!' });
 });
 
 /**
