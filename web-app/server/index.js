@@ -6,7 +6,7 @@ const port = process.env.PORT || 3001;
 
 // API routes
 app.get('/api/hello', (req, res) => {
-  res.json({ message: 'Hello gamer!' });
+  res.json({ message: 'Hello from the AI Assistant Platform API!' });
 });
 
 // Serve static files from the React app build
