@@ -41,7 +41,7 @@ function Integrations() {
   }, [location]);
 
   const handleConnectSlack = () => {
-    const clientId = process.env.REACT_APP_SLACK_CLIENT_ID;
+    const clientId = '12345.67890'; // Placeholder Client ID
     const redirectUri = 'http://localhost:3000/integrations';
     const scope = 'chat:write,commands,users:read';
     const slackAuthUrl = `https://slack.com/oauth/v2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
