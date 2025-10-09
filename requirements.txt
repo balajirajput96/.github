@@ -3,4 +3,3 @@ uvicorn[standard]==0.30.6
 numpy==1.26.4
 scikit-learn==1.5.2
 pydantic==2.9.2
-requests==2.32.5
