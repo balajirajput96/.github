@@ -34,6 +34,9 @@ const Sidebar = () => {
         <ListItemButton component={Link} to="/google-drive">
           <ListItemText primary="Google Drive" />
         </ListItemButton>
+        <ListItemButton component={Link} to="/github">
+          <ListItemText primary="GitHub" />
+        </ListItemButton>
       </List>
     </Drawer>
   );

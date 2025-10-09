@@ -29,6 +29,16 @@ app.get('/api/google-drive', (req, res) => {
   res.json({ message: 'Google Drive API endpoint' });
 });
 
+app.get('/api/github', (req, res) => {
+  res.json({
+    repositories: [
+      { id: 1, name: 'react-app', owner: 'jules', stars: 150 },
+      { id: 2, name: 'express-server', owner: 'jules', stars: 99 },
+      { id: 3, name: 'automation-hub', owner: 'user', stars: 42 }
+    ]
+  });
+});
+
 // Serve static files from the React app build
 const clientBuildPath = path.join(__dirname, '..', 'client', 'build');
 app.use(express.static(clientBuildPath));
