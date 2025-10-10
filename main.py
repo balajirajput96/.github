@@ -2,8 +2,13 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import numpy as np
 from typing import List
+import os
+import requests
+from dotenv import load_dotenv
 
-app = FastAPI(title="ML Model API")
+load_dotenv()
+
+app = FastAPI(title="ML Model and GitHub API")
 
 class PredictionInput(BaseModel):
     features: List[float]
@@ -25,3 +30,28 @@ def predict(data: PredictionInput):
         return {"prediction": float(prediction)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/github-repos")
+def get_github_repos():
+    github_token = os.getenv("GITHUB_TOKEN")
+    if not github_token or github_token == "YOUR_NEW_GITHUB_TOKEN_HERE":
+        raise HTTPException(status_code=400, detail="GitHub token not configured. Please set it in your .env file.")
+
+    headers = {
+        "Authorization": f"token {github_token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    url = "https://api.github.com/user/repos"
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+        repos = response.json()
+        repo_names = [repo["name"] for repo in repos]
+        return {"repositories": repo_names}
+    except requests.exceptions.HTTPError as http_err:
+        if response.status_code == 401:
+            raise HTTPException(status_code=401, detail="Unauthorized. Check your GitHub token.")
+        raise HTTPException(status_code=response.status_code, detail=f"HTTP error occurred: {http_err}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
