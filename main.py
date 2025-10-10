@@ -6,19 +6,25 @@ import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 
 from utils.logger import setup_logger
 
 load_dotenv()
 logger = setup_logger(__name__)
 
-app = FastAPI(title="ML Model and GitHub API")
+app = FastAPI(title="ML, GitHub, and Slack API")
 
 
 class PredictionInput(BaseModel):
     """Input payload for the placeholder prediction endpoint."""
 
     features: List[float] = Field(..., max_length=1000)
+
+
+class SlackMessage(BaseModel):
+    text: str = Field(..., min_length=1, max_length=40_000)
 
 
 @app.get("/")
@@ -70,11 +76,29 @@ def get_github_repos():
         return {"repositories": [repo["name"] for repo in repositories]}
     except requests.HTTPError as exc:
         status_code = response.status_code
-        if status_code == 401:
-            detail = "Unauthorized. Check the GitHub token."
-        else:
-            detail = f"GitHub API returned HTTP {status_code}."
+        detail = "Unauthorized. Check the GitHub token." if status_code == 401 else f"GitHub API returned HTTP {status_code}."
         raise HTTPException(status_code=status_code, detail=detail) from exc
     except requests.RequestException as exc:
         logger.warning("GitHub API request failed: %s", exc)
         raise HTTPException(status_code=502, detail="GitHub API request failed.") from exc
+
+
+@app.post("/send-slack-message")
+def send_slack_message(message: SlackMessage):
+    slack_token = os.getenv("SLACK_BOT_TOKEN")
+    channel_id = os.getenv("SLACK_CHANNEL_ID")
+    if not slack_token or slack_token.lower().startswith("your_"):
+        raise HTTPException(status_code=400, detail="Slack token not configured. Set SLACK_BOT_TOKEN in the environment.")
+    if not channel_id or channel_id.lower().startswith("your_"):
+        raise HTTPException(status_code=400, detail="Slack channel ID not configured. Set SLACK_CHANNEL_ID in the environment.")
+
+    try:
+        WebClient(token=slack_token).chat_postMessage(channel=channel_id, text=message.text)
+        return {"ok": True, "message": "Message sent successfully."}
+    except SlackApiError as exc:
+        error = exc.response.get("error", "unknown_error")
+        logger.warning("Slack API request failed: %s", error)
+        raise HTTPException(status_code=502, detail=f"Slack API error: {error}") from exc
+    except Exception as exc:
+        logger.exception("Unexpected Slack error")
+        raise HTTPException(status_code=502, detail="Slack API request failed.") from exc
