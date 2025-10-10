@@ -5,13 +5,18 @@ from typing import List
 import os
 import requests
 from dotenv import load_dotenv
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 
 load_dotenv()
 
-app = FastAPI(title="ML Model and GitHub API")
+app = FastAPI(title="ML, GitHub, and Slack API")
 
 class PredictionInput(BaseModel):
     features: List[float]
+
+class SlackMessage(BaseModel):
+    text: str
 
 @app.get("/")
 def home():
@@ -55,3 +60,28 @@ def get_github_repos():
         raise HTTPException(status_code=response.status_code, detail=f"HTTP error occurred: {http_err}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@app.post("/send-slack-message")
+def send_slack_message(message: SlackMessage):
+    slack_token = os.getenv("SLACK_BOT_TOKEN")
+    channel_id = os.getenv("SLACK_CHANNEL_ID")
+
+    if not slack_token or slack_token == "YOUR_SLACK_BOT_TOKEN_HERE":
+        raise HTTPException(status_code=400, detail="Slack token not configured. Please set it in your .env file.")
+    if not channel_id or channel_id == "YOUR_SLACK_CHANNEL_ID_HERE":
+        raise HTTPException(status_code=400, detail="Slack channel ID not configured. Please set it in your .env file.")
+
+    client = WebClient(token=slack_token)
+
+    try:
+        response = client.chat_postMessage(
+            channel=channel_id,
+            text=message.text
+        )
+        return {"ok": True, "message": f"Message sent to channel {channel_id}"}
+    except SlackApiError as e:
+        # You can handle specific errors here
+        error_message = e.response["error"]
+        raise HTTPException(status_code=500, detail=f"Slack API error: {error_message}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")

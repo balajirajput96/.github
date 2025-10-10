@@ -5,3 +5,4 @@ scikit-learn==1.5.2
 pydantic==2.9.2
 python-dotenv==1.0.1
 requests==2.32.3
+slack-sdk==3.27.0
