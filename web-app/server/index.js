@@ -19,7 +19,16 @@ app.get('/api/hello', (req, res) => {
  * @returns {object} 200 - A JSON object with a message indicating the endpoint.
  */
 app.get('/api/atlassian', (req, res) => {
-  res.json({ message: 'Atlassian API endpoint' });
+  res.json({
+    message: 'Successfully connected to Atlassian API',
+    data: {
+      projects: [
+        { id: 1, name: 'Project Alpha', key: 'PA' },
+        { id: 2, name: 'Project Beta', key: 'PB' },
+      ],
+      issues: 25,
+    },
+  });
 });
 
 /**
@@ -28,7 +37,13 @@ app.get('/api/atlassian', (req, res) => {
  * @returns {object} 200 - A JSON object with a message indicating the endpoint.
  */
 app.get('/api/slack', (req, res) => {
-  res.json({ message: 'Slack API endpoint' });
+  res.json({
+    message: 'Successfully connected to Slack API',
+    data: {
+      workspace: 'My Workspace',
+      channels: ['#general', '#random', '#dev'],
+    },
+  });
 });
 
 /**
@@ -37,7 +52,13 @@ app.get('/api/slack', (req, res) => {
  * @returns {object} 200 - A JSON object with a message indicating the endpoint.
  */
 app.get('/api/claude-ai', (req, res) => {
-  res.json({ message: 'Claude AI API endpoint' });
+  res.json({
+    message: 'Successfully connected to Claude AI API',
+    data: {
+      model: 'claude-2',
+      status: 'active',
+    },
+  });
 });
 
 /**
@@ -46,7 +67,14 @@ app.get('/api/claude-ai', (req, res) => {
  * @returns {object} 200 - A JSON object with a message indicating the endpoint.
  */
 app.get('/api/youtube', (req, res) => {
-  res.json({ message: 'YouTube API endpoint' });
+  res.json({
+    message: 'Successfully connected to YouTube API',
+    data: {
+      channel: 'My Channel',
+      subscribers: 1000,
+      videos: 50,
+    },
+  });
 });
 
 /**
@@ -55,7 +83,14 @@ app.get('/api/youtube', (req, res) => {
  * @returns {object} 200 - A JSON object with a message indicating the endpoint.
  */
 app.get('/api/google-drive', (req, res) => {
-  res.json({ message: 'Google Drive API endpoint' });
+  res.json({
+    message: 'Successfully connected to Google Drive API',
+    data: {
+      user: 'testuser@gmail.com',
+      files: 120,
+      storageUsed: '10 GB',
+    },
+  });
 });
 
 /**
@@ -73,7 +108,7 @@ app.use(express.static(clientBuildPath));
  * @param {object} req - The Express request object.
  * @param {object} res - The Express response object.
  */
-app.get('*', (req, res) => {
+app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
