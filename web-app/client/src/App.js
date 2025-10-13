@@ -7,18 +7,21 @@ import Slack from './pages/Slack';
 import ClaudeAI from './pages/ClaudeAI';
 import YouTube from './pages/YouTube';
 import GoogleDrive from './pages/GoogleDrive';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
     <Layout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/atlassian" element={<Atlassian />} />
-        <Route path="/slack" element={<Slack />} />
-        <Route path="/claude-ai" element={<ClaudeAI />} />
-        <Route path="/youtube" element={<YouTube />} />
-        <Route path="/google-drive" element={<GoogleDrive />} />
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/atlassian" element={<Atlassian />} />
+          <Route path="/slack" element={<Slack />} />
+          <Route path="/claude-ai" element={<ClaudeAI />} />
+          <Route path="/youtube" element={<YouTube />} />
+          <Route path="/google-drive" element={<GoogleDrive />} />
+        </Routes>
+      </ErrorBoundary>
     </Layout>
   );
 }
