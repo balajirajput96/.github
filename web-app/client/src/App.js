@@ -7,6 +7,7 @@ import Slack from './pages/Slack';
 import ClaudeAI from './pages/ClaudeAI';
 import YouTube from './pages/YouTube';
 import GoogleDrive from './pages/GoogleDrive';
+import Pricing from './pages/Pricing';
 
 /**
  * @description The main application component. It sets up the routing for the entire application,
@@ -23,6 +24,7 @@ function App() {
         <Route path="/claude-ai" element={<ClaudeAI />} />
         <Route path="/youtube" element={<YouTube />} />
         <Route path="/google-drive" element={<GoogleDrive />} />
+        <Route path="/pricing" element={<Pricing />} />
       </Routes>
     </Layout>
   );
