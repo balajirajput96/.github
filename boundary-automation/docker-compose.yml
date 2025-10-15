@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # SSH Target
+  ssh-target:
+    image: linuxserver/openssh-server:latest
+    container_name: boundary-ssh-target
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - PASSWORD_ACCESS=true
+      - USER_PASSWORD=demo123
+      - USER_NAME=demo
+    ports:
+      - "2222:2222"
+    volumes:
+      - ssh-config:/config
+    restart: unless-stopped
+    networks:
+      - boundary-net
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: boundary-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+      - POSTGRES_DB=testdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - boundary-net
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: boundary-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql123
+      - MYSQL_DATABASE=testdb
+      - MYSQL_USER=testuser
+      - MYSQL_PASSWORD=testpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - boundary-net
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: boundary-redis
+    command: redis-server --requirepass redis123
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - boundary-net
+
+  # Web Application
+  web-app:
+    build: ./sample-web
+    container_name: boundary-web-app
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    networks:
+      - boundary-net
+    environment:
+      - APP_NAME=Boundary Test App
+
+  # NGINX
+  nginx:
+    image: nginx:alpine
+    container_name: boundary-nginx
+    ports:
+      - "8081:80"
+    volumes:
+      - ./sample-web/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./sample-web:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - boundary-net
+
+volumes:
+  ssh-config:
+  postgres-data:
+  mysql-data:
+  redis-data:
+
+networks:
+  boundary-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
