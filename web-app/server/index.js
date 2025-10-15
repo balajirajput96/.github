@@ -29,14 +29,40 @@ app.get('/api/google-drive', (req, res) => {
   res.json({ message: 'Google Drive API endpoint' });
 });
 
-app.get('/api/github', (req, res) => {
-  res.json({
-    repositories: [
-      { id: 1, name: 'react-app', owner: 'jules', stars: 150 },
-      { id: 2, name: 'express-server', owner: 'jules', stars: 99 },
-      { id: 3, name: 'automation-hub', owner: 'user', stars: 42 }
-    ]
-  });
+const axios = require('axios');
+
+app.get('/api/github', async (req, res) => {
+  const token = process.env.GITHUB_TOKEN;
+
+  if (!token) {
+    return res.status(401).json({
+      error: 'GitHub token not provided. Please set the GITHUB_TOKEN environment variable.'
+    });
+  }
+
+  try {
+    const response = await axios.get('https://api.github.com/user/repos', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const repositories = response.data.map(repo => ({
+      id: repo.id,
+      name: repo.name,
+      owner: repo.owner.login,
+      stars: repo.stargazers_count,
+      url: repo.html_url
+    }));
+
+    res.json({ repositories });
+  } catch (error) {
+    console.error('Error fetching from GitHub API:', error.message);
+    res.status(500).json({
+      error: 'Failed to fetch data from GitHub API.',
+      details: error.message
+    });
+  }
 });
 
 // Serve static files from the React app build
