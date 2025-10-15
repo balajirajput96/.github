@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "heroku-postbuild": "cd ../client && npm ci --omit=dev && npm run build",
-    "test": "node --test test/server.test.js"
+    "test": "jest --runInBand"
   },
   "keywords": [],
   "author": "",
@@ -16,5 +16,9 @@
     "axios": "^1.12.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
   }
 }
