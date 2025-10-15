@@ -32,7 +32,10 @@ This project is a monorepo containing a React frontend and a Node.js/Express bac
     - Add the following line to the `.env` file, replacing `your_github_token` with the token you just created:
       ```
       GITHUB_TOKEN=your_github_token
+      SLACK_TOKEN=your_slack_token
       ```
+    - To get a Slack token, you'll need to create a Slack App and add the `channels:read` and `groups:read` scopes.
+
 5.  Start the server:
     ```bash
     npm start
