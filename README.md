@@ -1,56 +1,101 @@
-# AI Automation Workspace and Express API
+# AI Automation Hub and Pharma Job Automation Agent
 
-This repository contains the AI-assisted pharmaceutical job-automation workspace and an Express server that exposes safe, testable integration routes for GitHub, Slack, Jira, and workflow orchestration.
+This repository combines a personal AI-powered job-search toolkit for Pharmaceutical QA/IPQA roles with a React and Node.js dashboard for developer productivity and AI integrations.
 
-## Server routes
+## Features
 
-| Route | Purpose |
-|---|---|
-| `GET /` | Service status and configured integration indicators. |
-| `GET /health` | Health check. |
-| `GET /api/hello` | Basic API smoke test. |
-| `GET /api/atlassian`, `/api/slack`, `/api/claude-ai`, `/api/youtube`, `/api/google-drive` | Integration placeholders. |
-| `GET/POST /api/github/...` | Authorized GitHub integration placeholders with input validation. |
-| `GET/POST /api/slack/...` | Slack integration placeholders with input validation. |
-| `GET/POST /api/jira/...` | Jira integration placeholders with input validation. |
-| `POST /api/workflow/create` | Validate and create a workflow representation. |
-| `POST /api/workflow/sync` | Validate a workflow synchronization request. |
-| `GET /api-docs` | Lightweight endpoint list. |
+- **Job collection:** Scan public job boards and company career pages using authorized sources.
+- **Resume tailoring and matching:** Compare job descriptions with a Pharma QA/IPQA profile and generate concise match scores for skills such as GMP, BMR/BPR review, and quality oversight.
+- **Application drafting and reporting:** Generate tailored HR email and cover-letter drafts, together with daily summaries of new jobs and matches.
+- **Integration dashboard:** Use the web application to access GitHub, Slack, Atlassian, Claude AI, YouTube, Google Drive, and other integration entry points.
+- **GitHub integration:** The dashboard can load repositories from the GitHub API when `GITHUB_TOKEN` is configured; without a token, the API returns a clear configuration error rather than exposing credentials.
 
-All API routes are rate-limited in memory and return JSON errors for invalid input. The module exports the Express app and only starts a listener outside `NODE_ENV=test`, which keeps tests deterministic.
+## Repository Structure
 
-## Local setup
+- `agents/`: Core job collection, resume analysis, matching, and email-generation modules.
+- `utils/`: Logging and configuration helpers.
+- `scripts/`: Demo, daily-job, and scheduling scripts.
+- `jobs/`, `reports/`: CSV, JSON, and text outputs.
+- `docs/`: Setup, troubleshooting, and beginner guides.
+- `web-app/client/`: React frontend.
+- `web-app/server/`: Node.js and Express backend.
+
+## Python Quick Start
+
+1. Create and activate a virtual environment:
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate
+   # Windows: venv\\Scripts\\activate
+   ```
+
+2. Install requirements and configure environment variables:
+
+   ```bash
+   pip install -r requirements.txt
+   cp .env.example .env
+   ```
+
+   Add authorized API keys, such as Google Gemini or OpenAI, to `.env` as needed.
+
+3. Run the demo:
+
+   ```bash
+   python scripts/demo_run.py
+   ```
+
+## Web Application Setup
+
+The web application is a monorepo containing a React frontend and a Node.js/Express backend. Node.js and npm are required.
+
+### Backend
 
 ```bash
 cd web-app/server
-npm ci
-npm test
+npm install
+```
+
+Create `web-app/server/.env` and configure the integrations you intend to use. For GitHub, create a personal access token through [GitHub Developer settings](https://github.com/settings/tokens) with only the scopes required for the intended repositories, then set:
+
+```dotenv
+GITHUB_TOKEN=your_github_token
+```
+
+Start the backend:
+
+```bash
 npm start
 ```
 
-The server listens on port `3001` by default or the value of `PORT`. The client build is served from `web-app/client/build` when it exists.
+The backend listens on `http://localhost:3001` by default. The GitHub dashboard endpoint is `GET /api/github`; it returns repository data from GitHub when a valid token is configured.
 
-Copy `.env.example` to `.env` and provide only the credentials required for your integrations. Never commit `.env` or put real tokens in source files.
+### Frontend
+
+In a separate terminal:
+
+```bash
+cd web-app/client
+npm install
+npm start
+```
+
+The development frontend opens at `http://localhost:3000` and communicates with the backend according to the client configuration.
 
 ## Testing
 
-The server test suite uses Jest and Supertest:
+Run the backend test command from `web-app/server`:
 
 ```bash
-cd web-app/server
 NODE_ENV=test npm test
 ```
 
-Tests cover the API smoke endpoints and integration placeholders without sending external messages or modifying third-party systems.
+If no test files are present, the package script reports that tests have not been configured for that package. Python tests, when present, can be run with `pytest` from the repository root.
 
-## Workspace automation
+## Security and Responsible Use
 
-The repository also contains modules for authorized job collection, resume tailoring, pharmaceutical QA/IPQA matching, application-email drafting, and reporting. Review generated outputs before external use and follow each source platform's terms.
-
-## Deployment
-
-Install dependencies with `npm ci` and start the service with `npm start`. Configure environment variables through the hosting provider. The service must not expose credentials in logs or client-side bundles.
+Keep `.env` files and API tokens out of version control. The web server disables Express fingerprinting, applies common security headers, limits API request rates, and avoids starting a listener when `NODE_ENV=test`. Use only public or otherwise authorized data sources, and follow the terms of each external platform.
 
 ## Disclaimer
 
-Use this project only with public or authorized data and with appropriate human review. The integration routes in this branch are validation-safe placeholders unless a real provider client is deliberately configured.
+This tool is intended for personal automation and authorized integrations. It relies on public and authorized sources and does not endorse bypassing access controls or platform restrictions.
