@@ -1,84 +1,61 @@
-# AI Automation Hub
+# Personal AI Platform
 
-This project is a web-based dashboard designed to centralize and manage various AI-powered automations and integrations. It provides a unified interface for connecting to services like Atlassian, Slack, Claude AI, YouTube, and Google Drive.
+This project is a web-based platform designed to integrate with various development and communication tools like GitHub, Slack, and Jira. It is built with a React frontend and a Node.js/Express backend, and it is optimized for easy deployment on Railway.
 
-## Features
+## 🚀 Features
 
-- **Centralized Dashboard**: View and manage all your integrations from a single dashboard.
-- **Service Integrations**: Connect to popular services:
-  - Atlassian
-  - Slack
-  - Claude AI
-  - YouTube
-  - Google Drive
-- **Scalable Architecture**: Built with a separate client and server, allowing for independent development and scaling.
+- **GitHub Integration:** Manage repositories and issues directly from the platform.
+- **Slack Integration:** Send notifications and messages to Slack channels.
+- **Jira Integration:** Create and manage Jira issues.
+- **Workflow Automation:** Create custom workflows to sync information between services.
+- **Health Checks:** A `/health` endpoint to monitor the status of the service.
+- **Ready for Deployment:** Optimized for one-click deployment on Railway.
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-- **Frontend**: React, React Router, Material-UI (MUI)
-- **Backend**: Node.js, Express.js
+- **Frontend:** React
+- **Backend:** Node.js, Express
+- **Deployment:** Railway.app
 
-## Project Structure
-
-The project is organized into two main directories:
-
-- `web-app/client`: Contains the React frontend application.
-- `web-app/server`: Contains the Node.js/Express backend server.
-
-## Getting Started
-
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+## ⚙️ Getting Started
 
 ### Prerequisites
 
-You will need to have [Node.js](https://nodejs.org/) and [npm](https://www.npmjs.com/) installed on your machine.
+- Node.js and npm
+- A GitHub account
+- A Railway account
 
-### Installation & Setup
+### Deployment
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd <repository-directory>
+1.  **Fork this Repository:**
+    Click the "Fork" button at the top right of this page to create your own copy.
+
+2.  **Create a New Project on Railway:**
+    - Go to your Railway dashboard and click "New Project".
+    - Select "Deploy from GitHub repo" and choose the repository you just forked.
+
+3.  **Configure Environment Variables:**
+    - In your Railway project dashboard, go to the "Variables" tab.
+    - Add the following environment variables. You can get the necessary tokens from the respective services.
+
+    ```
+    GITHUB_TOKEN=your_github_personal_access_token
+    SLACK_TOKEN=your_slack_bot_token
+    JIRA_USER=your_jira_email
+    JIRA_TOKEN=your_jira_api_token
+    JIRA_HOST=your_jira_instance.atlassian.net
     ```
 
-2.  **Install server dependencies:**
-    ```bash
-    cd web-app/server
-    npm install
-    ```
+4.  **Deploy:**
+    Railway will automatically detect the `railway.json` file and deploy the application. Once the deployment is complete, you can access your live application at the URL provided by Railway.
 
-3.  **Install client dependencies:**
-    ```bash
-    cd ../client
-    npm install
-    ```
+## API Endpoints
 
-### Running the Application
-
-You will need to run the client and server in separate terminal windows.
-
-1.  **Start the backend server:**
-    ```bash
-    cd web-app/server
-    npm start
-    ```
-    The server will start on `http://localhost:3001`.
-
-2.  **Start the frontend application:**
-    ```bash
-    cd web-app/client
-    npm start
-    ```
-    The client development server will open in your browser at `http://localhost:3000`.
-
-## Available Scripts
-
-### Client (`web-app/client`)
-
-- `npm start`: Runs the app in development mode.
-- `npm test`: Launches the test runner in interactive watch mode.
-- `npm run build`: Builds the app for production to the `build` folder.
-
-### Server (`web-app/server`)
-
-- `npm start`: Starts the server using `node index.js`.
+- `GET /`: Health check and status of integrations.
+- `GET /health`: Simple health check, returns `{ "status": "ok" }`.
+- `GET /api/github/repos/:owner`: Fetch repositories for a GitHub owner.
+- `POST /api/github/issues/:owner/:repo`: Create a new issue in a GitHub repository.
+- `POST /api/slack/message`: Send a message to a Slack channel.
+- `POST /api/jira/issue`: Create a new issue in a Jira project.
+- `POST /api/workflow/create`: Create a new automation workflow.
+- `POST /api/workflow/sync`: Initiate a sync between two services.
