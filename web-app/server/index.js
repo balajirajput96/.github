@@ -8,7 +8,7 @@ const port = process.env.PORT || 3001;
 // Middleware to parse JSON bodies
 app.use(express.json());
 
-// --- GitHub API Client ---
+// --- API Clients ---
 const githubApi = axios.create({
   baseURL: 'https://api.github.com',
   headers: {
@@ -17,7 +17,6 @@ const githubApi = axios.create({
   },
 });
 
-// --- Slack API Client ---
 const slackApi = axios.create({
   baseURL: 'https://slack.com/api',
   headers: {
@@ -35,6 +34,7 @@ app.get('/', (req, res) => {
       github: process.env.GITHUB_TOKEN ? '✅ Connected' : '⚠️ Not Connected',
       slack: process.env.SLACK_TOKEN ? '✅ Connected' : '⚠️ Not Connected',
       jira: process.env.JIRA_TOKEN ? '✅ Connected' : '⚠️ Not Connected',
+      discord: process.env.DISCORD_WEBHOOK_URL ? '✅ Connected' : '⚠️ Not Connected',
     },
     api_documentation: '/api-docs',
   });
@@ -58,11 +58,6 @@ app.get('/api/github/repos/:owner', async (req, res) => {
   }
 });
 
-app.get('/api/github/issues/:owner/:repo', (req, res) => {
-  const { owner, repo } = req.params;
-  res.json({ message: `Fetching issues for repo: ${repo}`, owner, repo });
-});
-
 app.post('/api/github/issues/:owner/:repo', async (req, res) => {
   const { owner, repo } = req.params;
   const { title, body } = req.body;
@@ -77,15 +72,19 @@ app.post('/api/github/issues/:owner/:repo', async (req, res) => {
       body,
     });
 
-    // --- Workflow: Send Slack notification ---
     const issueData = issueResponse.data;
+    // --- Workflow: Send notifications ---
     const slackMessage = `🚀 New GitHub issue created in ${owner}/${repo}:\n<${issueData.html_url}|#${issueData.number} ${issueData.title}>`;
-
-    // Send notification without waiting for it to complete
     slackApi.post('/chat.postMessage', {
-      channel: '#general', // Default channel, can be configured later
+      channel: '#general',
       text: slackMessage,
     }).catch(err => console.error('Failed to send Slack notification:', err.message));
+
+    const discordMessage = `🚀 New GitHub issue created in **${owner}/${repo}**: [ #${issueData.number} ${issueData.title} ](${issueData.html_url})`;
+    if (process.env.DISCORD_WEBHOOK_URL) {
+      axios.post(process.env.DISCORD_WEBHOOK_URL, { content: discordMessage })
+        .catch(err => console.error('Failed to send Discord notification:', err.message));
+    }
     // --- End Workflow ---
 
     res.status(201).json(issueData);
@@ -98,10 +97,6 @@ app.post('/api/github/issues/:owner/:repo', async (req, res) => {
 });
 
 // --- Slack Integration Endpoints ---
-app.get('/api/slack/channels', (req, res) => {
-  res.json({ message: 'Fetching Slack channels' });
-});
-
 app.post('/api/slack/message', async (req, res) => {
   const { channel, text } = req.body;
 
@@ -110,16 +105,8 @@ app.post('/api/slack/message', async (req, res) => {
   }
 
   try {
-    const response = await slackApi.post('/chat.postMessage', {
-      channel,
-      text,
-    });
-
-    if (!response.data.ok) {
-      // Slack API returns 200 OK even for some errors, so we check the `ok` field.
-      throw new Error(response.data.error || 'Failed to send message to Slack');
-    }
-
+    const response = await slackApi.post('/chat.postMessage', { channel, text });
+    if (!response.data.ok) throw new Error(response.data.error);
     res.json({ message: `Message sent to channel: ${channel}` });
   } catch (error) {
     res.status(error.response?.status || 500).json({
@@ -129,7 +116,30 @@ app.post('/api/slack/message', async (req, res) => {
   }
 });
 
-// --- Jira Integration Endpoints ---
+// --- Discord Integration Endpoints ---
+app.post('/api/discord/message', async (req, res) => {
+  const { content } = req.body;
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+
+  if (!content) {
+    return res.status(400).json({ message: 'Content is required' });
+  }
+  if (!webhookUrl) {
+    return res.status(500).json({ message: 'Discord webhook URL is not configured' });
+  }
+
+  try {
+    await axios.post(webhookUrl, { content });
+    res.json({ message: 'Message sent to Discord' });
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      message: 'Failed to send Discord message',
+      error: error.message,
+    });
+  }
+});
+
+// --- Jira Integration Endpoints (Placeholder) ---
 app.get('/api/jira/projects', (req, res) => {
   res.json({ message: 'Fetching Jira projects' });
 });
@@ -139,7 +149,7 @@ app.post('/api/jira/issue', (req, res) => {
   res.status(201).json({ message: 'Successfully created Jira issue', issue: { projectKey, summary, description } });
 });
 
-// --- Workflow Automation Endpoints ---
+// --- Workflow Automation Endpoints (Placeholder) ---
 app.post('/api/workflow/create', (req, res) => {
     const { workflowName, steps } = req.body;
     res.status(201).json({ message: `Workflow '${workflowName}' created successfully.`, steps });
