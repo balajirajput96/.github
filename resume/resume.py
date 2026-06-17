@@ -76,10 +76,11 @@ S = {
                  textColor=NAVY, spaceBefore=3),
     "meta":   st("meta", fontName="Helvetica-Oblique", fontSize=8.6,
                  leading=11, textColor=GREY, spaceAfter=1),
-    "bullet": st("bullet", fontSize=8.7, leading=11.6, alignment=TA_JUSTIFY),
+    "bullet": st("bullet", fontSize=8.7, leading=11.8, alignment=TA_JUSTIFY),
     "subh":   st("subh", fontName="Helvetica-Bold", fontSize=9.2, leading=11.8,
                  textColor=DARK),
-    "small":  st("small", fontSize=8.7, leading=11.6, textColor=DARK),
+    "small":  st("small", fontSize=8.7, leading=11.8, textColor=DARK),
+    "comp":   st("comp", fontSize=8.7, leading=14, textColor=DARK),
 }
 
 def rule(space_after=4):
@@ -174,7 +175,7 @@ comp = [
 ]
 comp_text = (" &nbsp;&nbsp;<font color='#1E5F8E'>" + BUL + "</font>&nbsp;&nbsp; ").join(comp)
 story.append(Paragraph(
-    "<font color='#1E5F8E'>" + BUL + "</font>&nbsp;&nbsp; " + comp_text, S["small"]))
+    "<font color='#1E5F8E'>" + BUL + "</font>&nbsp;&nbsp; " + comp_text, S["comp"]))
 
 # ---- Professional Experience ----
 story.append(heading("Professional Experience"))
