@@ -2,3 +2,5 @@
 .env
 sent_log.csv
 *.local
+__pycache__/
+*.pyc

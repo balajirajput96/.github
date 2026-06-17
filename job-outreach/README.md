@@ -1,76 +1,102 @@
 # Job-Application Outreach Automation
 
-A small, **safe** tool to email a personalized job application (with the resume PDF
-attached) to a curated list of pharmaceutical companies / HR contacts in Gujarat,
-using **your own Gmail account**.
+A small, **safe** toolkit to run a personalized job-application campaign to
+pharmaceutical companies / HR contacts / recruiters in Gujarat — using **your own
+Gmail**. It sends the application, follows up with non-responders, detects replies
+and bounces, and reports progress.
 
 > This is **targeted, personalized, rate-limited outreach** — not a spam blaster.
-> Mass/unsolicited blasting gets your email flagged and your number/account banned,
-> and recruiters ignore it. This tool keeps volume sane and every mail personalized.
+> Mass/unsolicited blasting gets your mail flagged and your account banned, and
+> recruiters ignore it. This toolkit keeps volume sane and every mail personalized.
 
-## What's here
+## Files
 
 | File | Purpose |
 |------|---------|
-| `send_applications.py` | The sender (pure Python standard library — no `pip install`) |
+| `send_applications.py` | Sends initial mails **and** follow-ups; prints a status report |
+| `check_replies.py` | Scans your inbox (IMAP) for replies & bounces, updates the log |
 | `recipients.csv` | Your target list: `company,email` (de-duplicated) |
-| `email_template.txt` | The email body with `{greeting}` / `{company}` tokens |
-| `sent_log.csv` | Auto-created log of who was emailed (git-ignored) |
+| `email_template.txt` | Initial email body (`{greeting}` / `{company}` / `{resume_link_line}`) |
+| `followup_template.txt` | Polite follow-up email body |
+| `.env.example` | Copy to `.env` and add your Gmail credentials |
+| `sent_log.csv` | Auto-created campaign log (git-ignored) |
 
 The resume that gets attached: `../resume/Balaji_Rajput_QA_Officer_Resume.pdf`.
+Everything uses the **Python standard library** — no `pip install` needed.
 
 ## Safety features
 
-- **Excluded employer**: never sends to addresses containing `elysium`
-  (former employer). Add more in `EXCLUDE_KEYWORDS / EXCLUDE_DOMAINS / EXCLUDE_EMAILS`
-  near the top of `send_applications.py`.
-- **No duplicates / no re-sends**: tracks `sent_log.csv` and skips anyone already mailed.
-- **Daily cap** (`--limit`, default **35/day**) so Gmail doesn't rate-limit you.
-- **Human-like delay** (45–90s) between mails.
-- **Dry-run by default**: prints what it *would* send. Nothing leaves your inbox
-  until you add `--send`.
+- **Excluded employer** — never sends to addresses containing `elysium` (former
+  employer). Add more in `EXCLUDE_KEYWORDS / EXCLUDE_DOMAINS / EXCLUDE_EMAILS` at the
+  top of `send_applications.py`.
+- **No duplicates / no re-sends** — tracks `sent_log.csv` and skips anyone already mailed.
+- **Smart follow-ups** — only to people who were emailed N+ days ago and have **not**
+  replied or bounced; capped per contact.
+- **Daily cap** (`--limit`, default **35/day**) + **human-like delay** (45–90s).
+- **Dry-run by default** — nothing leaves your inbox until you add `--send`
+  (and `check_replies.py` writes nothing until `--apply`).
 
-## Setup (one-time): Gmail App Password
+## One-time setup: Gmail App Password
 
-Normal Gmail passwords don't work for SMTP. Create a free **App Password**:
+Normal Gmail passwords don't work for SMTP/IMAP. Create a free **App Password**:
 
 1. Turn on **2-Step Verification**: <https://myaccount.google.com/security>
 2. Open **App passwords**: <https://myaccount.google.com/apppasswords>
-3. Create one (name it e.g. "job-outreach"). Google shows a 16-char code.
-4. Export your credentials in the terminal:
+3. Create one (e.g. "job-outreach"); Google shows a 16-char code.
+4. Save your credentials in a `.env` file (git-ignored):
 
 ```bash
-export GMAIL_ADDRESS="balajirajput966@gmail.com"
-export GMAIL_APP_PASSWORD="xxxx xxxx xxxx xxxx"   # the 16-char app password
+cp .env.example .env
+# then edit .env and put your address + the 16-char app password
 ```
 
-## Usage
+(Or `export GMAIL_ADDRESS=...` and `export GMAIL_APP_PASSWORD=...` instead.)
+
+## The campaign — step by step
 
 ```bash
-# 1) Preview — sends NOTHING, shows the queue + a sample email
+# 1) Preview the initial batch (sends NOTHING)
 python3 send_applications.py
 
-# 2) Send ONE test mail to yourself to check formatting + attachment
+# 2) Send a test mail to yourself (check formatting + attachment)
 python3 send_applications.py --test balajirajput966@gmail.com --send
 
-# 3) Send for real (35/day cap, polite delays)
+# 3) Send the initial applications (35/day cap, polite delays)
 python3 send_applications.py --send
 
-# Optional: change the daily cap or delays
-python3 send_applications.py --send --limit 25 --min-delay 60 --max-delay 120
+# 4) A few days later — find out who replied / bounced
+python3 check_replies.py            # preview
+python3 check_replies.py --apply    # update the log
+
+# 5) Follow up with people who didn't reply (waits 5 days by default)
+python3 send_applications.py --followup --send
+
+# 6) Check progress any time
+python3 send_applications.py --report
 ```
 
-Run it again the next day — it automatically continues with whoever is left,
-respecting the daily cap and skipping anyone already emailed.
+Re-run on later days — it automatically continues where it left off, respects the
+daily cap, and skips anyone already contacted / replied / bounced.
 
-## Recommended workflow
+## Useful options
 
-1. **Test mail to yourself first** — confirm the resume attaches and the text looks right.
-2. Start with a small `--limit` (e.g. 10–15) the first day, watch for bounces/replies.
-3. **Follow up** after 4–5 days with people who didn't reply (you can re-use this tool
-   with a follow-up template, or reply manually — manual replies convert best).
-4. In parallel, **apply on official portals** (Naukri, LinkedIn, Indeed, company career
-   pages) — these usually get the highest response rate.
+```bash
+# smaller first day + gentler pace
+python3 send_applications.py --send --limit 15 --min-delay 60 --max-delay 120
+
+# follow up only after 7 days, allow up to 2 follow-ups
+python3 send_applications.py --followup --send --followup-after 7 --max-followups 2
+```
+
+## Status values in `sent_log.csv`
+
+| status | meaning |
+|--------|---------|
+| `sent` | initial application delivered |
+| `followup` | a follow-up was sent |
+| `replied` | they emailed you back (set by `check_replies.py`) |
+| `bounced` | address undeliverable (set by `check_replies.py`) |
+| `failed` | send error (never delivered) |
 
 ## Adding / editing targets
 
@@ -81,10 +107,13 @@ company,email
 New Pharma Ltd,hr@newpharma.com
 ```
 
-Leave `company` blank and the greeting falls back to "Dear Hiring Manager / HR Team,".
+Leave `company` blank → greeting falls back to "Dear Hiring Manager / HR Team,".
 
 ## Good-practice notes
 
 - Keep the list to genuinely relevant employers/recruiters (quality > quantity).
-- Don't send to the same company many times in a short window.
-- If anyone asks to be removed, add their address to `EXCLUDE_EMAILS` and never mail again.
+- In parallel, **apply on official portals** (Naukri, LinkedIn, Indeed, company
+  career pages) — these usually get the highest response rate.
+- If anyone asks to be removed, add them to `EXCLUDE_EMAILS` and never mail again.
+- Manual, personal replies convert best — use the automation to open doors, then
+  follow through personally.
