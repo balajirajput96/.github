@@ -1,0 +1,9 @@
+# never commit secrets, the personal send log, or run logs
+.env
+sent_log.csv
+run_daily.log
+run_*.log
+whatsapp_links.html
+*.local
+__pycache__/
+*.pyc
