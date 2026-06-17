@@ -33,6 +33,8 @@ NAVY  = HexColor("#0B2E4F")   # name + section headings
 ACCENT = HexColor("#1E5F8E")  # rules, links
 DARK  = HexColor("#222222")   # body text
 GREY  = HexColor("#555555")   # meta text
+HAIR  = HexColor("#C9D4DC")   # hairlines
+HDRBG = HexColor("#F2F6F9")   # subtle header background tint
 
 OUT = "Balaji_Rajput_QA_Officer_Resume.pdf"
 PW, PH = A4
@@ -60,14 +62,14 @@ def st(name, **kw):
     return ParagraphStyle(name, **base)
 
 S = {
-    "name":   st("name", fontName="Helvetica-Bold", fontSize=19, leading=22,
+    "name":   st("name", fontName="Helvetica-Bold", fontSize=20, leading=23,
                  textColor=NAVY, alignment=TA_CENTER),
     "title":  st("title", fontName="Helvetica-Bold", fontSize=10, leading=13,
                  textColor=ACCENT, alignment=TA_CENTER),
     "contact": st("contact", fontSize=8.6, leading=12, textColor=DARK,
                   alignment=TA_CENTER),
-    "sect":   st("sect", fontName="Helvetica-Bold", fontSize=10.3, leading=12,
-                 textColor=NAVY, spaceBefore=7),
+    "sect":   st("sect", fontName="Helvetica-Bold", fontSize=10.5, leading=12,
+                 textColor=NAVY, spaceBefore=8),
     "body":   st("body", fontSize=8.9, leading=11.8, alignment=TA_JUSTIFY,
                  spaceAfter=1),
     "job":    st("job", fontName="Helvetica-Bold", fontSize=9.7, leading=12,
@@ -85,9 +87,11 @@ def rule(space_after=4):
                       spaceBefore=1, spaceAfter=space_after)
 
 def heading(title):
-    """Section heading + rule that never gets orphaned at a page bottom
-    (keepWithNext pulls the following content along)."""
-    kt = KeepTogether([Paragraph(title.upper(), S["sect"]), rule()])
+    """Professional section heading: a small accent marker + uppercase title,
+    underlined by a thin accent rule. keepWithNext prevents page-bottom orphans."""
+    para = Paragraph(
+        f'<font color="#1E5F8E">\u25AC</font>&nbsp;&nbsp;{title.upper()}', S["sect"])
+    kt = KeepTogether([para, rule()])
     kt.keepWithNext = 1
     return kt
 
@@ -102,11 +106,15 @@ def bullets(items, style="bullet", gap=2):
 # ---------------------------------------------------------------- page deco
 def on_page(c, doc):
     c.saveState()
+    # subtle header background tint (page 1 only, behind name/title/contact)
+    if doc.page == 1:
+        c.setFillColor(HDRBG)
+        c.rect(0, PH - 38 * mm, PW, 34 * mm, fill=1, stroke=0)
     # top accent band
     c.setFillColor(NAVY)
     c.rect(0, PH - 4 * mm, PW, 4 * mm, fill=1, stroke=0)
     # footer
-    c.setStrokeColor(HexColor("#C9D4DC")); c.setLineWidth(0.6)
+    c.setStrokeColor(HAIR); c.setLineWidth(0.6)
     c.line(ML, 9 * mm, PW - MR, 9 * mm)
     c.setFont("Helvetica", 7.6); c.setFillColor(GREY)
     c.drawString(ML, 5.8 * mm,
@@ -175,7 +183,8 @@ exp_head = KeepTogether([
               "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; "
               "<font color='#555555' size=9>Mar 2024 " + EN + " Mar 2026 (2 Years)</font>",
               S["job"]),
-    Paragraph("Elysium Pharmaceuticals Ltd., Dabhasa, Vadodara, Gujarat  "
+    Paragraph("<b><font color='#1E5F8E'>Elysium Pharmaceuticals Ltd.</font></b>, "
+              "Dabhasa, Vadodara, Gujarat  "
               f"{BUL}  Department: Quality Assurance", S["meta"]),
 ])
 story.append(exp_head)
