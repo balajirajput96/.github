@@ -28,6 +28,7 @@ from reportlab.platypus import (
     Paragraph, Spacer, HRFlowable, KeepTogether, ListFlowable, ListItem,
 )
 from reportlab.pdfbase.pdfmetrics import stringWidth
+from reportlab.pdfgen import canvas
 
 # ---------------------------------------------------------------- palette
 NAVY  = HexColor("#0B2E4F")   # name + section headings
@@ -139,6 +140,37 @@ class HeaderRow(Flowable):
         c.setFont(self.rfont, self.rsize); c.setFillColor(self.rcolor)
         c.drawRightString(self._w, y, self.right)
 
+class NumberedCanvas(canvas.Canvas):
+    """Two-pass canvas: buffers every page, then draws the footer with the
+    final 'Page X of Y' once the total page count is known."""
+    def __init__(self, *args, **kwargs):
+        canvas.Canvas.__init__(self, *args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        total = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self._draw_footer(total)
+            canvas.Canvas.showPage(self)
+        canvas.Canvas.save(self)
+
+    def _draw_footer(self, total):
+        self.saveState()
+        self.setStrokeColor(HAIR); self.setLineWidth(0.6)
+        self.line(ML, 9 * mm, PW - MR, 9 * mm)
+        self.setFont("Helvetica", 7.6); self.setFillColor(GREY)
+        self.drawString(ML, 5.8 * mm,
+                        "Balaji Dilipsingh Rajput  |  Quality Assurance Officer")
+        self.drawRightString(
+            PW - MR, 5.8 * mm,
+            f"{PHONE}   {BUL}   {EMAIL}   {BUL}   Page {self._pageNumber} of {total}")
+        self.restoreState()
+
 # ---------------------------------------------------------------- page deco
 def on_page(c, doc):
     c.saveState()
@@ -149,19 +181,12 @@ def on_page(c, doc):
     # top accent band
     c.setFillColor(NAVY)
     c.rect(0, PH - 4 * mm, PW, 4 * mm, fill=1, stroke=0)
-    # footer
-    c.setStrokeColor(HAIR); c.setLineWidth(0.6)
-    c.line(ML, 9 * mm, PW - MR, 9 * mm)
-    c.setFont("Helvetica", 7.6); c.setFillColor(GREY)
-    c.drawString(ML, 5.8 * mm,
-                 "Balaji Dilipsingh Rajput  |  Quality Assurance Officer")
-    c.drawRightString(PW - MR, 5.8 * mm,
-                      f"{PHONE}   {BUL}   {EMAIL}   {BUL}   Page {doc.page}")
     c.restoreState()
 
 # ---------------------------------------------------------------- header flow
 def header_block():
-    contact1 = (f'{PHONE} &nbsp;&nbsp;{BUL}&nbsp;&nbsp; '
+    contact1 = (f'<a href="tel:+918780861044"><font color="#222222">{PHONE}</font></a>'
+                f' &nbsp;&nbsp;{BUL}&nbsp;&nbsp; '
                 f'<a href="mailto:{EMAIL}"><font color="#1E5F8E">{EMAIL}</font></a>'
                 f' &nbsp;&nbsp;{BUL}&nbsp;&nbsp; {LOCATION}')
     contact2 = (f'<a href="https://{LINKEDIN}"><font color="#1E5F8E">{LINKEDIN}</font></a>'
@@ -186,15 +211,17 @@ story += header_block()
 # ---- Professional Summary ----
 story.append(heading("Professional Summary"))
 story.append(Paragraph(
-    "Results-driven pharmaceutical Quality Assurance professional with 2+ years "
-    "of hands-on experience in cGMP, GDP and Schedule M compliance at Elysium "
-    "Pharmaceuticals Ltd., Vadodara, in Oral Solid Dosage (tablet) manufacturing. "
-    "Skilled in SOP authoring, deviation management, CAPA, BMR/BPR review, change "
-    "control, in-process quality checks (IPQA) and OOS/OOT investigation support "
-    "within a QMS framework. Experienced in internal audits, documentation control "
-    "and data integrity (ALCOA+), with strong audit readiness for CDSCO and WHO-GMP "
-    "inspections. Seeking QA Officer / QA Executive / IPQA / Documentation Officer "
-    "roles across Gujarat. Available to join immediately.",
+    "Detail-oriented and compliance-focused Quality Assurance Officer with 2+ years "
+    "of hands-on experience in Oral Solid Dosage (tablet) manufacturing at Elysium "
+    "Pharmaceuticals Ltd., Vadodara, working within cGMP, GDP and Schedule M "
+    "frameworks. Skilled in SOP authoring, deviation management, CAPA, BMR/BPR "
+    "review, change control, in-process quality checks (IPQA) and OOS/OOT "
+    "investigation support across a structured QMS. Experienced in internal audits, "
+    "documentation control and data integrity (ALCOA+), with proven audit readiness "
+    "for CDSCO and WHO-GMP inspections. A meticulous team player committed to product "
+    "quality, patient safety and regulatory compliance. Seeking QA Officer / QA "
+    "Executive / IPQA / Documentation Officer roles across Gujarat - available to "
+    "join immediately.",
     S["body"]))
 
 # ---- Core Competencies ----
@@ -379,6 +406,17 @@ story.append(Spacer(1, 3))
 story.append(Paragraph(
     "<i>I hereby declare that the information furnished above is true and correct "
     "to the best of my knowledge and belief.</i>", S["small"]))
+story.append(Spacer(1, 9))
+story.append(HeaderRow(
+    "Place: Vadodara, Gujarat", "(Balaji Dilipsingh Rajput)",
+    lfont="Helvetica", lsize=8.7, lcolor=DARK,
+    rfont="Helvetica-Bold", rsize=8.7, rcolor=NAVY,
+    space_before=2, space_after=2))
+story.append(HeaderRow(
+    "Date: ____________________", "Signature",
+    lfont="Helvetica", lsize=8.7, lcolor=DARK,
+    rfont="Helvetica-Oblique", rsize=8.3, rcolor=GREY,
+    space_before=2, space_after=0))
 
 # ================================================================ build
 doc = BaseDocTemplate(
@@ -398,5 +436,5 @@ doc = BaseDocTemplate(
 frame = Frame(ML, MB, CW, PH - MT - MB, id="full",
               leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
 doc.addPageTemplates([PageTemplate(id="main", frames=[frame], onPage=on_page)])
-doc.build(story)
+doc.build(story, canvasmaker=NumberedCanvas)
 print(f"Created {OUT}")
