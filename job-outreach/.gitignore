@@ -1,6 +1,8 @@
-# never commit secrets or the personal send log
+# never commit secrets, the personal send log, or run logs
 .env
 sent_log.csv
+run_daily.log
+run_*.log
 *.local
 __pycache__/
 *.pyc

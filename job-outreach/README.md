@@ -20,6 +20,7 @@ and bounces, and reports progress.
 | `followup_template.txt` | Polite follow-up email body |
 | `companies_to_apply.csv` | Extra companies + official **careers-page URLs** to apply directly |
 | `copy_paste_messages.md` | Ready-to-paste LinkedIn / Naukri / WhatsApp / phone messages |
+| `run_daily.sh` / `run_daily.bat` | One-shot daily runner for cron / Task Scheduler |
 | `.env.example` | Copy to `.env` and add your Gmail credentials |
 | `sent_log.csv` | Auto-created campaign log (git-ignored) |
 
@@ -79,6 +80,35 @@ python3 send_applications.py --report
 
 Re-run on later days — it automatically continues where it left off, respects the
 daily cap, and skips anyone already contacted / replied / bounced.
+
+## Run it automatically every day (scheduler)
+
+`run_daily.sh` (Linux/macOS) and `run_daily.bat` (Windows) do the full daily
+cycle in one go: **check replies/bounces → send the day's initial batch →
+send follow-ups → print a report**. The daily cap makes it safe to run once a day.
+
+> The scheduler runs on **your own computer**, which must be on and online at the
+> scheduled time. Credentials come from your `.env` file — nothing is stored anywhere else.
+
+### Linux / macOS (cron)
+
+```bash
+chmod +x run_daily.sh           # one time
+crontab -e                      # opens your crontab
+```
+Add this line to run every day at 10:00 AM (use the full path to the file):
+```
+0 10 * * * /full/path/to/job-outreach/run_daily.sh
+```
+
+### Windows (Task Scheduler)
+
+1. Open **Task Scheduler** → **Create Basic Task**.
+2. Trigger: **Daily**, time e.g. 10:00 AM.
+3. Action: **Start a program** → browse to `run_daily.bat`.
+4. Finish. (Tick "Run whether user is logged on or not" if you want.)
+
+Output of each run is appended to `run_daily.log` in this folder.
 
 ## Useful options
 
