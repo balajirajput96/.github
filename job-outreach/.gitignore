@@ -3,6 +3,7 @@
 sent_log.csv
 run_daily.log
 run_*.log
+whatsapp_links.html
 *.local
 __pycache__/
 *.pyc

@@ -20,6 +20,7 @@ and bounces, and reports progress.
 | `followup_template.txt` | Polite follow-up email body |
 | `companies_to_apply.csv` | Extra companies + official **careers-page URLs** to apply directly |
 | `copy_paste_messages.md` | Ready-to-paste LinkedIn / Naukri / WhatsApp / phone messages |
+| `whatsapp_links.py` / `whatsapp_contacts.csv` | Safe one-click WhatsApp links (you press send) |
 | `run_daily.sh` / `run_daily.bat` | One-shot daily runner for cron / Task Scheduler |
 | `.env.example` | Copy to `.env` and add your Gmail credentials |
 | `sent_log.csv` | Auto-created campaign log (git-ignored) |
@@ -169,6 +170,31 @@ direct-apply checklist alongside the email campaign.
 `copy_paste_messages.md` has ready-to-paste, personalized templates for LinkedIn
 connection notes and recruiter messages, a Naukri/Indeed summary, an opt-in-only
 WhatsApp message, and a short phone-call script. Replace `[Name]` / `[Company]` and send.
+
+### WhatsApp (safe, one-click)
+
+`whatsapp_links.py` turns a contact list into **wa.me click-to-chat links** with a
+pre-filled message — you open each link and press send yourself.
+
+```bash
+# 1) add opt-in contacts to whatsapp_contacts.csv  (company,name,phone)
+#    phone like 919876543210  (91 = India; bare 10-digit numbers get 91 added)
+# 2) generate links
+python3 whatsapp_links.py
+# 3) open whatsapp_links.html in a browser, click each green button
+```
+
+> **Do NOT bulk auto-send WhatsApp messages to cold/scraped numbers** — it breaks
+> WhatsApp's rules and gets your number permanently banned. Only message people who
+> are open to being contacted. That's why this tool is one-click-per-person, not a blaster.
+
+## A note on Naukri / LinkedIn / Indeed "auto-apply"
+
+Fully automatic bot-applying on these portals is **not provided on purpose**: it
+violates their Terms of Service (accounts get banned), breaks on CAPTCHAs/logins, and
+recruiters reject obvious bot applications. Instead use `companies_to_apply.csv`
+(direct careers pages) and `copy_paste_messages.md` (fast personalized applies). These
+get far better results.
 
 ## Good-practice notes
 
