@@ -24,9 +24,10 @@ from reportlab.lib.colors import HexColor
 from reportlab.lib.enums import TA_JUSTIFY, TA_LEFT, TA_CENTER
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import (
-    BaseDocTemplate, Frame, PageTemplate,
+    BaseDocTemplate, Frame, PageTemplate, Flowable,
     Paragraph, Spacer, HRFlowable, KeepTogether, ListFlowable, ListItem,
 )
+from reportlab.pdfbase.pdfmetrics import stringWidth
 
 # ---------------------------------------------------------------- palette
 NAVY  = HexColor("#0B2E4F")   # name + section headings
@@ -104,6 +105,40 @@ def bullets(items, style="bullet", gap=2):
         leftIndent=12, bulletOffsetY=0.5,
     )
 
+class HeaderRow(Flowable):
+    """Single-line role/title on the left, date right-aligned to the margin.
+    Pure text (selectable, correct reading order) -> stays ATS-safe, no tables.
+    If the left text would collide with the date it auto-shrinks to fit."""
+    def __init__(self, left, right, lfont="Helvetica-Bold", lsize=9.7,
+                 lcolor=NAVY, rfont="Helvetica-Oblique", rsize=9.0,
+                 rcolor=GREY, leading=13, space_before=3, space_after=1):
+        Flowable.__init__(self)
+        self.left, self.right = left, right
+        self.lfont, self.lsize, self.lcolor = lfont, lsize, lcolor
+        self.rfont, self.rsize, self.rcolor = rfont, rsize, rcolor
+        self.height = leading
+        self.spaceBefore = space_before
+        self.spaceAfter = space_after
+        self._w = CW
+
+    def wrap(self, availWidth, availHeight):
+        self._w = availWidth
+        return (availWidth, self.height)
+
+    def draw(self):
+        c = self.canv
+        y = self.height - self.lsize
+        rw = stringWidth(self.right, self.rfont, self.rsize)
+        # shrink left font only if it would overlap the right-aligned date
+        lsize = self.lsize
+        while (stringWidth(self.left, self.lfont, lsize)
+               > self._w - rw - 10) and lsize > 7.5:
+            lsize -= 0.2
+        c.setFont(self.lfont, lsize); c.setFillColor(self.lcolor)
+        c.drawString(0, y, self.left)
+        c.setFont(self.rfont, self.rsize); c.setFillColor(self.rcolor)
+        c.drawRightString(self._w, y, self.right)
+
 # ---------------------------------------------------------------- page deco
 def on_page(c, doc):
     c.saveState()
@@ -180,10 +215,8 @@ story.append(Paragraph(
 # ---- Professional Experience ----
 story.append(heading("Professional Experience"))
 exp_head = KeepTogether([
-    Paragraph("Quality Assurance Officer / IPQA Officer "
-              "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; "
-              "<font color='#555555' size=9>Mar 2024 " + EN + " Mar 2026 (2 Years)</font>",
-              S["job"]),
+    HeaderRow("Quality Assurance Officer / IPQA Officer",
+              "Mar 2024 " + EN + " Mar 2026   (2 Years)"),
     Paragraph("<b><font color='#1E5F8E'>Elysium Pharmaceuticals Ltd.</font></b>, "
               "Dabhasa, Vadodara, Gujarat  "
               f"{BUL}  Department: Quality Assurance", S["meta"]),
@@ -224,10 +257,8 @@ story.append(bullets([
 # ---- Education ----
 story.append(heading("Education"))
 story.append(KeepTogether([
-    Paragraph("Diploma in Biotechnology "
-              "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; "
-              "<font color='#555555' size=9>2021 " + EN + " 2025 &nbsp;|&nbsp; CGPA: 6.7 / 10</font>",
-              S["job"]),
+    HeaderRow("Diploma in Biotechnology",
+              "2021 " + EN + " 2025    CGPA: 6.7 / 10"),
     Paragraph("Parul Institute of Technology & Engineering, Vadodara - "
               "Gujarat Technological University (GTU)", S["meta"]),
 ]))
@@ -242,9 +273,9 @@ story.append(bullets([
 # ---- Internship Experience ----
 story.append(heading("Internship Experience"))
 story.append(KeepTogether([
-    Paragraph("Bioinformatics Intern " + EN + " Biotecnika (Remote) "
-              "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; "
-              "<font color='#555555' size=9>2024 &nbsp;|&nbsp; 3 Months</font>", S["subh"]),
+    HeaderRow("Bioinformatics Intern " + EN + " Biotecnika (Remote)",
+              "2024   " + BUL + "   3 Months",
+              lfont="Helvetica-Bold", lsize=9.2, lcolor=DARK),
 ]))
 story.append(bullets([
     "Built Python / Biopython pipelines for genomic data analysis; analysed 500+ "
@@ -253,9 +284,9 @@ story.append(bullets([
 ], gap=2))
 story.append(Spacer(1, 3))
 story.append(KeepTogether([
-    Paragraph("Laboratory Research Intern " + EN + " Gujarat Biotech Innovations "
-              "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; "
-              "<font color='#555555' size=9>2023 &nbsp;|&nbsp; 2 Months</font>", S["subh"]),
+    HeaderRow("Laboratory Research Intern " + EN + " Gujarat Biotech Innovations",
+              "2023   " + BUL + "   2 Months",
+              lfont="Helvetica-Bold", lsize=9.2, lcolor=DARK),
 ]))
 story.append(bullets([
     "Executed PCR, gel electrophoresis and microbial culture workflows; processed "
