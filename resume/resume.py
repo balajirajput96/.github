@@ -89,12 +89,38 @@ def rule(space_after=4):
     return HRFlowable(width="100%", thickness=0.9, color=ACCENT,
                       spaceBefore=1, spaceAfter=space_after)
 
+class Bookmark(Flowable):
+    """Zero-height flowable that registers a PDF outline (bookmark) entry at its
+    position, so the finished PDF has a navigable section tree in any reader.
+    Invisible and text-free -> no impact on layout or ATS parsing.
+
+    NOTE: actual bookmark creation is *deferred* to the second pass in
+    NumberedCanvas.save(). With the two-pass NumberedCanvas the first pass never
+    emits real pages, so calling bookmarkPage() here would bind every entry to
+    page 1. Instead we just record (page, key, title) and let the canvas emit
+    each bookmark while the matching page is actually being written."""
+    def __init__(self, title, key):
+        Flowable.__init__(self)
+        self.title, self.key = title, key
+        self.width = self.height = 0
+
+    def wrap(self, aw, ah):
+        return (0, 0)
+
+    def draw(self):
+        reg = getattr(self.canv, "_deferred_bookmarks", None)
+        if reg is None:
+            reg = self.canv._deferred_bookmarks = []
+        reg.append((self.canv._pageNumber, self.key, self.title))
+
 def heading(title):
     """Professional section heading: a small accent marker + uppercase title,
-    underlined by a thin accent rule. keepWithNext prevents page-bottom orphans."""
+    underlined by a thin accent rule. keepWithNext prevents page-bottom orphans.
+    Also drops a PDF bookmark so the document has a navigable outline."""
+    key = "sec_" + "".join(ch for ch in title.lower() if ch.isalnum())
     para = Paragraph(
         f'<font color="#1E5F8E">\u25AC</font>&nbsp;&nbsp;{title.upper()}', S["sect"])
-    kt = KeepTogether([para, rule()])
+    kt = KeepTogether([Bookmark(title, key), para, rule()])
     kt.keepWithNext = 1
     return kt
 
@@ -153,9 +179,18 @@ class NumberedCanvas(canvas.Canvas):
 
     def save(self):
         total = len(self._saved_page_states)
-        for state in self._saved_page_states:
+        # group deferred bookmarks by the page they were recorded on
+        by_page = {}
+        for pno, key, title in getattr(self, "_deferred_bookmarks", []):
+            by_page.setdefault(pno, []).append((key, title))
+        for idx, state in enumerate(self._saved_page_states, start=1):
             self.__dict__.update(state)
             self._draw_footer(total)
+            # emit bookmarks now, while this page is the one being written,
+            # so each outline entry resolves to the correct page
+            for key, title in by_page.get(idx, []):
+                self.bookmarkPage(key)
+                self.addOutlineEntry(title, key, level=0, closed=False)
             canvas.Canvas.showPage(self)
         canvas.Canvas.save(self)
 
@@ -187,11 +222,11 @@ def on_page(c, doc):
 def header_block():
     contact1 = (f'<a href="tel:+918780861044"><font color="#222222">{PHONE}</font></a>'
                 f' &nbsp;&nbsp;{BUL}&nbsp;&nbsp; '
-                f'<a href="mailto:{EMAIL}"><font color="#1E5F8E">{EMAIL}</font></a>'
+                f'<a href="mailto:{EMAIL}"><font color="#1E5F8E"><u>{EMAIL}</u></font></a>'
                 f' &nbsp;&nbsp;{BUL}&nbsp;&nbsp; {LOCATION}')
-    contact2 = (f'<a href="https://{LINKEDIN}"><font color="#1E5F8E">{LINKEDIN}</font></a>'
+    contact2 = (f'<a href="https://{LINKEDIN}"><font color="#1E5F8E"><u>{LINKEDIN}</u></font></a>'
                 f' &nbsp;&nbsp;{BUL}&nbsp;&nbsp; '
-                f'<a href="https://{GITHUB}"><font color="#1E5F8E">{GITHUB}</font></a>')
+                f'<a href="https://{GITHUB}"><font color="#1E5F8E"><u>{GITHUB}</u></font></a>')
     return [
         Paragraph(NAME, S["name"]),
         HRFlowable(width="38%", thickness=2, color=ACCENT,
