@@ -1,0 +1,6 @@
+# never commit secrets or the personal send log
+.env
+sent_log.csv
+*.local
+__pycache__/
+*.pyc
