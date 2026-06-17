@@ -1,0 +1,22 @@
+{greeting}
+
+I am Balaji Dilipsingh Rajput, a Biotechnology Diploma graduate from Parul University, Vadodara (Gujarat). I am writing to express my keen interest in entry-level opportunities in QC / Lab Technician / Production / Microbiology roles at {company}.
+
+PROFILE HIGHLIGHTS:
+- Education      : Diploma in Biotechnology - Parul University (2025)
+- Location       : Vadodara, Gujarat | Immediate Joining
+- Key Skills     : PCR, Gel Electrophoresis, Cell Culture, Microbial Culture, HPLC, Spectrophotometry, GLP/GMP, Media Preparation, SOP Documentation
+- Bioinformatics : Python (Biopython), BLAST, R (Bioconductor)
+- Achievements   : 95% QC accuracy | 20% lab efficiency improvement | 15% bioethanol yield improvement (Best Project Award) | 500+ AMR gene sequences analyzed
+- Certifications : Bioinformatics (Coursera) | GMP Fundamentals (NPTEL) | Python for Genomics (Coursera)
+
+Please find my updated resume attached for your consideration. I would be grateful for the opportunity to discuss any suitable openings in your organization.
+
+Thank you for your time.
+
+Warm regards,
+Balaji Dilipsingh Rajput
+Phone   : +91 8780861044
+Email   : balajirajput966@gmail.com
+Location: Vadodara, Gujarat - 390010
+LinkedIn: linkedin.com/in/balaji-rajput-483a86194
