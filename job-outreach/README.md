@@ -18,6 +18,8 @@ and bounces, and reports progress.
 | `recipients.csv` | Your target list: `company,email` (de-duplicated) |
 | `email_template.txt` | Initial email body (`{greeting}` / `{company}` / `{resume_link_line}`) |
 | `followup_template.txt` | Polite follow-up email body |
+| `companies_to_apply.csv` | Extra companies + official **careers-page URLs** to apply directly |
+| `copy_paste_messages.md` | Ready-to-paste LinkedIn / Naukri / WhatsApp / phone messages |
 | `.env.example` | Copy to `.env` and add your Gmail credentials |
 | `sent_log.csv` | Auto-created campaign log (git-ignored) |
 
@@ -108,6 +110,35 @@ New Pharma Ltd,hr@newpharma.com
 ```
 
 Leave `company` blank → greeting falls back to "Dear Hiring Manager / HR Team,".
+
+### Option: manage the list in Google Sheets
+
+Instead of editing the CSV, you can keep the list in a Google Sheet:
+
+1. Make a sheet with header columns `company` and `email`.
+2. Share it as **"Anyone with the link → Viewer"**.
+3. Either set `RECIPIENTS_URL` in `.env` to the share URL, or run:
+
+```bash
+python3 send_applications.py --recipients-url "https://docs.google.com/spreadsheets/d/<ID>/edit"
+```
+
+The share/edit URL is auto-converted to a CSV-export link and downloaded each run —
+no Google API key needed.
+
+## Apply directly on company portals
+
+`companies_to_apply.csv` lists additional Gujarat + national pharma companies with
+their **official careers pages**. Many big employers (Zydus, Torrent, Sun, Cadila,
+Intas, Amneal, Macleods, Cipla, Lupin, Dr Reddy's) hire mainly through their own
+portals — applying there usually gets the **highest response rate**. Use it as your
+direct-apply checklist alongside the email campaign.
+
+## LinkedIn / Naukri / WhatsApp / phone messages
+
+`copy_paste_messages.md` has ready-to-paste, personalized templates for LinkedIn
+connection notes and recruiter messages, a Naukri/Indeed summary, an opt-in-only
+WhatsApp message, and a short phone-call script. Replace `[Name]` / `[Company]` and send.
 
 ## Good-practice notes
 

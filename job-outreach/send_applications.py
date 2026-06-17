@@ -81,21 +81,45 @@ def load_dotenv(path=ENV_FILE):
         os.environ.setdefault(key, val)
 
 
-def load_recipients(path):
-    """Read recipients.csv -> list of {company, email}. De-dupes by email."""
+def parse_recipients(lines):
+    """Parse CSV lines/file -> list of {company, email}. De-dupes by email."""
     seen, rows = set(), []
-    with open(path, newline="", encoding="utf-8") as f:
-        for r in csv.DictReader(f):
-            email = (r.get("email") or "").strip()
-            company = (r.get("company") or "").strip()
-            if not email:
-                continue
-            key = email.lower()
-            if key in seen:
-                continue
-            seen.add(key)
-            rows.append({"company": company, "email": email})
+    for r in csv.DictReader(lines):
+        email = (r.get("email") or "").strip()
+        company = (r.get("company") or "").strip()
+        if not email:
+            continue
+        key = email.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.append({"company": company, "email": email})
     return rows
+
+
+def sheet_to_csv_url(url):
+    """Convert a Google Sheets share/edit URL to a CSV-export URL.
+    Leaves any other URL untouched."""
+    m = re.search(r"/spreadsheets/d/([a-zA-Z0-9-_]+)", url)
+    if not m:
+        return url
+    sid = m.group(1)
+    g = re.search(r"[#&?]gid=([0-9]+)", url)
+    gid = g.group(1) if g else "0"
+    return f"https://docs.google.com/spreadsheets/d/{sid}/export?format=csv&gid={gid}"
+
+
+def load_recipients(path=None, url=None):
+    """Load recipients from a Google Sheet (url) or a local CSV (path)."""
+    if url:
+        import urllib.request
+        export = sheet_to_csv_url(url)
+        log(f"Fetching recipients from URL: {export}")
+        with urllib.request.urlopen(export, timeout=30) as resp:
+            text = resp.read().decode("utf-8", "replace")
+        return parse_recipients(text.splitlines())
+    with open(path, newline="", encoding="utf-8") as f:
+        return parse_recipients(f)
 
 
 def is_valid(email):
@@ -261,6 +285,9 @@ def main():
     ap.add_argument("--min-delay", type=int, default=45)
     ap.add_argument("--max-delay", type=int, default=90)
     ap.add_argument("--recipients", default=str(DEFAULT_RECIPIENTS))
+    ap.add_argument("--recipients-url", default="",
+                    help="load recipients from a Google Sheet share/CSV URL "
+                         "instead of the local CSV (or set RECIPIENTS_URL)")
     ap.add_argument("--template", default=str(DEFAULT_TEMPLATE))
     ap.add_argument("--resume", default=str(DEFAULT_RESUME))
     ap.add_argument("--test", metavar="EMAIL",
@@ -273,7 +300,8 @@ def main():
     resume_link = os.environ.get("RESUME_LINK", "").strip()
     resume = args.resume
 
-    recipients = load_recipients(args.recipients)
+    recipients_url = args.recipients_url.strip() or os.environ.get("RECIPIENTS_URL", "").strip()
+    recipients = load_recipients(path=args.recipients, url=recipients_url or None)
 
     if args.report:
         cmd_report(recipients)
