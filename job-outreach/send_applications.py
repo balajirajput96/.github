@@ -54,10 +54,10 @@ EXCLUDE_KEYWORDS = ["elysium"]          # company already worked at
 EXCLUDE_DOMAINS = set()                 # e.g. {"example.com"}
 EXCLUDE_EMAILS = set()                  # e.g. {"someone@x.com"}
 
-SUBJECT = ("Application - QA Officer / IPQA / QA Executive "
-           "| Balaji Dilipsingh Rajput (2+ Years Pharmaceutical QA Experience)")
-FOLLOWUP_SUBJECT = ("Following up - QA Officer / IPQA Application | Balaji Dilipsingh Rajput "
-                    "(2+ Years Pharmaceutical QA)")
+SUBJECT = ("Job Application - QA Officer / IPQA / Quality Assurance Executive "
+           "| Balaji Dilipsingh Rajput (2 Yrs QA Experience, Pharma)")
+FOLLOWUP_SUBJECT = ("Following up - Job Application | Balaji Dilipsingh Rajput "
+                    "(Diploma Biotechnology, QC / Microbiology)")
 SENDER_NAME = "Balaji Dilipsingh Rajput"
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
