@@ -1,22 +1,26 @@
 {greeting}
 
-I am Balaji Dilipsingh Rajput, a Biotechnology Diploma graduate from Parul University, Vadodara (Gujarat). I am writing to express my keen interest in entry-level opportunities in QC / Lab Technician / Production / Microbiology roles at {company}.
+I am Balaji Dilipsingh Rajput, a Quality Assurance Officer with over 2 years of hands-on experience in pharmaceutical Oral Solid Dosage (tablet) manufacturing. I am writing to express my keen interest in QA Officer / QA Executive / IPQA / Documentation Officer opportunities at {company}.
 
-PROFILE HIGHLIGHTS:
-- Education      : Diploma in Biotechnology - Parul University (2025)
-- Location       : Vadodara, Gujarat | Immediate Joining
-- Key Skills     : PCR, Gel Electrophoresis, Cell Culture, Microbial Culture, HPLC, Spectrophotometry, GLP/GMP, Media Preparation, SOP Documentation
-- Bioinformatics : Python (Biopython), BLAST, R (Bioconductor)
-- Achievements   : 95% QC accuracy | 20% lab efficiency improvement | 15% bioethanol yield improvement (Best Project Award) | 500+ AMR gene sequences analyzed
-- Certifications : Bioinformatics (Coursera) | GMP Fundamentals (NPTEL) | Python for Genomics (Coursera)
+PROFESSIONAL SNAPSHOT:
+- Experience    : 2+ years as QA / IPQA Officer at Elysium Pharmaceuticals Ltd., Vadodara (Mar 2024 - Mar 2026)
+- Compliance    : cGMP, GDP, GLP, Schedule M, ICH Q8/Q9/Q10, 21 CFR Part 11; WHO-GMP & CDSCO audit readiness
+- QMS           : SOP authoring & periodic review, Deviation management & CAPA, Change Control, OOS/OOT investigation support
+- Batch Review  : BMR / BPR review, reconciliation and yield verification prior to batch release
+- IPQA          : Line clearance and in-process checks during granulation, compression, coating and packing (weight variation, hardness, friability, thickness, disintegration time)
+- Audit & Data  : Internal GMP audits & self-inspections; documentation control and data integrity (ALCOA+); APQR and stability documentation support
+- Education     : Diploma in Biotechnology - Parul University, GTU (2025)
 
-Please find my updated resume attached for your consideration. I would be grateful for the opportunity to discuss any suitable openings in your organization.
+Over the past two years I have supported audit-ready documentation, timely deviation/CAPA closures and reliable batch-release decisions within a structured QMS, while coordinating GMP/GDP training for production staff. I am confident I can bring the same compliance focus and attention to detail to the Quality Assurance team at {company}, and I am available to join immediately.
+
+Please find my updated resume attached for your consideration. I would welcome the opportunity to discuss any suitable openings in your organization.
 
 {resume_link_line}
-Thank you for your time.
+Thank you for your time and consideration.
 
 Warm regards,
 Balaji Dilipsingh Rajput
+Quality Assurance Officer | IPQA | Pharmaceutical QA
 Phone   : +91 8780861044
 Email   : balajirajput966@gmail.com
 Location: Vadodara, Gujarat - 390010

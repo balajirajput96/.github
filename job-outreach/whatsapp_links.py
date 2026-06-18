@@ -30,11 +30,12 @@ CONTACTS = HERE / "whatsapp_contacts.csv"
 OUT_HTML = HERE / "whatsapp_links.html"
 
 MESSAGE = (
-    "Hello {name}, this is Balaji Rajput. I'm a Biotechnology Diploma graduate "
-    "from Parul University, Vadodara, looking for an entry-level QC / Microbiology "
-    "/ Production role. I have hands-on lab experience (PCR, HPLC, microbial "
-    "culture, GLP/GMP) and can join immediately. May I share my resume for any "
-    "suitable opening at {company}? Thank you!"
+    "Hello {name}, this is Balaji Rajput. I am a Quality Assurance Officer with "
+    "2+ years of experience in pharmaceutical tablet (OSD) manufacturing at "
+    "Elysium Pharmaceuticals, Vadodara - working on cGMP, SOPs, BMR/BPR review, "
+    "IPQA, deviation/CAPA and change control. I am looking for a QA Officer / IPQA "
+    "role and can join immediately. May I share my resume for any suitable opening "
+    "at {company}? Thank you!"
 )
 
 
