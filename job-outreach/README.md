@@ -111,6 +111,37 @@ Add this line to run every day at 10:00 AM (use the full path to the file):
 
 Output of each run is appended to `run_daily.log` in this folder.
 
+### Weekly automation — every Monday at 12:00 noon (run for years)
+
+Use `run_weekly.sh` / `run_weekly.bat` for a hands-off weekly pipeline. It does
+**not** spam the same people — de-dupe is always on. Each Monday it emails any
+**new** companies you've added, sends **limited follow-ups** (max 2 per contact)
+to non-responders, and records replies/bounces.
+
+**Linux / macOS (cron) — every Monday 12:00:**
+```bash
+chmod +x run_weekly.sh
+crontab -e
+```
+Add (use the full path):
+```
+0 12 * * 1 /full/path/to/job-outreach/run_weekly.sh
+```
+`* * 1` = Monday, `0 12` = 12:00 noon. Leave it in your crontab and it keeps
+running every Monday for as long as you like (years) — just keep your computer
+on at that time and add new targets over time.
+
+**Windows (Task Scheduler):** Create Task → Trigger: **Weekly → Monday → 12:00 PM**
+→ Action: run `run_weekly.bat`. Set it to repeat weekly with no end date.
+
+> WHY NOT re-send the same email to everyone every week? Sending the identical
+> application to the same companies repeatedly is spam: Gmail will rate-limit and
+> eventually ban the account, and recruiters will blacklist the sender. The weekly
+> job therefore targets only NEW companies plus a small, capped number of polite
+> follow-ups. To keep getting value over months/years, keep adding fresh targets.
+
+Output is appended to `run_weekly.log`.
+
 ## Useful options
 
 ```bash

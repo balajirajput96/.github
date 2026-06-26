@@ -2,6 +2,7 @@
 .env
 sent_log.csv
 run_daily.log
+run_weekly.log
 run_*.log
 whatsapp_links.html
 *.local
