@@ -1,0 +1,37 @@
+{greeting}
+
+I am Balaji Dilipsingh Rajput, a Quality Assurance professional with 2 years of hands-on QA/IPQA experience in Oral Solid Dosage (tablet) manufacturing at an established pharmaceutical company in Vadodara, working within cGMP, GDP and Schedule M frameworks. I hold a Diploma in Biotechnology from Parul University (GTU, 2025).
+
+I am writing to express my strong interest in Quality Assurance Officer / QA Executive / IPQA / Documentation Officer roles at {company}.
+
+PROFESSIONAL EXPERIENCE (2 Years - QA/IPQA Officer):
+- SOP authoring, periodic review and documentation control (cGMP/GDP/Schedule M)
+- Batch Manufacturing Record (BMR) and Batch Packaging Record (BPR) review, verification and approval
+- In-Process Quality Assurance (IPQA): line clearance, weight variation, hardness, friability, thickness, disintegration checks
+- Deviation management with root-cause analysis (5-Why, Fishbone) and CAPA implementation
+- Change Control initiation, impact assessment and post-change effectiveness verification
+- OOS/OOT investigation support per ICH Q10 and 21 CFR Part 211
+- Internal GMP audits and self-inspections (production, warehouse, HVAC/AHU, utilities)
+- Data integrity (ALCOA+), Good Documentation Practices (GDP), APQR compilation
+- Audit readiness support for CDSCO and WHO-GMP inspections
+- GMP/GDP training coordination for production staff
+
+KEY QUALIFICATIONS:
+- Education      : Diploma in Biotechnology - Parul University, Vadodara (2025)
+- Experience     : 2 Years as QA Officer / IPQA Officer (OSD Tablet Manufacturing)
+- Core Skills    : cGMP, GDP, GLP, SOP Writing, CAPA, Deviation, Change Control, BMR/BPR Review, OOS/OOT, QMS, Internal Audit, Data Integrity (ALCOA+), ICH Q8/Q9/Q10, WHO-GMP, CDSCO, 21 CFR Part 11
+- Laboratory     : HPLC, PCR, UV-Vis Spectrophotometry, Microbial Culture, Sterility Testing
+- Certifications : GMP Fundamentals (NPTEL/IIT Madras) | Bioinformatics (Coursera/UCSD) | Python for Genomics (Coursera/JHU)
+- Location       : Vadodara, Gujarat | Immediate Joining | Open to relocation within Gujarat
+
+Please find my updated resume attached for your kind consideration. I would be grateful for the opportunity to discuss any suitable QA openings at {company}.
+
+{resume_link_line}
+Thank you for your time and consideration.
+
+Warm regards,
+Balaji Dilipsingh Rajput
+Phone   : +91 8780861044
+Email   : balajirajput966@gmail.com
+Location: Vadodara, Gujarat - 390010
+LinkedIn: linkedin.com/in/balaji-rajput-483a86194

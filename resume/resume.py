@@ -24,15 +24,19 @@ from reportlab.lib.colors import HexColor
 from reportlab.lib.enums import TA_JUSTIFY, TA_LEFT, TA_CENTER
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import (
-    BaseDocTemplate, Frame, PageTemplate,
+    BaseDocTemplate, Frame, PageTemplate, Flowable,
     Paragraph, Spacer, HRFlowable, KeepTogether, ListFlowable, ListItem,
 )
+from reportlab.pdfbase.pdfmetrics import stringWidth
+from reportlab.pdfgen import canvas
 
 # ---------------------------------------------------------------- palette
 NAVY  = HexColor("#0B2E4F")   # name + section headings
 ACCENT = HexColor("#1E5F8E")  # rules, links
 DARK  = HexColor("#222222")   # body text
 GREY  = HexColor("#555555")   # meta text
+HAIR  = HexColor("#C9D4DC")   # hairlines
+HDRBG = HexColor("#F2F6F9")   # subtle header background tint
 
 OUT = "Balaji_Rajput_QA_Officer_Resume.pdf"
 PW, PH = A4
@@ -60,34 +64,63 @@ def st(name, **kw):
     return ParagraphStyle(name, **base)
 
 S = {
-    "name":   st("name", fontName="Helvetica-Bold", fontSize=19, leading=22,
+    "name":   st("name", fontName="Helvetica-Bold", fontSize=20, leading=23,
                  textColor=NAVY, alignment=TA_CENTER),
     "title":  st("title", fontName="Helvetica-Bold", fontSize=10, leading=13,
                  textColor=ACCENT, alignment=TA_CENTER),
     "contact": st("contact", fontSize=8.6, leading=12, textColor=DARK,
                   alignment=TA_CENTER),
-    "sect":   st("sect", fontName="Helvetica-Bold", fontSize=10.3, leading=12,
-                 textColor=NAVY, spaceBefore=7),
+    "sect":   st("sect", fontName="Helvetica-Bold", fontSize=10.5, leading=12,
+                 textColor=NAVY, spaceBefore=8),
     "body":   st("body", fontSize=8.9, leading=11.8, alignment=TA_JUSTIFY,
                  spaceAfter=1),
     "job":    st("job", fontName="Helvetica-Bold", fontSize=9.7, leading=12,
                  textColor=NAVY, spaceBefore=3),
     "meta":   st("meta", fontName="Helvetica-Oblique", fontSize=8.6,
                  leading=11, textColor=GREY, spaceAfter=1),
-    "bullet": st("bullet", fontSize=8.7, leading=11.6, alignment=TA_JUSTIFY),
+    "bullet": st("bullet", fontSize=8.7, leading=11.8, alignment=TA_JUSTIFY),
     "subh":   st("subh", fontName="Helvetica-Bold", fontSize=9.2, leading=11.8,
                  textColor=DARK),
-    "small":  st("small", fontSize=8.7, leading=11.6, textColor=DARK),
+    "small":  st("small", fontSize=8.7, leading=11.8, textColor=DARK),
+    "comp":   st("comp", fontSize=8.7, leading=14, textColor=DARK),
 }
 
 def rule(space_after=4):
     return HRFlowable(width="100%", thickness=0.9, color=ACCENT,
                       spaceBefore=1, spaceAfter=space_after)
 
+class Bookmark(Flowable):
+    """Zero-height flowable that registers a PDF outline (bookmark) entry at its
+    position, so the finished PDF has a navigable section tree in any reader.
+    Invisible and text-free -> no impact on layout or ATS parsing.
+
+    NOTE: actual bookmark creation is *deferred* to the second pass in
+    NumberedCanvas.save(). With the two-pass NumberedCanvas the first pass never
+    emits real pages, so calling bookmarkPage() here would bind every entry to
+    page 1. Instead we just record (page, key, title) and let the canvas emit
+    each bookmark while the matching page is actually being written."""
+    def __init__(self, title, key):
+        Flowable.__init__(self)
+        self.title, self.key = title, key
+        self.width = self.height = 0
+
+    def wrap(self, aw, ah):
+        return (0, 0)
+
+    def draw(self):
+        reg = getattr(self.canv, "_deferred_bookmarks", None)
+        if reg is None:
+            reg = self.canv._deferred_bookmarks = []
+        reg.append((self.canv._pageNumber, self.key, self.title))
+
 def heading(title):
-    """Section heading + rule that never gets orphaned at a page bottom
-    (keepWithNext pulls the following content along)."""
-    kt = KeepTogether([Paragraph(title.upper(), S["sect"]), rule()])
+    """Professional section heading: a small accent marker + uppercase title,
+    underlined by a thin accent rule. keepWithNext prevents page-bottom orphans.
+    Also drops a PDF bookmark so the document has a navigable outline."""
+    key = "sec_" + "".join(ch for ch in title.lower() if ch.isalnum())
+    para = Paragraph(
+        f'<font color="#1E5F8E">\u25AC</font>&nbsp;&nbsp;{title.upper()}', S["sect"])
+    kt = KeepTogether([Bookmark(title, key), para, rule()])
     kt.keepWithNext = 1
     return kt
 
@@ -99,30 +132,101 @@ def bullets(items, style="bullet", gap=2):
         leftIndent=12, bulletOffsetY=0.5,
     )
 
+class HeaderRow(Flowable):
+    """Single-line role/title on the left, date right-aligned to the margin.
+    Pure text (selectable, correct reading order) -> stays ATS-safe, no tables.
+    If the left text would collide with the date it auto-shrinks to fit."""
+    def __init__(self, left, right, lfont="Helvetica-Bold", lsize=9.7,
+                 lcolor=NAVY, rfont="Helvetica-Oblique", rsize=9.0,
+                 rcolor=GREY, leading=13, space_before=3, space_after=1):
+        Flowable.__init__(self)
+        self.left, self.right = left, right
+        self.lfont, self.lsize, self.lcolor = lfont, lsize, lcolor
+        self.rfont, self.rsize, self.rcolor = rfont, rsize, rcolor
+        self.height = leading
+        self.spaceBefore = space_before
+        self.spaceAfter = space_after
+        self._w = CW
+
+    def wrap(self, availWidth, availHeight):
+        self._w = availWidth
+        return (availWidth, self.height)
+
+    def draw(self):
+        c = self.canv
+        y = self.height - self.lsize
+        rw = stringWidth(self.right, self.rfont, self.rsize)
+        # shrink left font only if it would overlap the right-aligned date
+        lsize = self.lsize
+        while (stringWidth(self.left, self.lfont, lsize)
+               > self._w - rw - 10) and lsize > 7.5:
+            lsize -= 0.2
+        c.setFont(self.lfont, lsize); c.setFillColor(self.lcolor)
+        c.drawString(0, y, self.left)
+        c.setFont(self.rfont, self.rsize); c.setFillColor(self.rcolor)
+        c.drawRightString(self._w, y, self.right)
+
+class NumberedCanvas(canvas.Canvas):
+    """Two-pass canvas: buffers every page, then draws the footer with the
+    final 'Page X of Y' once the total page count is known."""
+    def __init__(self, *args, **kwargs):
+        canvas.Canvas.__init__(self, *args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        total = len(self._saved_page_states)
+        # group deferred bookmarks by the page they were recorded on
+        by_page = {}
+        for pno, key, title in getattr(self, "_deferred_bookmarks", []):
+            by_page.setdefault(pno, []).append((key, title))
+        for idx, state in enumerate(self._saved_page_states, start=1):
+            self.__dict__.update(state)
+            self._draw_footer(total)
+            # emit bookmarks now, while this page is the one being written,
+            # so each outline entry resolves to the correct page
+            for key, title in by_page.get(idx, []):
+                self.bookmarkPage(key)
+                self.addOutlineEntry(title, key, level=0, closed=False)
+            canvas.Canvas.showPage(self)
+        canvas.Canvas.save(self)
+
+    def _draw_footer(self, total):
+        self.saveState()
+        self.setStrokeColor(HAIR); self.setLineWidth(0.6)
+        self.line(ML, 9 * mm, PW - MR, 9 * mm)
+        self.setFont("Helvetica", 7.6); self.setFillColor(GREY)
+        self.drawString(ML, 5.8 * mm,
+                        "Balaji Dilipsingh Rajput  |  Quality Assurance Officer")
+        self.drawRightString(
+            PW - MR, 5.8 * mm,
+            f"{PHONE}   {BUL}   {EMAIL}   {BUL}   Page {self._pageNumber} of {total}")
+        self.restoreState()
+
 # ---------------------------------------------------------------- page deco
 def on_page(c, doc):
     c.saveState()
+    # subtle header background tint (page 1 only, behind name/title/contact)
+    if doc.page == 1:
+        c.setFillColor(HDRBG)
+        c.rect(0, PH - 38 * mm, PW, 34 * mm, fill=1, stroke=0)
     # top accent band
     c.setFillColor(NAVY)
     c.rect(0, PH - 4 * mm, PW, 4 * mm, fill=1, stroke=0)
-    # footer
-    c.setStrokeColor(HexColor("#C9D4DC")); c.setLineWidth(0.6)
-    c.line(ML, 9 * mm, PW - MR, 9 * mm)
-    c.setFont("Helvetica", 7.6); c.setFillColor(GREY)
-    c.drawString(ML, 5.8 * mm,
-                 "Balaji Dilipsingh Rajput  |  Quality Assurance Officer")
-    c.drawRightString(PW - MR, 5.8 * mm,
-                      f"{PHONE}   {BUL}   {EMAIL}   {BUL}   Page {doc.page}")
     c.restoreState()
 
 # ---------------------------------------------------------------- header flow
 def header_block():
-    contact1 = (f'{PHONE} &nbsp;&nbsp;{BUL}&nbsp;&nbsp; '
-                f'<a href="mailto:{EMAIL}"><font color="#1E5F8E">{EMAIL}</font></a>'
-                f' &nbsp;&nbsp;{BUL}&nbsp;&nbsp; {LOCATION}')
-    contact2 = (f'<a href="https://{LINKEDIN}"><font color="#1E5F8E">{LINKEDIN}</font></a>'
+    contact1 = (f'<a href="tel:+918780861044"><font color="#222222">{PHONE}</font></a>'
                 f' &nbsp;&nbsp;{BUL}&nbsp;&nbsp; '
-                f'<a href="https://{GITHUB}"><font color="#1E5F8E">{GITHUB}</font></a>')
+                f'<a href="mailto:{EMAIL}"><font color="#1E5F8E"><u>{EMAIL}</u></font></a>'
+                f' &nbsp;&nbsp;{BUL}&nbsp;&nbsp; {LOCATION}')
+    contact2 = (f'<a href="https://{LINKEDIN}"><font color="#1E5F8E"><u>{LINKEDIN}</u></font></a>'
+                f' &nbsp;&nbsp;{BUL}&nbsp;&nbsp; '
+                f'<a href="https://{GITHUB}"><font color="#1E5F8E"><u>{GITHUB}</u></font></a>')
     return [
         Paragraph(NAME, S["name"]),
         HRFlowable(width="38%", thickness=2, color=ACCENT,
@@ -142,15 +246,17 @@ story += header_block()
 # ---- Professional Summary ----
 story.append(heading("Professional Summary"))
 story.append(Paragraph(
-    "Results-driven pharmaceutical Quality Assurance professional with 2+ years "
-    "of hands-on experience in cGMP, GDP and Schedule M compliance at Elysium "
-    "Pharmaceuticals Ltd., Vadodara, in Oral Solid Dosage (tablet) manufacturing. "
-    "Skilled in SOP authoring, deviation management, CAPA, BMR/BPR review, change "
-    "control, in-process quality checks (IPQA) and OOS/OOT investigation support "
-    "within a QMS framework. Experienced in internal audits, documentation control "
-    "and data integrity (ALCOA+), with strong audit readiness for CDSCO and WHO-GMP "
-    "inspections. Seeking QA Officer / QA Executive / IPQA / Documentation Officer "
-    "roles across Gujarat. Available to join immediately.",
+    "Detail-oriented and compliance-focused Quality Assurance Officer with 2+ years "
+    "of hands-on experience in Oral Solid Dosage (tablet) manufacturing at Elysium "
+    "Pharmaceuticals Ltd., Vadodara, working within cGMP, GDP and Schedule M "
+    "frameworks. Skilled in SOP authoring, deviation management, CAPA, BMR/BPR "
+    "review, change control, in-process quality checks (IPQA) and OOS/OOT "
+    "investigation support across a structured QMS. Experienced in internal audits, "
+    "documentation control and data integrity (ALCOA+), with proven audit readiness "
+    "for CDSCO and WHO-GMP inspections. A meticulous team player committed to product "
+    "quality, patient safety and regulatory compliance. Seeking QA Officer / QA "
+    "Executive / IPQA / Documentation Officer roles across Gujarat - available to "
+    "join immediately.",
     S["body"]))
 
 # ---- Core Competencies ----
@@ -166,16 +272,15 @@ comp = [
 ]
 comp_text = (" &nbsp;&nbsp;<font color='#1E5F8E'>" + BUL + "</font>&nbsp;&nbsp; ").join(comp)
 story.append(Paragraph(
-    "<font color='#1E5F8E'>" + BUL + "</font>&nbsp;&nbsp; " + comp_text, S["small"]))
+    "<font color='#1E5F8E'>" + BUL + "</font>&nbsp;&nbsp; " + comp_text, S["comp"]))
 
 # ---- Professional Experience ----
 story.append(heading("Professional Experience"))
 exp_head = KeepTogether([
-    Paragraph("Quality Assurance Officer / IPQA Officer "
-              "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; "
-              "<font color='#555555' size=9>Mar 2024 " + EN + " Mar 2026 (2 Years)</font>",
-              S["job"]),
-    Paragraph("Elysium Pharmaceuticals Ltd., Dabhasa, Vadodara, Gujarat  "
+    HeaderRow("Quality Assurance Officer / IPQA Officer",
+              "Mar 2024 " + EN + " Mar 2026   (2 Years)"),
+    Paragraph("<b><font color='#1E5F8E'>Elysium Pharmaceuticals Ltd.</font></b>, "
+              "Dabhasa, Vadodara, Gujarat  "
               f"{BUL}  Department: Quality Assurance", S["meta"]),
 ])
 story.append(exp_head)
@@ -214,10 +319,8 @@ story.append(bullets([
 # ---- Education ----
 story.append(heading("Education"))
 story.append(KeepTogether([
-    Paragraph("Diploma in Biotechnology "
-              "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; "
-              "<font color='#555555' size=9>2021 " + EN + " 2025 &nbsp;|&nbsp; CGPA: 6.7 / 10</font>",
-              S["job"]),
+    HeaderRow("Diploma in Biotechnology",
+              "2021 " + EN + " 2025    CGPA: 6.7 / 10"),
     Paragraph("Parul Institute of Technology & Engineering, Vadodara - "
               "Gujarat Technological University (GTU)", S["meta"]),
 ]))
@@ -232,9 +335,9 @@ story.append(bullets([
 # ---- Internship Experience ----
 story.append(heading("Internship Experience"))
 story.append(KeepTogether([
-    Paragraph("Bioinformatics Intern " + EN + " Biotecnika (Remote) "
-              "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; "
-              "<font color='#555555' size=9>2024 &nbsp;|&nbsp; 3 Months</font>", S["subh"]),
+    HeaderRow("Bioinformatics Intern " + EN + " Biotecnika (Remote)",
+              "2024   " + BUL + "   3 Months",
+              lfont="Helvetica-Bold", lsize=9.2, lcolor=DARK),
 ]))
 story.append(bullets([
     "Built Python / Biopython pipelines for genomic data analysis; analysed 500+ "
@@ -243,9 +346,9 @@ story.append(bullets([
 ], gap=2))
 story.append(Spacer(1, 3))
 story.append(KeepTogether([
-    Paragraph("Laboratory Research Intern " + EN + " Gujarat Biotech Innovations "
-              "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; "
-              "<font color='#555555' size=9>2023 &nbsp;|&nbsp; 2 Months</font>", S["subh"]),
+    HeaderRow("Laboratory Research Intern " + EN + " Gujarat Biotech Innovations",
+              "2023   " + BUL + "   2 Months",
+              lfont="Helvetica-Bold", lsize=9.2, lcolor=DARK),
 ]))
 story.append(bullets([
     "Executed PCR, gel electrophoresis and microbial culture workflows; processed "
@@ -338,6 +441,17 @@ story.append(Spacer(1, 3))
 story.append(Paragraph(
     "<i>I hereby declare that the information furnished above is true and correct "
     "to the best of my knowledge and belief.</i>", S["small"]))
+story.append(Spacer(1, 9))
+story.append(HeaderRow(
+    "Place: Vadodara, Gujarat", "(Balaji Dilipsingh Rajput)",
+    lfont="Helvetica", lsize=8.7, lcolor=DARK,
+    rfont="Helvetica-Bold", rsize=8.7, rcolor=NAVY,
+    space_before=2, space_after=2))
+story.append(HeaderRow(
+    "Date: ____________________", "Signature",
+    lfont="Helvetica", lsize=8.7, lcolor=DARK,
+    rfont="Helvetica-Oblique", rsize=8.3, rcolor=GREY,
+    space_before=2, space_after=0))
 
 # ================================================================ build
 doc = BaseDocTemplate(
@@ -357,5 +471,5 @@ doc = BaseDocTemplate(
 frame = Frame(ML, MB, CW, PH - MT - MB, id="full",
               leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
 doc.addPageTemplates([PageTemplate(id="main", frames=[frame], onPage=on_page)])
-doc.build(story)
+doc.build(story, canvasmaker=NumberedCanvas)
 print(f"Created {OUT}")
