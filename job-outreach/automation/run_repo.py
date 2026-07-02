@@ -20,6 +20,8 @@ MODEL = os.getenv("LLM_MODEL", "openai/gpt-4o-mini")
 SCORE_THRESHOLD = int(os.getenv("SCORE_THRESHOLD", "55"))
 MAX_POSTS_PER_LISTING = int(os.getenv("MAX_POSTS_PER_LISTING", "12"))
 
+DIAG = []   # human-readable diagnostics surfaced into dashboard.md
+
 FIELDS = ["key", "date_added", "company", "job_title", "department", "location",
           "walk_in", "source_url", "official_email", "official_phone", "eligibility",
           "salary", "company_size", "match_score", "score_reason", "subject", "email",
@@ -55,8 +57,12 @@ def prompt(name):
 
 def fetch_html(url):
     try:
-        return requests.get(url, timeout=45, headers={"User-Agent": "Mozilla/5.0"}).text
+        r = requests.get(url, timeout=45, headers={"User-Agent": "Mozilla/5.0"})
+        if r.status_code != 200:
+            DIAG.append(f"fetch HTTP {r.status_code}: {url}")
+        return r.text
     except Exception as e:
+        DIAG.append(f"fetch ERROR {url}: {e}")
         print(f"  ! fetch failed {url}: {e}")
         return ""
 
@@ -78,9 +84,7 @@ def expand_links(url, html):
         if "pharmatutor.org" in url:
             for a in soup.select("a[href]"):
                 h = a.get("href", "")
-                if "/content/" in h and any(k in h.lower() for k in (
-                        "qa", "qc", "quality", "production", "pharma",
-                        "manufactur", "walk", "ipqa")):
+                if "/content/" in h:
                     out.append(urljoin(url, h))
     except Exception:
         pass
@@ -121,15 +125,18 @@ def process_page(url, rows, keys):
         return 0
     text = to_text(html)
     if len(text) < 200:
+        DIAG.append(f"little text ({len(text)} chars, maybe JS-only): {url}")
         print(f"  - skipped (little/no text, maybe JS-only): {url}")
         return 0
     try:
         data = llm(prompt("extract"), f"URL: {url}\n\nPAGE TEXT:\n{text}")
     except Exception as e:
+        DIAG.append(f"LLM extract ERROR: {e}")
         print(f"  ! extract failed {url}: {e}")
         return 0
     job_list = data.get("jobs", []) if isinstance(data, dict) else []
     if not job_list:
+        DIAG.append(f"no jobs extracted from: {url}")
         print(f"  - no relevant jobs on: {url}")
         return 0
     added = 0
@@ -146,6 +153,7 @@ def process_page(url, rows, keys):
             sc = llm(prompt("score"), f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(d)}")
             score = int(sc.get("match_score", 0))
         except Exception as e:
+            DIAG.append(f"LLM score ERROR: {e}")
             print(f"  ! score failed: {e}"); score = 0; sc = {}
         drafts = {}
         if score >= SCORE_THRESHOLD:
@@ -189,6 +197,7 @@ def main():
             continue
         children = expand_links(url, html)
         if children:
+            DIAG.append(f"listing {url} -> {len(children)} posts")
             print(f"  ~ listing: {url} -> {len(children)} posts")
             for c in children:
                 added += process_page(c, rows, keys)
@@ -232,6 +241,12 @@ def write_dashboard(rows, added):
                "**Follow-up (Day 3):** " + r.get("followup_day3", ""), "",
                "</details>", ""]
     md += ["", "> Review, set status in jobs.csv, then SEND yourself. Nothing is auto-sent."]
+    if DIAG:
+        md += ["", "## Run log (diagnostics)", "",
+               "_If 0 jobs, these lines show why (blocked fetch / JS-only page / "
+               "LLM key or credits error)._", ""]
+        for line in DIAG[-40:]:
+            md.append(f"- {line}")
     DASHBOARD.write_text("\n".join(md), encoding="utf-8")
 
 
