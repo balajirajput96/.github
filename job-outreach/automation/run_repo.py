@@ -2,13 +2,14 @@
 """
 Repo-native pipeline (NO Google account needed).
 
-Reads job URLs from inbox.txt -> fetch -> LLM extract -> filter -> LLM score ->
-dedupe (against jobs.csv) -> LLM draft -> append to jobs.csv -> regenerate dashboard.md.
+inbox.txt (job/listing URLs) -> fetch -> [expand listing pages into individual posts]
+-> LLM extract (multi-job) -> score -> dedupe -> LLM draft -> jobs.csv + dashboard.md.
 
 The GitHub Actions workflow commits jobs.csv + dashboard.md back to the repo.
 NEVER sends anything. Only secret required: OPENROUTER_API_KEY.
 """
 import os, sys, json, csv, hashlib, datetime, pathlib, re
+from urllib.parse import urljoin
 import requests
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -17,6 +18,7 @@ JOBS_CSV = HERE / "jobs.csv"
 DASHBOARD = HERE / "dashboard.md"
 MODEL = os.getenv("LLM_MODEL", "openai/gpt-4o-mini")
 SCORE_THRESHOLD = int(os.getenv("SCORE_THRESHOLD", "55"))
+MAX_POSTS_PER_LISTING = int(os.getenv("MAX_POSTS_PER_LISTING", "12"))
 
 FIELDS = ["key", "date_added", "company", "job_title", "department", "location",
           "walk_in", "source_url", "official_email", "official_phone", "eligibility",
@@ -51,27 +53,45 @@ def prompt(name):
     return (HERE / "prompts" / f"{name}.md").read_text(encoding="utf-8")
 
 
-def fetch_text(url):
+def fetch_html(url):
     try:
-        from bs4 import BeautifulSoup
-        html = requests.get(url, timeout=45, headers={"User-Agent": "Mozilla/5.0"}).text
-        soup = BeautifulSoup(html, "html.parser")
-        for t in soup(["script", "style", "noscript"]):
-            t.extract()
-        return re.sub(r"\n{3,}", "\n\n", soup.get_text("\n"))[:12000]
+        return requests.get(url, timeout=45, headers={"User-Agent": "Mozilla/5.0"}).text
     except Exception as e:
         print(f"  ! fetch failed {url}: {e}")
         return ""
 
 
+def to_text(html):
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, "html.parser")
+    for t in soup(["script", "style", "noscript"]):
+        t.extract()
+    return re.sub(r"\n{3,}", "\n\n", soup.get_text("\n"))[:12000]
+
+
+def expand_links(url, html):
+    """If URL is a known job-listing page, return individual posting URLs to follow."""
+    out = []
+    try:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html, "html.parser")
+        if "pharmatutor.org" in url:
+            for a in soup.select("a[href]"):
+                h = a.get("href", "")
+                if "/content/" in h and any(k in h.lower() for k in (
+                        "qa", "qc", "quality", "production", "pharma",
+                        "manufactur", "walk", "ipqa")):
+                    out.append(urljoin(url, h))
+    except Exception:
+        pass
+    return list(dict.fromkeys(out))[:MAX_POSTS_PER_LISTING]
+
+
 def read_inbox():
     if not INBOX.exists():
         return []
-    out = []
-    for line in INBOX.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if line.startswith("http"):
-            out.append(line)
+    out = [l.strip() for l in INBOX.read_text(encoding="utf-8").splitlines()
+           if l.strip().startswith("http")]
     return list(dict.fromkeys(out))
 
 
@@ -94,6 +114,64 @@ def dkey(company, title, location, url):
     return hashlib.sha1(f"{company}|{title}|{location}|{url}".lower().encode()).hexdigest()[:12]
 
 
+def process_page(url, rows, keys):
+    """Extract, score and draft all jobs on one page. Returns count added."""
+    html = fetch_html(url)
+    if not html:
+        return 0
+    text = to_text(html)
+    if len(text) < 200:
+        print(f"  - skipped (little/no text, maybe JS-only): {url}")
+        return 0
+    try:
+        data = llm(prompt("extract"), f"URL: {url}\n\nPAGE TEXT:\n{text}")
+    except Exception as e:
+        print(f"  ! extract failed {url}: {e}")
+        return 0
+    job_list = data.get("jobs", []) if isinstance(data, dict) else []
+    if not job_list:
+        print(f"  - no relevant jobs on: {url}")
+        return 0
+    added = 0
+    for d in job_list:
+        company = (d.get("company") or "NOT VERIFIED").strip()
+        title = (d.get("job_title") or "").strip()
+        location = (d.get("location") or "").strip()
+        if not title:
+            continue
+        k = dkey(company, title, location, url)
+        if k in keys:
+            continue
+        try:
+            sc = llm(prompt("score"), f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(d)}")
+            score = int(sc.get("match_score", 0))
+        except Exception as e:
+            print(f"  ! score failed: {e}"); score = 0; sc = {}
+        drafts = {}
+        if score >= SCORE_THRESHOLD:
+            try:
+                drafts = llm(prompt("draft"),
+                             f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(d)}")
+            except Exception as e:
+                print(f"  ! draft failed: {e}")
+        rows.append({
+            "key": k, "date_added": datetime.date.today().isoformat(),
+            "company": company, "job_title": title, "department": d.get("department", ""),
+            "location": location, "walk_in": d.get("walk_in", ""), "source_url": url,
+            "official_email": d.get("official_email", "NOT VERIFIED"),
+            "official_phone": d.get("official_phone", "NOT VERIFIED"),
+            "eligibility": d.get("eligibility", ""), "salary": d.get("salary", ""),
+            "company_size": d.get("company_size", ""), "match_score": score,
+            "score_reason": sc.get("reason", ""), "subject": drafts.get("subject", ""),
+            "email": drafts.get("email", ""), "linkedin_note": drafts.get("linkedin_note", ""),
+            "linkedin_message": drafts.get("linkedin_message", ""),
+            "followup_day3": drafts.get("followup_day3", ""),
+            "followup_day7": drafts.get("followup_day7", ""), "status": "new"})
+        keys.add(k); added += 1
+        print(f"  + [{score}] {company} - {title} ({location})")
+    return added
+
+
 def main():
     if not os.getenv("OPENROUTER_API_KEY"):
         print("Missing OPENROUTER_API_KEY (add it in repo Settings -> Secrets -> Actions).")
@@ -106,56 +184,16 @@ def main():
 
     added = 0
     for url in urls:
-        text = fetch_text(url)
-        if len(text) < 200:
-            print(f"  - skipped (little/no text, maybe JS-only page): {url}")
+        html = fetch_html(url)
+        if not html:
             continue
-        try:
-            data = llm(prompt("extract"), f"URL: {url}\n\nPAGE TEXT:\n{text}")
-        except Exception as e:
-            print(f"  ! extract failed: {e}"); continue
-
-        job_list = data.get("jobs", []) if isinstance(data, dict) else []
-        if not job_list:
-            print(f"  - no relevant jobs found on: {url}")
-            continue
-
-        for d in job_list:
-            company = (d.get("company") or "NOT VERIFIED").strip()
-            title = (d.get("job_title") or "").strip()
-            location = (d.get("location") or "").strip()
-            if not title:
-                continue
-            k = dkey(company, title, location, url)
-            if k in keys:
-                continue
-            try:
-                sc = llm(prompt("score"), f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(d)}")
-                score = int(sc.get("match_score", 0))
-            except Exception as e:
-                print(f"  ! score failed: {e}"); score = 0; sc = {}
-            drafts = {}
-            if score >= SCORE_THRESHOLD:
-                try:
-                    drafts = llm(prompt("draft"),
-                                 f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(d)}")
-                except Exception as e:
-                    print(f"  ! draft failed: {e}")
-            rows.append({
-                "key": k, "date_added": datetime.date.today().isoformat(),
-                "company": company, "job_title": title, "department": d.get("department", ""),
-                "location": location, "walk_in": d.get("walk_in", ""), "source_url": url,
-                "official_email": d.get("official_email", "NOT VERIFIED"),
-                "official_phone": d.get("official_phone", "NOT VERIFIED"),
-                "eligibility": d.get("eligibility", ""), "salary": d.get("salary", ""),
-                "company_size": d.get("company_size", ""), "match_score": score,
-                "score_reason": sc.get("reason", ""), "subject": drafts.get("subject", ""),
-                "email": drafts.get("email", ""), "linkedin_note": drafts.get("linkedin_note", ""),
-                "linkedin_message": drafts.get("linkedin_message", ""),
-                "followup_day3": drafts.get("followup_day3", ""),
-                "followup_day7": drafts.get("followup_day7", ""), "status": "new"})
-            keys.add(k); added += 1
-            print(f"  + [{score}] {company} - {title} ({location})")
+        children = expand_links(url, html)
+        if children:
+            print(f"  ~ listing: {url} -> {len(children)} posts")
+            for c in children:
+                added += process_page(c, rows, keys)
+        else:
+            added += process_page(url, rows, keys)
 
     rows.sort(key=lambda r: int(r.get("match_score") or 0), reverse=True)
     write_jobs(rows)
@@ -188,7 +226,7 @@ def write_dashboard(rows, added):
         md += [f"<details><summary><b>{r.get('company')} — {r.get('job_title')} "
                f"(score {r.get('match_score')})</b></summary>", "",
                f"**Apply:** {r.get('source_url')}  ",
-               f"**Email (verified?):** {r.get('official_email')}  ",
+               f"**Email (verify):** {r.get('official_email')}  ",
                f"**Subject:** {r.get('subject')}", "", "```", r.get("email", ""), "```",
                "**LinkedIn note:** " + r.get("linkedin_note", ""), "",
                "**Follow-up (Day 3):** " + r.get("followup_day3", ""), "",
