@@ -19,8 +19,9 @@ Free, no-server, compliant, human-in-the-loop job-application system.
 
 ## One-time setup (≈30 min)
 ### 1. Create the Google Sheet
-- New Google Sheet named `Pharma-Job-Tracker`.
-- Create tabs exactly: `Inbox`, `Jobs`, `Summary` (columns in `sheet_schema.md`).
+- Create a new blank Google Sheet named `Pharma-Job-Tracker`.
+- That's it — the workflow **auto-creates** the `Inbox`, `Jobs`, `Summary` tabs and
+  headers on first run. (Schema reference: `sheet_schema.md`.)
 - Copy its **Sheet ID** (from the URL between `/d/` and `/edit`).
 
 ### 2. Google service account (free)

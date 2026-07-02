@@ -85,6 +85,14 @@ def rss_urls(sources_file):
 
 
 # ----------------------------------------------------------------- sheets
+JOBS_HEADER = [
+    "key", "date_added", "company", "job_title", "department", "location", "walk_in",
+    "source_url", "official_email", "official_phone", "eligibility", "salary",
+    "company_size", "match_score", "score_reason", "subject", "email",
+    "linkedin_note", "linkedin_message", "followup_day3", "followup_day7", "status",
+]
+
+
 def open_sheet():
     import gspread
     from google.oauth2.service_account import Credentials
@@ -93,6 +101,32 @@ def open_sheet():
         info, scopes=["https://www.googleapis.com/auth/spreadsheets"])
     gc = gspread.authorize(creds)
     return gc.open_by_key(os.environ["SHEET_ID"])
+
+
+def ensure_sheet(sh):
+    """Idempotently create the Inbox / Jobs / Summary tabs and headers if missing.
+    So the user only has to create ONE empty Google Sheet + share it."""
+    existing = {w.title: w for w in sh.worksheets()}
+    if "Inbox" not in existing:
+        w = sh.add_worksheet("Inbox", rows=200, cols=1)
+        w.update("A1", [["url"]])
+    else:
+        if (existing["Inbox"].acell("A1").value or "").strip().lower() != "url":
+            existing["Inbox"].update("A1", [["url"]])
+    if "Jobs" not in existing:
+        w = sh.add_worksheet("Jobs", rows=1000, cols=len(JOBS_HEADER))
+        w.update("A1", [JOBS_HEADER])
+    else:
+        if not existing["Jobs"].row_values(1):
+            existing["Jobs"].update("A1", [JOBS_HEADER])
+    if "Summary" not in existing:
+        sh.add_worksheet("Summary", rows=100, cols=8)
+    # remove default "Sheet1" if empty and unused
+    if "Sheet1" in existing and existing["Sheet1"].acell("A1").value in (None, ""):
+        try:
+            sh.del_worksheet(existing["Sheet1"])
+        except Exception:
+            pass
 
 
 def dedup_key(company, title, location, url):
@@ -108,6 +142,7 @@ def main():
             sys.exit(1)
 
     sh = open_sheet()
+    ensure_sheet(sh)   # auto-create Inbox/Jobs/Summary tabs + headers if missing
     inbox = sh.worksheet("Inbox")
     jobs = sh.worksheet("Jobs")
 
