@@ -1,14 +1,15 @@
 # PASTE JOB URLs HERE — one per line. Lines starting with # are ignored.
-# The daily run reads these, extracts jobs, scores them for your QA/IPQA OSD profile,
-# drafts your application, and writes dashboard.md.
+# Server-rendered pages extract best. Listing pages (like pharmatutor pharma-jobs)
+# are auto-expanded into individual posts. JS-heavy sites (LinkedIn/Naukri/Indeed) may
+# show little text to a simple fetch — paste a specific posting URL for those.
 #
-# TIP: server-rendered pages (like pharmatutor, many company career pages) extract best.
-# JS-heavy sites (LinkedIn/Naukri/Indeed) may show little text to a simple fetch — for
-# those, open the specific job and paste its direct posting URL, or use the pages below.
-#
-# --- Starter set (QA/IPQA/OSD, Gujarat + India) — edit/add freely ---
+# --- Listing (auto-expands to individual QA/QC/Production posts) ---
 https://www.pharmatutor.org/pharma-jobs
+#
+# --- Company career pages (QA/IPQA/OSD, Gujarat + India) ---
 https://india.amneal.com/careers/search-our-career-opportunities
 https://alembicpharmaceuticals.com/careers.aspx
 https://careers.cadilapharma.com/in/en
 https://www.torrentpharma.com/careers/join-us/
+#
+# --- Add your own job/posting URLs below ---
