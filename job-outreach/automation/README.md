@@ -1,12 +1,33 @@
-# Pharma QA/IPQA Job Automation — MVP (GitHub Actions + Google Sheets)
+# Pharma QA/IPQA Job Automation — MVP (GitHub Actions)
 
 Free, no-server, compliant, human-in-the-loop job-application system.
 
-- Runs **daily** on GitHub Actions (cron) — no server needed.
-- Reads job URLs you paste into a Google Sheet **Inbox** tab (+ optional RSS feeds).
-- Uses an LLM to **extract → score → draft** email / LinkedIn / follow-ups.
-- Writes ranked results back into the Sheet (your dashboard).
-- **Never sends anything.** You review, approve, and send yourself (compliant, ban-safe).
+## ⭐ RECOMMENDED: Zero-Google setup (only 1 secret, least work)
+Uses the repo itself as the database — **no Google account needed.**
+
+**One-time (2 minutes):**
+1. Get a NEW OpenRouter key: https://openrouter.ai/keys
+2. Repo → Settings → Secrets and variables → Actions → New secret:
+   - Name: `OPENROUTER_API_KEY`  Value: your new key
+3. Actions tab → enable workflows → open "Daily Pharma Job Scan" → **Run workflow** (test).
+
+**Daily (10 seconds):**
+- Open `job-outreach/automation/inbox.txt` on GitHub (pencil icon) → paste job URLs
+  (LinkedIn/Naukri/Indeed/career pages) → commit.
+- The daily run reads them and updates:
+  - `dashboard.md` → ranked Top-10 matches + walk-ins + ready-to-send drafts
+  - `jobs.csv`     → full tracker (with status column)
+- You review `dashboard.md`, copy a draft, and **send it yourself** (nothing auto-sends).
+
+That's the whole system. `run_repo.py` + `.github/workflows/daily-jobs.yml` do the rest.
+
+---
+
+## Alternative: Google Sheets dashboard (optional)
+If you prefer a live spreadsheet dashboard instead of files in the repo, use `run.py`
+with a Google Sheet. This needs a Google service account (more setup). Steps below.
+
+
 
 ## What is automated vs manual
 | Automated (daily, hands-off) | Manual (you, ~5–10 min/day) |

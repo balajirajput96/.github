@@ -1,0 +1,8 @@
+# PASTE JOB URLs HERE — one per line. Lines starting with # are ignored.
+#
+# How: open LinkedIn / Naukri / Indeed / a company career page, find a QA/IPQA/OSD job,
+# copy its URL, and paste it below (edit this file right here on GitHub — pencil icon).
+# The daily run reads these, scores them, drafts your application, and writes dashboard.md.
+#
+# Example (delete this and add real ones):
+# https://www.naukri.com/job-listings-xxxx
