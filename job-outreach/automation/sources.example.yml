@@ -1,0 +1,7 @@
+# Copy to sources.yml. OPTIONAL RSS feeds (public, compliant).
+# The primary source is the "Inbox" tab of your Google Sheet where you paste job URLs
+# (including LinkedIn saved-search result URLs you open yourself).
+#
+# Add only public RSS feeds you trust. Leave empty if you only use the Inbox tab.
+rss: []
+  # - https://www.example-jobboard.com/feed/qa-pharma-gujarat.rss
