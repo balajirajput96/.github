@@ -26,8 +26,15 @@ jobs:
 
       - name: Run daily scan (fetch -> extract -> score -> draft -> dashboard)
         env:
+          # Key: put your provider key in ONE of these repo secrets
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          LLM_MODEL: openai/gpt-4o-mini
+          # Provider config via repo Variables (Settings -> Variables). Leave unset for OpenRouter.
+          LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          LLM_JSON_MODE: ${{ vars.LLM_JSON_MODE }}
+          LLM_API_STYLE: ${{ vars.LLM_API_STYLE }}
+          LLM_API_VERSION: ${{ vars.LLM_API_VERSION }}
           SCORE_THRESHOLD: "55"
         run: python run_repo.py
 

@@ -35,20 +35,41 @@ coating, deviation, CAPA, IPQA sampling, GMP/GDP, documentation. Diploma in Biot
 Changodar, Padra, Ankleshwar, Bharuch. Experience fit: 1-3 / 2-5 / 2-7 years."""
 
 
+def _parse_json(txt):
+    txt = (txt or "").strip()
+    if txt.startswith("```"):
+        txt = re.sub(r"^```[a-zA-Z]*\n?", "", txt).rstrip("`").rstrip()
+    try:
+        return json.loads(txt)
+    except Exception:
+        m = re.search(r"\{.*\}", txt, re.S)
+        return json.loads(m.group(0)) if m else {}
+
+
 def llm(system, user, json_out=True):
-    key = os.environ["OPENROUTER_API_KEY"]
-    r = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-        json={"model": MODEL,
-              "messages": [{"role": "system", "content": system},
-                           {"role": "user", "content": user}],
-              "temperature": 0.2,
-              **({"response_format": {"type": "json_object"}} if json_out else {})},
-        timeout=90)
+    # Provider-flexible: works with any OpenAI-compatible endpoint
+    # (OpenRouter / Google Gemini / Azure OpenAI / OpenAI). Configure via env:
+    #   LLM_BASE_URL (default OpenRouter), LLM_MODEL, and key in
+    #   LLM_API_KEY (falls back to OPENROUTER_API_KEY).
+    base = (os.getenv("LLM_BASE_URL") or "https://openrouter.ai/api/v1").rstrip("/")
+    key = os.getenv("LLM_API_KEY") or os.getenv("OPENROUTER_API_KEY") or ""
+    body = {"model": MODEL,
+            "messages": [{"role": "system", "content": system},
+                         {"role": "user", "content": user}],
+            "temperature": 0.2}
+    if json_out and os.getenv("LLM_JSON_MODE", "on") != "off":
+        body["response_format"] = {"type": "json_object"}
+    url = f"{base}/chat/completions"
+    headers = {"Content-Type": "application/json"}
+    if os.getenv("LLM_API_STYLE", "").lower() == "azure":
+        headers["api-key"] = key
+        url += "?api-version=" + os.getenv("LLM_API_VERSION", "2024-08-01-preview")
+    else:
+        headers["Authorization"] = f"Bearer {key}"
+    r = requests.post(url, headers=headers, json=body, timeout=90)
     r.raise_for_status()
     c = r.json()["choices"][0]["message"]["content"]
-    return json.loads(c) if json_out else c
+    return _parse_json(c) if json_out else c
 
 
 def prompt(name):
@@ -181,8 +202,9 @@ def process_page(url, rows, keys):
 
 
 def main():
-    if not os.getenv("OPENROUTER_API_KEY"):
-        print("Missing OPENROUTER_API_KEY (add it in repo Settings -> Secrets -> Actions).")
+    if not (os.getenv("LLM_API_KEY") or os.getenv("OPENROUTER_API_KEY")):
+        print("Missing LLM key. Set LLM_API_KEY (or OPENROUTER_API_KEY) in "
+              "repo Settings -> Secrets -> Actions.")
         sys.exit(1)
 
     rows = read_jobs()
