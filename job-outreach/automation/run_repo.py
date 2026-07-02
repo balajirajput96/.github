@@ -108,47 +108,54 @@ def main():
     for url in urls:
         text = fetch_text(url)
         if len(text) < 200:
+            print(f"  - skipped (little/no text, maybe JS-only page): {url}")
             continue
         try:
-            d = llm(prompt("extract"), f"URL: {url}\n\nPAGE TEXT:\n{text}")
+            data = llm(prompt("extract"), f"URL: {url}\n\nPAGE TEXT:\n{text}")
         except Exception as e:
             print(f"  ! extract failed: {e}"); continue
-        if d.get("is_pharma_qa_related") is False:
+
+        job_list = data.get("jobs", []) if isinstance(data, dict) else []
+        if not job_list:
+            print(f"  - no relevant jobs found on: {url}")
             continue
-        company = (d.get("company") or "NOT VERIFIED").strip()
-        title = (d.get("job_title") or "").strip()
-        location = (d.get("location") or "").strip()
-        if not title:
-            continue
-        k = dkey(company, title, location, url)
-        if k in keys:
-            continue
-        try:
-            sc = llm(prompt("score"), f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(d)}")
-            score = int(sc.get("match_score", 0))
-        except Exception as e:
-            print(f"  ! score failed: {e}"); score = 0; sc = {}
-        drafts = {}
-        if score >= SCORE_THRESHOLD:
+
+        for d in job_list:
+            company = (d.get("company") or "NOT VERIFIED").strip()
+            title = (d.get("job_title") or "").strip()
+            location = (d.get("location") or "").strip()
+            if not title:
+                continue
+            k = dkey(company, title, location, url)
+            if k in keys:
+                continue
             try:
-                drafts = llm(prompt("draft"), f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(d)}")
+                sc = llm(prompt("score"), f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(d)}")
+                score = int(sc.get("match_score", 0))
             except Exception as e:
-                print(f"  ! draft failed: {e}")
-        rows.append({
-            "key": k, "date_added": datetime.date.today().isoformat(),
-            "company": company, "job_title": title, "department": d.get("department", ""),
-            "location": location, "walk_in": d.get("walk_in", ""), "source_url": url,
-            "official_email": d.get("official_email", "NOT VERIFIED"),
-            "official_phone": d.get("official_phone", "NOT VERIFIED"),
-            "eligibility": d.get("eligibility", ""), "salary": d.get("salary", ""),
-            "company_size": d.get("company_size", ""), "match_score": score,
-            "score_reason": sc.get("reason", ""), "subject": drafts.get("subject", ""),
-            "email": drafts.get("email", ""), "linkedin_note": drafts.get("linkedin_note", ""),
-            "linkedin_message": drafts.get("linkedin_message", ""),
-            "followup_day3": drafts.get("followup_day3", ""),
-            "followup_day7": drafts.get("followup_day7", ""), "status": "new"})
-        keys.add(k); added += 1
-        print(f"  + [{score}] {company} - {title} ({location})")
+                print(f"  ! score failed: {e}"); score = 0; sc = {}
+            drafts = {}
+            if score >= SCORE_THRESHOLD:
+                try:
+                    drafts = llm(prompt("draft"),
+                                 f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(d)}")
+                except Exception as e:
+                    print(f"  ! draft failed: {e}")
+            rows.append({
+                "key": k, "date_added": datetime.date.today().isoformat(),
+                "company": company, "job_title": title, "department": d.get("department", ""),
+                "location": location, "walk_in": d.get("walk_in", ""), "source_url": url,
+                "official_email": d.get("official_email", "NOT VERIFIED"),
+                "official_phone": d.get("official_phone", "NOT VERIFIED"),
+                "eligibility": d.get("eligibility", ""), "salary": d.get("salary", ""),
+                "company_size": d.get("company_size", ""), "match_score": score,
+                "score_reason": sc.get("reason", ""), "subject": drafts.get("subject", ""),
+                "email": drafts.get("email", ""), "linkedin_note": drafts.get("linkedin_note", ""),
+                "linkedin_message": drafts.get("linkedin_message", ""),
+                "followup_day3": drafts.get("followup_day3", ""),
+                "followup_day7": drafts.get("followup_day7", ""), "status": "new"})
+            keys.add(k); added += 1
+            print(f"  + [{score}] {company} - {title} ({location})")
 
     rows.sort(key=lambda r: int(r.get("match_score") or 0), reverse=True)
     write_jobs(rows)

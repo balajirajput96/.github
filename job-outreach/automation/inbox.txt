@@ -1,8 +1,14 @@
 # PASTE JOB URLs HERE — one per line. Lines starting with # are ignored.
+# The daily run reads these, extracts jobs, scores them for your QA/IPQA OSD profile,
+# drafts your application, and writes dashboard.md.
 #
-# How: open LinkedIn / Naukri / Indeed / a company career page, find a QA/IPQA/OSD job,
-# copy its URL, and paste it below (edit this file right here on GitHub — pencil icon).
-# The daily run reads these, scores them, drafts your application, and writes dashboard.md.
+# TIP: server-rendered pages (like pharmatutor, many company career pages) extract best.
+# JS-heavy sites (LinkedIn/Naukri/Indeed) may show little text to a simple fetch — for
+# those, open the specific job and paste its direct posting URL, or use the pages below.
 #
-# Example (delete this and add real ones):
-# https://www.naukri.com/job-listings-xxxx
+# --- Starter set (QA/IPQA/OSD, Gujarat + India) — edit/add freely ---
+https://www.pharmatutor.org/pharma-jobs
+https://india.amneal.com/careers/search-our-career-opportunities
+https://alembicpharmaceuticals.com/careers.aspx
+https://careers.cadilapharma.com/in/en
+https://www.torrentpharma.com/careers/join-us/
