@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
-import Home from './pages/Home';
-import Atlassian from './pages/Atlassian';
-import Slack from './pages/Slack';
-import ClaudeAI from './pages/ClaudeAI';
-import YouTube from './pages/YouTube';
-import GoogleDrive from './pages/GoogleDrive';
+
+// Lazy load route components for code splitting
+const Home = React.lazy(() => import('./pages/Home'));
+const Atlassian = React.lazy(() => import('./pages/Atlassian'));
+const Slack = React.lazy(() => import('./pages/Slack'));
+const ClaudeAI = React.lazy(() => import('./pages/ClaudeAI'));
+const YouTube = React.lazy(() => import('./pages/YouTube'));
+const GoogleDrive = React.lazy(() => import('./pages/GoogleDrive'));
 
 /**
  * @description The main application component. It sets up the routing for the entire application,
@@ -16,14 +18,16 @@ import GoogleDrive from './pages/GoogleDrive';
 function App() {
   return (
     <Layout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/atlassian" element={<Atlassian />} />
-        <Route path="/slack" element={<Slack />} />
-        <Route path="/claude-ai" element={<ClaudeAI />} />
-        <Route path="/youtube" element={<YouTube />} />
-        <Route path="/google-drive" element={<GoogleDrive />} />
-      </Routes>
+      <Suspense fallback={<div>Loading...</div>}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/atlassian" element={<Atlassian />} />
+          <Route path="/slack" element={<Slack />} />
+          <Route path="/claude-ai" element={<ClaudeAI />} />
+          <Route path="/youtube" element={<YouTube />} />
+          <Route path="/google-drive" element={<GoogleDrive />} />
+        </Routes>
+      </Suspense>
     </Layout>
   );
 }
