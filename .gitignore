@@ -136,3 +136,20 @@ cython_debug/
 
 # VSCode files
 .vscode/
+# Environments
+venv/
+.env
+__pycache__/
+*.pyc
+
+# IDEs
+.idea/
+.vscode/
+
+# Project specific
+jobs/*.json
+jobs/*.csv
+reports/*.md
+reports/*.csv
+database/*.db
+!database/.keep
