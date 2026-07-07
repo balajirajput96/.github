@@ -59,7 +59,7 @@ def fetch_html(url):
     try:
         r = requests.get(url, timeout=45, headers={"User-Agent": "Mozilla/5.0"})
         if r.status_code != 200:
-            DIAG.append(f"fetch {r.status_code}: {url}")
+            DIAG.append(f"fetch HTTP {r.status_code}: {url}")
         return r.text
     except Exception as e:
         DIAG.append(f"fetch ERROR {url}: {e}")
@@ -243,8 +243,8 @@ def write_dashboard(rows, added):
     md += ["", "> Review, set status in jobs.csv, then SEND yourself. Nothing is auto-sent."]
     if DIAG:
         md += ["", "## Run log (diagnostics)", "",
-               "_If 0 jobs: check these lines to see why (fetch blocked? JS-only page? "
-               "LLM key/credits error?)._", ""]
+               "_If 0 jobs, these lines show why (blocked fetch / JS-only page / "
+               "LLM key or credits error)._", ""]
         for line in DIAG[-40:]:
             md.append(f"- {line}")
     DASHBOARD.write_text("\n".join(md), encoding="utf-8")
