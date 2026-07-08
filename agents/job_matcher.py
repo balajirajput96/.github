@@ -15,7 +15,8 @@ class JobMatcher:
         matched_jobs = []
 
         # Simple keyword matching for demo purposes
-        keywords = ["IPQA", "QA", "OSD", "tablet", "GMP", "BMR", "BPR"]
+        # ⚡ Bolt Optimization: Pre-uppercased keywords to prevent calling .upper() O(N*K) times in the loop
+        keywords = ["IPQA", "QA", "OSD", "TABLET", "GMP", "BMR", "BPR"]
 
         for job in jobs:
             score = 0
@@ -23,7 +24,7 @@ class JobMatcher:
             title = job.get("title", "").upper()
 
             for kw in keywords:
-                if kw.upper() in desc or kw.upper() in title:
+                if kw in desc or kw in title:
                     score += 10
 
             # Penalize for higher experience required (very simple logic)
