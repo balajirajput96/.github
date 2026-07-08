@@ -2,6 +2,9 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import numpy as np
 from typing import List
+from utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 app = FastAPI(title="ML Model API")
 
@@ -24,4 +27,5 @@ def predict(data: PredictionInput):
         prediction = np.random.random() * 100
         return {"prediction": float(prediction)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Prediction failed: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred")
