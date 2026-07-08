@@ -1,0 +1,4 @@
+id,date_found,source,project,role,contact_type,contact,status,notes
+1,2023-10-25,LinkedIn,Fintech App QA,QA Engineer,email,recruiter@fintech.com,NEW,Saw the post by HR. They need manual QA.
+2,2023-10-26,Upwork,E-commerce Website Testing,QA Tester,dm,upwork_client_id,NEW,Requires testing checkout flows. Registration fee mentioned.
+3,2023-10-27,Twitter,Unknown Startup,QA Analyst,email,startupceo@gmail.com,NEW,Looks like an early stage startup.
