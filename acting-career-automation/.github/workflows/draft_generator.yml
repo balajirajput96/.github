@@ -1,0 +1,36 @@
+name: Draft Generator
+
+on:
+  push:
+    paths:
+      - 'data/casting_leads.csv'
+  schedule:
+    - cron: '0 8 * * *' # Runs daily at 8 AM UTC
+  workflow_dispatch:
+
+jobs:
+  generate-drafts:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+      - name: Run Draft Generator
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python scripts/generate_drafts.py
+      - name: Commit CSV Updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/casting_leads.csv
+          # Only commit if there are changes
+          git diff-index --quiet HEAD || (git commit -m "chore: update lead statuses to DRAFTED" && git push)
