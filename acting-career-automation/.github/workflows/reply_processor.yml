@@ -1,0 +1,48 @@
+name: Reply Processor
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  process-reply:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Check for commands
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const commentBody = context.payload.comment.body.toLowerCase();
+            const issueNumber = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            let newLabel = '';
+
+            if (commentBody.includes('/sent')) {
+              newLabel = 'Status: Sent';
+            } else if (commentBody.includes('/rejected')) {
+              newLabel = 'Status: Rejected';
+            } else if (commentBody.includes('/callback')) {
+              newLabel = 'Status: Callback';
+            }
+
+            if (newLabel) {
+              // Add new label
+              await github.rest.issues.addLabels({
+                owner: owner,
+                repo: repo,
+                issue_number: issueNumber,
+                labels: [newLabel]
+              });
+
+              // Post confirmation comment (does NOT close the issue)
+              await github.rest.issues.createComment({
+                owner: owner,
+                repo: repo,
+                issue_number: issueNumber,
+                body: `✅ Marked as **${newLabel}**. Don't forget to manually move this card on your Project Board!`
+              });
+            }
