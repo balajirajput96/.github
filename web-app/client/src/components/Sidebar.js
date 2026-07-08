@@ -1,6 +1,6 @@
 import React from 'react';
 import { Drawer, List, ListItemButton, ListItemText, Toolbar } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const drawerWidth = 240;
 
@@ -10,6 +10,8 @@ const drawerWidth = 240;
  * @returns {JSX.Element} The rendered sidebar component.
  */
 const Sidebar = () => {
+  const location = useLocation();
+
   return (
     <Drawer
       variant="permanent"
@@ -20,23 +22,23 @@ const Sidebar = () => {
       }}
     >
       <Toolbar />
-      <List>
-        <ListItemButton component={Link} to="/">
+      <List component="nav" aria-label="Main navigation">
+        <ListItemButton component={Link} to="/" selected={location.pathname === '/'}>
           <ListItemText primary="Dashboard" />
         </ListItemButton>
-        <ListItemButton component={Link} to="/atlassian">
+        <ListItemButton component={Link} to="/atlassian" selected={location.pathname === '/atlassian'}>
           <ListItemText primary="Atlassian" />
         </ListItemButton>
-        <ListItemButton component={Link} to="/slack">
+        <ListItemButton component={Link} to="/slack" selected={location.pathname === '/slack'}>
           <ListItemText primary="Slack" />
         </ListItemButton>
-        <ListItemButton component={Link} to="/claude-ai">
+        <ListItemButton component={Link} to="/claude-ai" selected={location.pathname === '/claude-ai'}>
           <ListItemText primary="Claude AI" />
         </ListItemButton>
-        <ListItemButton component={Link} to="/youtube">
+        <ListItemButton component={Link} to="/youtube" selected={location.pathname === '/youtube'}>
           <ListItemText primary="YouTube" />
         </ListItemButton>
-        <ListItemButton component={Link} to="/google-drive">
+        <ListItemButton component={Link} to="/google-drive" selected={location.pathname === '/google-drive'}>
           <ListItemText primary="Google Drive" />
         </ListItemButton>
       </List>
