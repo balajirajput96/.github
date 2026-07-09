@@ -4,6 +4,16 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3001;
 
+// Security Enhancements
+app.disable('x-powered-by'); // Hide Express
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff'); // Prevent MIME sniffing
+  res.setHeader('X-Frame-Options', 'DENY'); // Prevent clickjacking
+  res.setHeader('X-XSS-Protection', '1; mode=block'); // Enable XSS filter
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains'); // Enforce HTTPS
+  next();
+});
+
 /**
  * @route GET /api/hello
  * @description A simple test endpoint to ensure the server is running.
@@ -73,7 +83,7 @@ app.use(express.static(clientBuildPath));
  * @param {object} req - The Express request object.
  * @param {object} res - The Express response object.
  */
-app.get('*', (req, res) => {
+app.get(/(.*)/, (req, res) => {
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
