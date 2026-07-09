@@ -64,6 +64,7 @@ export function FAQ() {
                     fontSize: '1.125rem'
                   }}
                   aria-expanded={isOpen}
+                  aria-controls={`faq-answer-${index}`}
                 >
                   {faq.q}
                   <motion.div
@@ -79,6 +80,7 @@ export function FAQ() {
                 <AnimatePresence>
                   {isOpen && (
                     <motion.div
+                      id={`faq-answer-${index}`}
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
