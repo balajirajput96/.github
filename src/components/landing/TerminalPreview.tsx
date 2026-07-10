@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
   const [text, setText] = useState('');
-  const [showCursor, setShowCursor] = useState(true);
 
   const lines = [
     { cmd: 'ag init', out: 'Initialized empty Antigravity repository.' },
@@ -14,14 +13,6 @@ export function TerminalPreview() {
     { cmd: 'ag plugins', out: '3 installed plugins: format, lint, deploy' },
     { cmd: 'ag deploy', out: 'Deploying to production... Done in 1.2s' }
   ];
-
-  useEffect(() => {
-    // Cursor blinking
-    const cursorInterval = setInterval(() => {
-      setShowCursor(prev => !prev);
-    }, 500);
-    return () => clearInterval(cursorInterval);
-  }, []);
 
   useEffect(() => {
     if (currentLine >= lines.length) return;
@@ -108,13 +99,12 @@ export function TerminalPreview() {
                 <span style={{ color: 'var(--secondary-accent)' }}>$</span>
                 <span style={{ color: 'var(--fg-color)' }}>
                   {text}
-                  <span style={{
+                  <span className="cursor-blink" style={{
                     display: 'inline-block',
                     width: '8px',
                     height: '15px',
                     background: 'var(--fg-color)',
                     marginLeft: '2px',
-                    opacity: showCursor ? 1 : 0,
                     verticalAlign: 'middle'
                   }} />
                 </span>
@@ -125,13 +115,12 @@ export function TerminalPreview() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <span style={{ color: 'var(--primary-accent)' }}>~</span>
                 <span style={{ color: 'var(--secondary-accent)' }}>$</span>
-                <span style={{
+                <span className="cursor-blink" style={{
                   display: 'inline-block',
                   width: '8px',
                   height: '15px',
                   background: 'var(--fg-color)',
                   marginLeft: '2px',
-                  opacity: showCursor ? 1 : 0,
                   verticalAlign: 'middle'
                 }} />
               </div>
