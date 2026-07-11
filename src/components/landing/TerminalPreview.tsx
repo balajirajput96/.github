@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Move static data outside component to prevent recreation on every render (every 100ms during typing)
+const lines = [
+  { cmd: 'ag init', out: 'Initialized empty Antigravity repository.' },
+  { cmd: 'ag login', out: 'Successfully authenticated as user@google.com' },
+  { cmd: 'ag doctor', out: 'All checks passed. System ready.' },
+  { cmd: 'ag update', out: 'Antigravity is already up to date.' },
+  { cmd: 'ag plugins', out: '3 installed plugins: format, lint, deploy' },
+  { cmd: 'ag deploy', out: 'Deploying to production... Done in 1.2s' }
+];
+
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
   const [text, setText] = useState('');
   const [showCursor, setShowCursor] = useState(true);
-
-  const lines = [
-    { cmd: 'ag init', out: 'Initialized empty Antigravity repository.' },
-    { cmd: 'ag login', out: 'Successfully authenticated as user@google.com' },
-    { cmd: 'ag doctor', out: 'All checks passed. System ready.' },
-    { cmd: 'ag update', out: 'Antigravity is already up to date.' },
-    { cmd: 'ag plugins', out: '3 installed plugins: format, lint, deploy' },
-    { cmd: 'ag deploy', out: 'Deploying to production... Done in 1.2s' }
-  ];
 
   useEffect(() => {
     // Cursor blinking
