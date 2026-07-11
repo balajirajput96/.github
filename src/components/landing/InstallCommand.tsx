@@ -47,7 +47,7 @@ export function InstallCommand() {
         alignItems: 'center',
         gap: '1rem'
       }}>
-        <span style={{ color: 'var(--muted-color)', userSelect: 'none' }}>$</span>
+        <span aria-hidden="true" style={{ color: 'var(--muted-color)', userSelect: 'none' }}>$</span>
         <span>
           <span style={{ color: 'var(--secondary-accent)' }}>curl</span> -fsSL https://antigravity.google/cli/install.sh | <span style={{ color: 'var(--primary-accent)' }}>bash</span>
         </span>
@@ -57,7 +57,8 @@ export function InstallCommand() {
         whileHover={{ scale: 1.05, backgroundColor: 'var(--surface-hover)' }}
         whileTap={{ scale: 0.95 }}
         onClick={handleCopy}
-        aria-label="Copy install command"
+        title={copied ? "Copied!" : "Copy install command"}
+        aria-label={copied ? "Copied!" : "Copy install command"}
         style={{
           background: 'var(--bg-color)',
           border: '1px solid var(--border-color)',
