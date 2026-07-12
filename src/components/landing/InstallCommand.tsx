@@ -58,6 +58,7 @@ export function InstallCommand() {
         whileTap={{ scale: 0.95 }}
         onClick={handleCopy}
         aria-label="Copy install command"
+        title={copied ? "Copied!" : "Copy to clipboard"}
         style={{
           background: 'var(--bg-color)',
           border: '1px solid var(--border-color)',
@@ -101,6 +102,9 @@ export function InstallCommand() {
           )}
         </AnimatePresence>
       </motion.button>
+      <div aria-live="polite" className="sr-only">
+        {copied ? "Copied to clipboard" : ""}
+      </div>
     </motion.div>
   );
 }
