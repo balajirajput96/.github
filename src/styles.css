@@ -102,3 +102,19 @@ button {
     scroll-behavior: auto !important;
   }
 }
+
+/* Terminal Cursor */
+@keyframes terminal-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.terminal-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 15px;
+  background: var(--fg-color);
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: terminal-blink 1s step-end infinite;
+}
