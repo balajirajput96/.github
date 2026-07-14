@@ -1,6 +1,7 @@
 # never commit secrets, the personal send log, or run logs
 .env
 sent_log.csv
+recipients.csv
 run_daily.log
 run_weekly.log
 run_*.log
