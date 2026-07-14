@@ -47,10 +47,14 @@ export function InstallCommand() {
         alignItems: 'center',
         gap: '1rem'
       }}>
-        <span style={{ color: 'var(--muted-color)', userSelect: 'none' }}>$</span>
+        <span aria-hidden="true" style={{ color: 'var(--muted-color)', userSelect: 'none' }}>$</span>
         <span>
           <span style={{ color: 'var(--secondary-accent)' }}>curl</span> -fsSL https://antigravity.google/cli/install.sh | <span style={{ color: 'var(--primary-accent)' }}>bash</span>
         </span>
+      </div>
+
+      <div aria-live="polite" className="sr-only">
+        {copied ? 'Copied to clipboard' : ''}
       </div>
 
       <motion.button

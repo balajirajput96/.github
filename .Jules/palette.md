@@ -9,3 +9,7 @@
 ## 2024-08-14 - [UX] Decorative SVGs inside Interactive Elements
 **Learning:** Decorative icons (like SVG elements) inside interactive elements (buttons, toggles) or components with accompanying text will be redundantly announced by screen readers (e.g. as "graphic") if not explicitly hidden, creating unnecessary noise for visually impaired users.
 **Action:** Always add `aria-hidden="true"` to decorative SVGs when they are placed next to visible label text or title attributes to ensure a cleaner screen reader experience.
+
+## 2024-07-14 - Playwright Verification with Client-Side Routing
+**Learning:** Using `file://` to load the built index.html for Playwright testing fails because TanStack Router requires a proper server for client-side routing to function, otherwise elements like 'text=Defy gravity' won't render.
+**Action:** Always start a local server (e.g. `pnpm preview` on port 4173) and test against `http://localhost:4173` when verifying frontend changes in apps using client-side routing.
