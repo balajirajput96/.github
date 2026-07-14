@@ -1,27 +1,18 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const lines = [
+  { cmd: 'ag init', out: 'Initialized empty Antigravity repository.' },
+  { cmd: 'ag login', out: 'Successfully authenticated as user@google.com' },
+  { cmd: 'ag doctor', out: 'All checks passed. System ready.' },
+  { cmd: 'ag update', out: 'Antigravity is already up to date.' },
+  { cmd: 'ag plugins', out: '3 installed plugins: format, lint, deploy' },
+  { cmd: 'ag deploy', out: 'Deploying to production... Done in 1.2s' }
+];
+
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
   const [text, setText] = useState('');
-  const [showCursor, setShowCursor] = useState(true);
-
-  const lines = [
-    { cmd: 'ag init', out: 'Initialized empty Antigravity repository.' },
-    { cmd: 'ag login', out: 'Successfully authenticated as user@google.com' },
-    { cmd: 'ag doctor', out: 'All checks passed. System ready.' },
-    { cmd: 'ag update', out: 'Antigravity is already up to date.' },
-    { cmd: 'ag plugins', out: '3 installed plugins: format, lint, deploy' },
-    { cmd: 'ag deploy', out: 'Deploying to production... Done in 1.2s' }
-  ];
-
-  useEffect(() => {
-    // Cursor blinking
-    const cursorInterval = setInterval(() => {
-      setShowCursor(prev => !prev);
-    }, 500);
-    return () => clearInterval(cursorInterval);
-  }, []);
 
   useEffect(() => {
     if (currentLine >= lines.length) return;
@@ -108,15 +99,18 @@ export function TerminalPreview() {
                 <span style={{ color: 'var(--secondary-accent)' }}>$</span>
                 <span style={{ color: 'var(--fg-color)' }}>
                   {text}
-                  <span style={{
-                    display: 'inline-block',
-                    width: '8px',
-                    height: '15px',
-                    background: 'var(--fg-color)',
-                    marginLeft: '2px',
-                    opacity: showCursor ? 1 : 0,
-                    verticalAlign: 'middle'
-                  }} />
+                  <motion.span
+                    animate={{ opacity: [1, 0, 1] }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    style={{
+                      display: 'inline-block',
+                      width: '8px',
+                      height: '15px',
+                      background: 'var(--fg-color)',
+                      marginLeft: '2px',
+                      verticalAlign: 'middle'
+                    }}
+                  />
                 </span>
               </div>
             )}
@@ -125,15 +119,18 @@ export function TerminalPreview() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <span style={{ color: 'var(--primary-accent)' }}>~</span>
                 <span style={{ color: 'var(--secondary-accent)' }}>$</span>
-                <span style={{
-                  display: 'inline-block',
-                  width: '8px',
-                  height: '15px',
-                  background: 'var(--fg-color)',
-                  marginLeft: '2px',
-                  opacity: showCursor ? 1 : 0,
-                  verticalAlign: 'middle'
-                }} />
+                <motion.span
+                  animate={{ opacity: [1, 0, 1] }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  style={{
+                    display: 'inline-block',
+                    width: '8px',
+                    height: '15px',
+                    background: 'var(--fg-color)',
+                    marginLeft: '2px',
+                    verticalAlign: 'middle'
+                  }}
+                />
               </div>
             )}
           </div>
