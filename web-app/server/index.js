@@ -4,6 +4,38 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3001;
 
+// In-memory rate limiter logic
+const rateLimitWindowMs = 15 * 60 * 1000; // 15 minutes
+const maxRequestsPerWindow = 100;
+const ipRequestCounts = new Map();
+
+// Periodically clean up rate limiter map
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of ipRequestCounts.entries()) {
+    if (now - data.startTime > rateLimitWindowMs) {
+      ipRequestCounts.delete(ip);
+    }
+  }
+}, rateLimitWindowMs);
+
+const rateLimiter = (req, res, next) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+
+  let requestData = ipRequestCounts.get(ip);
+  if (!requestData || now - requestData.startTime > rateLimitWindowMs) {
+    requestData = { count: 1, startTime: now };
+    ipRequestCounts.set(ip, requestData);
+  } else {
+    requestData.count++;
+    if (requestData.count > maxRequestsPerWindow) {
+      return res.status(429).json({ error: 'Too many requests, please try again later.' });
+    }
+  }
+  next();
+};
+
 // Security Enhancements
 app.disable('x-powered-by'); // Hide Express
 app.use((req, res, next) => {
@@ -11,8 +43,12 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY'); // Prevent clickjacking
   res.setHeader('X-XSS-Protection', '1; mode=block'); // Enable XSS filter
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains'); // Enforce HTTPS
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"); // Mitigate XSS attacks
   next();
 });
+
+// Apply rate limiter to all /api/ routes
+app.use('/api/', rateLimiter);
 
 /**
  * @route GET /api/hello
