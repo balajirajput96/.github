@@ -234,15 +234,16 @@ def connect(sender, password):
 # ----------------------------------------------------------------- report
 def cmd_report(recipients):
     state = load_state()
-    total = len(recipients)
-    sent = sum(1 for s in state.values() if s["sent"])
-    replied = sum(1 for s in state.values() if s["replied"])
-    bounced = sum(1 for s in state.values() if s["bounced"])
-    failed = sum(1 for s in state.values() if s["failed"] and not s["sent"])
-    followed = sum(1 for s in state.values() if s["followups"] > 0)
+    recipient_emails = {r["email"].lower() for r in recipients if r.get("email")}
+    total = len(recipient_emails)
+    sent = sum(1 for e, s in state.items() if e in recipient_emails and s["sent"])
+    replied = sum(1 for e, s in state.items() if e in recipient_emails and s["replied"])
+    bounced = sum(1 for e, s in state.items() if e in recipient_emails and s["bounced"])
+    failed = sum(1 for e, s in state.items()
+                 if e in recipient_emails and s["failed"] and not s["sent"])
+    followed = sum(1 for e, s in state.items() if e in recipient_emails and s["followups"] > 0)
     pending = total - sent
     awaiting = sent - replied - bounced
-
     print("\n================  OUTREACH STATUS  ================")
     print(f"  Total target contacts     : {total}")
     print(f"  Initial mails sent        : {sent}")
