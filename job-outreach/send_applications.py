@@ -46,6 +46,7 @@ DEFAULT_RECIPIENTS = HERE / "recipients.csv"
 DEFAULT_TEMPLATE = HERE / "email_template.txt"
 FOLLOWUP_TEMPLATE = HERE / "followup_template.txt"
 DEFAULT_RESUME = HERE.parent / "resume" / "Balaji_Rajput_QA_Officer_Resume.pdf"
+DEFAULT_EXP_DOC = HERE.parent / "resume" / "experience_document.pdf"
 SENT_LOG = HERE / "sent_log.csv"
 ENV_FILE = HERE / ".env"
 
@@ -207,7 +208,7 @@ def render_body(template, company, resume_link=""):
     return body.replace("{resume_link_line}", link_line)
 
 
-def build_message(sender, to_email, company, template, resume_path,
+def build_message(sender, to_email, company, template, resume_path, exp_doc_path,
                   subject, resume_link=""):
     body = render_body(template, company, resume_link)
     msg = EmailMessage()
@@ -220,6 +221,10 @@ def build_message(sender, to_email, company, template, resume_path,
         msg.add_attachment(Path(resume_path).read_bytes(),
                            maintype="application", subtype="pdf",
                            filename=Path(resume_path).name)
+    if exp_doc_path and Path(exp_doc_path).exists():
+        msg.add_attachment(Path(exp_doc_path).read_bytes(),
+                           maintype="application", subtype="pdf",
+                           filename=Path(exp_doc_path).name)
     return msg
 
 
@@ -295,6 +300,7 @@ def main():
     args = ap.parse_args()
 
     load_dotenv()
+    exp_doc = str(DEFAULT_EXP_DOC)
     sender = os.environ.get("GMAIL_ADDRESS", "").strip()
     password = os.environ.get("GMAIL_APP_PASSWORD", "").strip()
     resume_link = os.environ.get("RESUME_LINK", "").strip()
@@ -323,7 +329,7 @@ def main():
             log("Test mode is a dry-run unless --send is also passed.")
         log(f"Building test mail -> {args.test}")
         msg = build_message(sender or "you@example.com", args.test,
-                            "Test Company", template, resume, subject, resume_link)
+                            "Test Company", template, resume, exp_doc, subject, resume_link)
         if args.send:
             if not (sender and password):
                 sys.exit("ERROR: set GMAIL_ADDRESS and GMAIL_APP_PASSWORD.")
@@ -403,7 +409,7 @@ def main():
         for i, r in enumerate(to_process):
             e, company = r["email"], r["company"]
             try:
-                msg = build_message(sender, e, company, template, resume,
+                msg = build_message(sender, e, company, template, resume, exp_doc,
                                     subject, resume_link)
                 server.send_message(msg)
                 record(e, company, status_label)
@@ -418,7 +424,7 @@ def main():
                 try:
                     server = connect(sender, password)
                     server.send_message(build_message(sender, e, company, template,
-                                                       resume, subject, resume_link))
+                                                       resume, exp_doc, subject, resume_link))
                     record(e, company, status_label, "after-reconnect")
                     done += 1
                     log(f"{mode} {done}/{len(to_process)} -> {e}  [{company}]")
