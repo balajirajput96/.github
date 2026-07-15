@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from typing import List
 from utils.logger import setup_logger
@@ -9,7 +9,7 @@ logger = setup_logger(__name__)
 app = FastAPI(title="ML Model API")
 
 class PredictionInput(BaseModel):
-    features: List[float]
+    features: List[float] = Field(..., max_length=100) # Security enhancement: prevent DoS via large payload
 
 @app.get("/")
 def home():
