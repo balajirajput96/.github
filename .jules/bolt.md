@@ -15,3 +15,7 @@
 ## 2025-02-14 - Move state-driven animations to CSS
 **Learning:** Using React state and `setInterval`/`useEffect` to drive visual animations like cursor blinking (e.g., in `TerminalPreview.tsx`) causes unnecessary and continuous component re-renders (in this case, 2 re-renders per second, indefinitely).
 **Action:** Always prefer CSS `@keyframes` animations for simple, continuous visual effects to offload the work from the main thread and prevent excessive React re-renders.
+
+## 2024-05-14 - React Animation State Updates Causing Unnecessary Re-renders
+**Learning:** High-frequency state updates (like typing animations using `setInterval` every 100ms) will trigger a full component re-render. If the component also renders a mapped list (like previous terminal lines), these elements will be needlessly recreated and reconciled on every frame of the animation, causing unnecessary CPU overhead and potential jank, even if they don't change.
+**Action:** Extract constant data arrays outside the component scope to avoid reallocation, and use `useMemo` to memoize the rendering of list elements that depend on a slow-changing state (e.g. `currentLine`) so they are isolated from the fast-changing state (e.g. `text` for the typing animation).
