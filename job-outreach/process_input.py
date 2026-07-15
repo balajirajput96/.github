@@ -5,30 +5,15 @@ from pathlib import Path
 RECIPIENTS_FILE = Path(__file__).parent / "recipients.csv"
 
 def extract_email_company(text):
-    # Matches patterns like "email@domain.com - Company Name" or "Company Name <email@domain.com>" or just "email@domain.com"
+    # Find all emails in the text regardless of spacing
     emails = re.findall(r'([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', text)
     results = []
 
-    lines = text.split('\n')
-    for line in lines:
-        line = line.strip()
-        if not line: continue
-
-        found_email = re.search(r'([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', line)
-        if found_email:
-            email = found_email.group(1)
-            # Try to find company name
-            # Remove email from line to see what's left
-            remainder = line.replace(email, '').strip()
-            # Clean up characters like -, :, <, >
-            company = remainder.strip(' -:<>[]()').strip()
-
-            if not company:
-                # Derive from domain
-                domain = email.split('@')[1].split('.')[0].capitalize()
-                company = domain
-
-            results.append({'email': email, 'company': company})
+    # Simple strategy: if it's a block of text, just extract all emails.
+    # If we want to keep company names, we'd need line-by-line, but the user just sent a block.
+    for email in emails:
+        domain = email.split('@')[1].split('.')[0].capitalize()
+        results.append({'email': email, 'company': domain})
 
     return results
 
@@ -36,13 +21,13 @@ def add_to_csv(entries):
     fieldnames = ['company', 'email']
     file_exists = RECIPIENTS_FILE.exists()
 
-    # Load existing emails to avoid duplicates
     existing_emails = set()
     if file_exists:
         with open(RECIPIENTS_FILE, mode='r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                existing_emails.add(row['email'].lower())
+                if row.get('email'):
+                    existing_emails.add(row['email'].lower())
 
     with open(RECIPIENTS_FILE, mode='a', encoding='utf-8', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
