@@ -1,23 +1,23 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const TERMINAL_LINES = [
+  { cmd: 'ag init', out: 'Initialized empty Antigravity repository.' },
+  { cmd: 'ag login', out: 'Successfully authenticated as user@google.com' },
+  { cmd: 'ag doctor', out: 'All checks passed. System ready.' },
+  { cmd: 'ag update', out: 'Antigravity is already up to date.' },
+  { cmd: 'ag plugins', out: '3 installed plugins: format, lint, deploy' },
+  { cmd: 'ag deploy', out: 'Deploying to production... Done in 1.2s' }
+];
+
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
   const [text, setText] = useState('');
 
-  const lines = [
-    { cmd: 'ag init', out: 'Initialized empty Antigravity repository.' },
-    { cmd: 'ag login', out: 'Successfully authenticated as user@google.com' },
-    { cmd: 'ag doctor', out: 'All checks passed. System ready.' },
-    { cmd: 'ag update', out: 'Antigravity is already up to date.' },
-    { cmd: 'ag plugins', out: '3 installed plugins: format, lint, deploy' },
-    { cmd: 'ag deploy', out: 'Deploying to production... Done in 1.2s' }
-  ];
-
   useEffect(() => {
-    if (currentLine >= lines.length) return;
+    if (currentLine >= TERMINAL_LINES.length) return;
 
-    const fullText = lines[currentLine].cmd;
+    const fullText = TERMINAL_LINES[currentLine].cmd;
     let charIndex = 0;
 
     const typingInterval = setInterval(() => {
@@ -74,7 +74,7 @@ export function TerminalPreview() {
             minHeight: '320px'
           }}>
             <AnimatePresence>
-              {lines.slice(0, currentLine).map((line, i) => (
+              {TERMINAL_LINES.slice(0, currentLine).map((line, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0 }}
@@ -93,7 +93,7 @@ export function TerminalPreview() {
               ))}
             </AnimatePresence>
 
-            {currentLine < lines.length && (
+            {currentLine < TERMINAL_LINES.length && (
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <span style={{ color: 'var(--primary-accent)' }}>~</span>
                 <span style={{ color: 'var(--secondary-accent)' }}>$</span>
@@ -111,7 +111,7 @@ export function TerminalPreview() {
               </div>
             )}
 
-            {currentLine >= lines.length && (
+            {currentLine >= TERMINAL_LINES.length && (
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <span style={{ color: 'var(--primary-accent)' }}>~</span>
                 <span style={{ color: 'var(--secondary-accent)' }}>$</span>
