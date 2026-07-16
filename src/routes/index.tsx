@@ -16,7 +16,9 @@ export const Route = createRoute({
 
 function LandingPage() {
   return (
-    <main style={{ width: '100%', minHeight: '100vh' }}>
+    <div style={{ width: '100%', minHeight: '100vh' }}>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+
       <header style={{
         position: 'absolute',
         top: 0,
@@ -65,13 +67,15 @@ function LandingPage() {
         </nav>
       </header>
 
-      <Hero />
-      <Features />
-      <Quickstart />
-      <TerminalPreview />
-      <FAQ />
-      <DocsCTA />
+      <main id="main-content">
+        <Hero />
+        <Features />
+        <Quickstart />
+        <TerminalPreview />
+        <FAQ />
+        <DocsCTA />
+      </main>
       <Footer />
-    </main>
+    </div>
   );
 }
