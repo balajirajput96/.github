@@ -1,15 +1,17 @@
 import { motion } from 'framer-motion';
+import { useMemo } from 'react';
 
 export function OrbitBackground() {
-  // Generate random particles
-  const particles = Array.from({ length: 30 }).map((_, i) => ({
+  // Generate random particles only once
+  // This prevents recalculating the 30 random particles on every render
+  const particles = useMemo(() => Array.from({ length: 30 }).map((_, i) => ({
     id: i,
     size: Math.random() * 4 + 1,
     left: `${Math.random() * 100}%`,
     top: `${Math.random() * 100}%`,
     duration: Math.random() * 20 + 10,
     delay: Math.random() * 5,
-  }));
+  })), []);
 
   return (
     <div style={{
