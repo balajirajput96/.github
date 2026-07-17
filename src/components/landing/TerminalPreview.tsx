@@ -39,7 +39,18 @@ export function TerminalPreview() {
   return (
     <section style={{ padding: '8rem 0' }}>
       <div className="container">
-        <div style={{
+        {/* Screen reader only description */}
+        <div className="sr-only">
+          Terminal window demonstrating Antigravity CLI commands.
+          Commands run:
+          {lines.map((line, i) => (
+            <span key={i}>
+              Command: {line.cmd}. Output: {line.out}.
+            </span>
+          ))}
+        </div>
+
+        <div aria-hidden="true" style={{
           background: 'var(--bg-color)',
           border: '1px solid var(--border-color)',
           borderRadius: '12px',
