@@ -1,16 +1,17 @@
 import { motion } from 'framer-motion';
 
-export function OrbitBackground() {
-  // Generate random particles
-  const particles = Array.from({ length: 30 }).map((_, i) => ({
-    id: i,
-    size: Math.random() * 4 + 1,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    duration: Math.random() * 20 + 10,
-    delay: Math.random() * 5,
-  }));
+// Generate random particles once, outside of the component to prevent
+// re-calculating random values and unnecessary allocations on every render
+const particles = Array.from({ length: 30 }).map((_, i) => ({
+  id: i,
+  size: Math.random() * 4 + 1,
+  left: `${Math.random() * 100}%`,
+  top: `${Math.random() * 100}%`,
+  duration: Math.random() * 20 + 10,
+  delay: Math.random() * 5,
+}));
 
+export function OrbitBackground() {
   return (
     <div style={{
       position: 'absolute',
