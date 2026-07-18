@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { SectionHeading } from './SectionHeading';
+import { CodeBlock } from './CodeBlock';
 
 export function Quickstart() {
   const steps = [
@@ -82,19 +83,7 @@ export function Quickstart() {
                 <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{step.title}</h3>
                 <p style={{ color: 'var(--muted-color)', marginBottom: '1.5rem' }}>{step.description}</p>
 
-                <div style={{
-                  background: 'var(--bg-color)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '8px',
-                  padding: '1rem',
-                  fontFamily: 'var(--font-code)',
-                  fontSize: '0.875rem',
-                  color: 'var(--secondary-accent)',
-                  overflowX: 'auto',
-                  whiteSpace: 'pre'
-                }}>
-                  {step.code}
-                </div>
+                <CodeBlock code={step.code} />
               </div>
             </motion.div>
           ))}
