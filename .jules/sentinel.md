@@ -1,4 +1,7 @@
 ## 2024-07-08 - Prevent Information Leakage in API Error Responses
 **Vulnerability:** Fastapi's `HTTPException` was returning the raw exception string `str(e)` on a 500 error, exposing potentially sensitive internal server details or stack traces to the end user.
 **Learning:** This is a common pattern when developers quickly add a try-catch block but forget that error details returned to the client can leak sensitive architecture information, path structures, or database details.
-**Prevention:** Always log the verbose error details internally (e.g., using `logger.error`), but return a generic, non-descriptive error message (e.g., "An internal error occurred") in the HTTP response.
+**Prevention:** Always log the verbose error details internally (e.g., using `logger.error`), but return a generic, non-descriptive error message (e.g., "An internal error occurred") in the HTTP response.## 2024-07-19 - Removed unsafe-eval from CSP header
+**Vulnerability:** The Express.js backend used an overly permissive Content-Security-Policy that included `'unsafe-eval'` in the `script-src` directive. This allowed the execution of string-to-code functions like `eval()`, which is a common vector for Cross-Site Scripting (XSS) attacks.
+**Learning:** Even when implementing security headers like CSP, developers sometimes copy-paste overly permissive defaults (like `unsafe-inline` and `unsafe-eval`) without understanding their implications, especially during initial development.
+**Prevention:** Always strive for a strict CSP. Evaluate if `unsafe-eval` is genuinely required (it rarely is for modern production applications) and remove it if not to significantly harden the application against XSS.
