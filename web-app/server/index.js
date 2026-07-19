@@ -43,7 +43,8 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY'); // Prevent clickjacking
   res.setHeader('X-XSS-Protection', '1; mode=block'); // Enable XSS filter
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains'); // Enforce HTTPS
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"); // Mitigate XSS attacks
+  // Mitigate XSS attacks: Restrict eval by not including 'unsafe-eval' in script-src
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'");
   next();
 });
 
