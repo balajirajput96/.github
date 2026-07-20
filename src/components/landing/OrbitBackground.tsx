@@ -1,15 +1,19 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 export function OrbitBackground() {
-  // Generate random particles
-  const particles = Array.from({ length: 30 }).map((_, i) => ({
+  // ⚡ Bolt Performance Optimization:
+  // Memoize random particle generation to prevent recalculating
+  // layout positions and sizes on every component re-render.
+  // This reduces CPU cycles during render without impacting visual behavior.
+  const particles = useMemo(() => Array.from({ length: 30 }).map((_, i) => ({
     id: i,
     size: Math.random() * 4 + 1,
     left: `${Math.random() * 100}%`,
     top: `${Math.random() * 100}%`,
     duration: Math.random() * 20 + 10,
     delay: Math.random() * 5,
-  }));
+  })), []);
 
   return (
     <div style={{
