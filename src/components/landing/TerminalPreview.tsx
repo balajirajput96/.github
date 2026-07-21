@@ -40,6 +40,26 @@ export function TerminalPreview() {
     <section style={{ padding: '8rem 0' }}>
       <div className="container">
         <div style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: 0,
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          borderWidth: 0
+        }}>
+          Terminal preview showing Antigravity CLI commands:
+          <ul>
+            {lines.map((line, i) => (
+              <li key={i}>
+                Command: {line.cmd}. Output: {line.out}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div aria-hidden="true" style={{
           background: 'var(--bg-color)',
           border: '1px solid var(--border-color)',
           borderRadius: '12px',
