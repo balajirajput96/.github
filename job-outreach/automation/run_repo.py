@@ -9,8 +9,10 @@ The GitHub Actions workflow commits jobs.csv + dashboard.md back to the repo.
 NEVER sends anything. Only secret required: OPENROUTER_API_KEY.
 """
 import os, sys, json, csv, hashlib, datetime, pathlib, re
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 import requests
+import socket
+import ipaddress
 
 
 # ⚡ Bolt Optimization: Use a shared requests.Session to pool connections and reduce API latency
@@ -59,7 +61,27 @@ def prompt(name):
     return (HERE / "prompts" / f"{name}.md").read_text(encoding="utf-8")
 
 
+def is_safe_url(url):
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ('http', 'https'):
+            return False
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+        ip = socket.gethostbyname(hostname)
+        ip_obj = ipaddress.ip_address(ip)
+        if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local:
+            return False
+        return True
+    except Exception:
+        return False
+
 def fetch_html(url):
+    if not is_safe_url(url):
+        DIAG.append(f"fetch BLOCKED (unsafe URL): {url}")
+        print(f"  ! fetch blocked (unsafe URL): {url}")
+        return ""
     try:
         r = session.get(url, timeout=45, headers={"User-Agent": "Mozilla/5.0"})
         if r.status_code != 200:
