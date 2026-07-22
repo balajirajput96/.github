@@ -1,4 +1,4 @@
-# Job Dashboard — updated 2026-07-21
+# Job Dashboard — updated 2026-07-22
 
 - New added today: **0**  |  Total tracked: **0**
 - Walk-ins available: **0**
@@ -24,7 +24,9 @@ _If 0 jobs, these lines show why (blocked fetch / JS-only page / LLM key or cred
 - LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 - LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 - LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
-- LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
+- fetch HTTP 403: https://india.amneal.com/careers/search-our-career-opportunities
+- fetch HTTP 403: https://india.amneal.com/careers/search-our-career-opportunities
+- little text (16 chars, maybe JS-only): https://india.amneal.com/careers/search-our-career-opportunities
 - LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 - LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 - fetch HTTP 403: https://www.torrentpharma.com/careers/join-us/
