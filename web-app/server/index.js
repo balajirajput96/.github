@@ -2,6 +2,10 @@ const express = require('express');
 const path = require('path');
 
 const app = express();
+
+// Trust the first proxy to ensure the rate limiter correctly identifies client IPs when behind a reverse proxy (e.g., Heroku, Nginx)
+app.set('trust proxy', 1);
+
 const port = process.env.PORT || 3001;
 
 // In-memory rate limiter logic
