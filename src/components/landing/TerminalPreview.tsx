@@ -1,40 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export function TerminalPreview() {
-  const [currentLine, setCurrentLine] = useState(0);
+const lines = [
+  { cmd: 'ag init', out: 'Initialized empty Antigravity repository.' },
+  { cmd: 'ag login', out: 'Successfully authenticated as user@google.com' },
+  { cmd: 'ag doctor', out: 'All checks passed. System ready.' },
+  { cmd: 'ag update', out: 'Antigravity is already up to date.' },
+  { cmd: 'ag plugins', out: '3 installed plugins: format, lint, deploy' },
+  { cmd: 'ag deploy', out: 'Deploying to production... Done in 1.2s' }
+];
+
+function TypewriterLine({ command, onComplete }: { command: string, onComplete: () => void }) {
   const [text, setText] = useState('');
 
-  const lines = [
-    { cmd: 'ag init', out: 'Initialized empty Antigravity repository.' },
-    { cmd: 'ag login', out: 'Successfully authenticated as user@google.com' },
-    { cmd: 'ag doctor', out: 'All checks passed. System ready.' },
-    { cmd: 'ag update', out: 'Antigravity is already up to date.' },
-    { cmd: 'ag plugins', out: '3 installed plugins: format, lint, deploy' },
-    { cmd: 'ag deploy', out: 'Deploying to production... Done in 1.2s' }
-  ];
-
   useEffect(() => {
-    if (currentLine >= lines.length) return;
-
-    const fullText = lines[currentLine].cmd;
     let charIndex = 0;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     const typingInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setText(fullText.substring(0, charIndex));
+      if (charIndex <= command.length) {
+        setText(command.substring(0, charIndex));
         charIndex++;
       } else {
         clearInterval(typingInterval);
-        setTimeout(() => {
-          setCurrentLine(prev => prev + 1);
-          setText('');
+        timeoutId = setTimeout(() => {
+          onComplete();
         }, 1500); // Wait before next command
       }
     }, 100); // Typing speed
 
-    return () => clearInterval(typingInterval);
-  }, [currentLine]);
+    return () => {
+      clearInterval(typingInterval);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [command, onComplete]);
+
+  return (
+    <div style={{ display: 'flex', gap: '1rem' }}>
+      <span style={{ color: 'var(--primary-accent)' }}>~</span>
+      <span style={{ color: 'var(--secondary-accent)' }}>$</span>
+      <span style={{ color: 'var(--fg-color)' }}>
+        {text}
+        <span className="cursor-blink" style={{
+          display: 'inline-block',
+          width: '8px',
+          height: '15px',
+          background: 'var(--fg-color)',
+          marginLeft: '2px',
+          verticalAlign: 'middle'
+        }} />
+      </span>
+    </div>
+  );
+}
+
+export function TerminalPreview() {
+  const [currentLine, setCurrentLine] = useState(0);
+
+  const handleComplete = useCallback(() => {
+    setCurrentLine((prev) => prev + 1);
+  }, []);
 
   return (
     <section style={{ padding: '8rem 0' }}>
@@ -94,21 +119,11 @@ export function TerminalPreview() {
             </AnimatePresence>
 
             {currentLine < lines.length && (
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <span style={{ color: 'var(--primary-accent)' }}>~</span>
-                <span style={{ color: 'var(--secondary-accent)' }}>$</span>
-                <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
-                  <span className="cursor-blink" style={{
-                    display: 'inline-block',
-                    width: '8px',
-                    height: '15px',
-                    background: 'var(--fg-color)',
-                    marginLeft: '2px',
-                    verticalAlign: 'middle'
-                  }} />
-                </span>
-              </div>
+              <TypewriterLine
+                key={currentLine}
+                command={lines[currentLine].cmd}
+                onComplete={handleComplete}
+              />
             )}
 
             {currentLine >= lines.length && (
