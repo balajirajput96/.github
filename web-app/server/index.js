@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 
 const app = express();
+app.set('trust proxy', 1);
 const port = process.env.PORT || 3001;
 
 // In-memory rate limiter logic
@@ -43,7 +44,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY'); // Prevent clickjacking
   res.setHeader('X-XSS-Protection', '1; mode=block'); // Enable XSS filter
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains'); // Enforce HTTPS
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"); // Mitigate XSS attacks
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"); // Mitigate XSS attacks
   next();
 });
 
