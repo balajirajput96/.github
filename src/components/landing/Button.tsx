@@ -51,6 +51,7 @@ export function Button({ variant = 'primary', size = 'md', children, style, ...p
   return (
     <motion.button
       whileHover={{ y: -2, scale: 1.02 }}
+      whileFocus={{ y: -2, scale: 1.02 }}
       whileTap={{ y: 0, scale: 0.98 }}
       style={{ ...baseStyle, ...sizes[size], ...variants[variant], ...style }}
       {...props}
