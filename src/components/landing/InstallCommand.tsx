@@ -55,6 +55,7 @@ export function InstallCommand() {
 
       <motion.button
         whileHover={{ scale: 1.05, backgroundColor: 'var(--surface-hover)' }}
+        whileFocus={{ scale: 1.05, backgroundColor: 'var(--surface-hover)' }}
         whileTap={{ scale: 0.95 }}
         onClick={handleCopy}
         aria-label="Copy install command"
