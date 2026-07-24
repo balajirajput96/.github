@@ -1,15 +1,17 @@
 import { motion } from 'framer-motion';
+import React, { useMemo } from 'react';
 
-export function OrbitBackground() {
+export const OrbitBackground = React.memo(function OrbitBackground() {
   // Generate random particles
-  const particles = Array.from({ length: 30 }).map((_, i) => ({
+  // Memoized to prevent recalculation of random properties on re-renders, saving CPU cycles
+  const particles = useMemo(() => Array.from({ length: 30 }).map((_, i) => ({
     id: i,
     size: Math.random() * 4 + 1,
     left: `${Math.random() * 100}%`,
     top: `${Math.random() * 100}%`,
     duration: Math.random() * 20 + 10,
     delay: Math.random() * 5,
-  }));
+  })), []);
 
   return (
     <div style={{
@@ -111,4 +113,4 @@ export function OrbitBackground() {
       }} />
     </div>
   );
-}
+});
