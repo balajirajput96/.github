@@ -51,6 +51,24 @@ export function TerminalPreview() {
       </motion.div>
     ));
   }, [currentLine]);
+=======
+  const terminalHeader = useMemo(() => (
+    <div style={{
+      background: 'var(--surface-color)',
+      padding: '0.75rem 1rem',
+      borderBottom: '1px solid var(--border-color)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem'
+    }}>
+      <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f56' }} />
+      <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e' }} />
+      <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#27c93f' }} />
+      <div style={{ marginLeft: '1rem', color: 'var(--muted-color)', fontSize: '0.875rem', fontFamily: 'var(--font-code)' }}>
+        bash — antigravity
+      </div>
+    </div>
+  }, [currentLine]);
 
   useEffect(() => {
     if (currentLine >= lines.length) return;
