@@ -49,17 +49,23 @@ function LandingPage() {
         <nav style={{ display: 'flex', gap: '2rem' }}>
           <a href="#features" style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)' }}
              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
-             onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-color)'}>
+             onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-color)'}
+             onFocus={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
+             onBlur={(e) => e.currentTarget.style.color = 'var(--muted-color)'}>
             Features
           </a>
           <a href="#quickstart" style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)' }}
              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
-             onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-color)'}>
+             onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-color)'}
+             onFocus={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
+             onBlur={(e) => e.currentTarget.style.color = 'var(--muted-color)'}>
             Quickstart
           </a>
           <a href="https://github.com" style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)' }}
              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
-             onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-color)'}>
+             onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-color)'}
+             onFocus={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
+             onBlur={(e) => e.currentTarget.style.color = 'var(--muted-color)'}>
             GitHub
           </a>
         </nav>
