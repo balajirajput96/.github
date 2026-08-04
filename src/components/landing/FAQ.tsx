@@ -51,7 +51,9 @@ export function FAQ() {
                   overflow: 'hidden'
                 }}
               >
-                <button
+                <motion.button
+                  whileHover={{ backgroundColor: 'var(--surface-hover)' }}
+                  whileFocus={{ backgroundColor: 'var(--surface-hover)' }}
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                   style={{
                     width: '100%',
@@ -75,7 +77,7 @@ export function FAQ() {
                       <polyline points="6 9 12 15 18 9"></polyline>
                     </svg>
                   </motion.div>
-                </button>
+                </motion.button>
 
                 <AnimatePresence>
                   {isOpen && (
