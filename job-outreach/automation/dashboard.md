@@ -1,4 +1,4 @@
-# Job Dashboard — updated 2026-08-06
+# Job Dashboard — updated 2026-08-07
 
 - New added today: **0**  |  Total tracked: **0**
 - Walk-ins available: **0**
@@ -25,7 +25,7 @@ _If 0 jobs, these lines show why (blocked fetch / JS-only page / LLM key or cred
 - LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 - LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 - LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
-- fetch ERROR https://alembicpharmaceuticals.com/careers.aspx: HTTPSConnectionPool(host='alembicpharmaceuticals.com', port=443): Max retries exceeded with url: /careers.aspx (Caused by NewConnectionError("HTTPSConnection(host='alembicpharmaceuticals.com', port=443): Failed to establish a new connection: [Errno 111] Connection refused"))
+- LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 - LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 - fetch HTTP 403: https://www.torrentpharma.com/careers/join-us/
 - fetch HTTP 403: https://www.torrentpharma.com/careers/join-us/
