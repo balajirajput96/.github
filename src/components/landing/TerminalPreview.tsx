@@ -10,6 +10,24 @@ const lines = [
   { cmd: 'ag deploy', out: 'Deploying to production... Done in 1.2s' }
 ];
 
+const TERMINAL_HEADER = (
+  <div style={{
+    background: 'var(--surface-color)',
+    padding: '0.75rem 1rem',
+    borderBottom: '1px solid var(--border-color)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem'
+  }}>
+    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f56' }} />
+    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e' }} />
+    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#27c93f' }} />
+    <div style={{ marginLeft: '1rem', color: 'var(--muted-color)', fontSize: '0.875rem', fontFamily: 'var(--font-code)' }}>
+      bash — antigravity
+    </div>
+  </div>
+);
+
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
   const [text, setText] = useState('');
@@ -68,22 +86,7 @@ export function TerminalPreview() {
           margin: '0 auto',
           boxShadow: '0 20px 40px var(--shadow-color)',
         }}>
-          {/* Terminal Header */}
-          <div style={{
-            background: 'var(--surface-color)',
-            padding: '0.75rem 1rem',
-            borderBottom: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f56' }} />
-            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e' }} />
-            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#27c93f' }} />
-            <div style={{ marginLeft: '1rem', color: 'var(--muted-color)', fontSize: '0.875rem', fontFamily: 'var(--font-code)' }}>
-              bash — antigravity
-            </div>
-          </div>
+          {TERMINAL_HEADER}
 
           {/* Terminal Body */}
           <div style={{
