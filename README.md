@@ -1,36 +1,56 @@
-# Pharma Job Automation Agent
+# AI Automation Workspace and Express API
 
-A personal AI-powered job search and automation toolkit tailored for Pharmaceutical QA/IPQA roles. This system helps you find jobs, match your resume, and draft tailored HR emails and cover letters to streamline the application process.
+This repository contains the AI-assisted pharmaceutical job-automation workspace and an Express server that exposes safe, testable integration routes for GitHub, Slack, Jira, and workflow orchestration.
 
-## Features
-- **Job Collection:** Scan public job boards and company career pages (no unauthorized scraping).
-- **Resume Tailoring:** Compare job descriptions with your Pharma QA/IPQA profile.
-- **Match Scoring:** Generate short match scores based on requirements like GMP, BMR/BPR review, and quality oversight.
-- **Email drafting:** Auto-generate tailored application email drafts with subject lines and bodies.
-- **Reporting:** Daily summaries of new jobs and matches.
+## Server routes
 
-## Quick Start (Beginner Friendly)
+| Route | Purpose |
+|---|---|
+| `GET /` | Service status and configured integration indicators. |
+| `GET /health` | Health check. |
+| `GET /api/hello` | Basic API smoke test. |
+| `GET /api/atlassian`, `/api/slack`, `/api/claude-ai`, `/api/youtube`, `/api/google-drive` | Integration placeholders. |
+| `GET/POST /api/github/...` | Authorized GitHub integration placeholders with input validation. |
+| `GET/POST /api/slack/...` | Slack integration placeholders with input validation. |
+| `GET/POST /api/jira/...` | Jira integration placeholders with input validation. |
+| `POST /api/workflow/create` | Validate and create a workflow representation. |
+| `POST /api/workflow/sync` | Validate a workflow synchronization request. |
+| `GET /api-docs` | Lightweight endpoint list. |
 
-1. **Clone the repository and set up a virtual environment:**
-   `python -m venv venv`
-   `source venv/bin/activate`  # On Windows, use `venv\Scripts\activate`
+All API routes are rate-limited in memory and return JSON errors for invalid input. The module exports the Express app and only starts a listener outside `NODE_ENV=test`, which keeps tests deterministic.
 
-2. **Install requirements:**
-   `pip install -r requirements.txt`
+## Local setup
 
-3. **Configure Environment:**
-   Copy `.env.example` to `.env` and fill in your API keys (e.g., Google Gemini, OpenAI).
-   `cp .env.example .env`
+```bash
+cd web-app/server
+npm ci
+npm test
+npm start
+```
 
-4. **Run the Demo:**
-   `python scripts/demo_run.py`
+The server listens on port `3001` by default or the value of `PORT`. The client build is served from `web-app/client/build` when it exists.
 
-## Folder Structure
-- `agents/`: Core modules for collecting jobs, analyzing resumes, matching, and generating emails.
-- `utils/`: Helpers like logging and configuration loading.
-- `scripts/`: Executable scripts for daily jobs, demos, and scheduling.
-- `jobs/`, `reports/`: Directories for saving output data (CSV/JSON/Text).
-- `docs/`: Setup, troubleshooting, and beginner guides.
+Copy `.env.example` to `.env` and provide only the credentials required for your integrations. Never commit `.env` or put real tokens in source files.
+
+## Testing
+
+The server test suite uses Jest and Supertest:
+
+```bash
+cd web-app/server
+NODE_ENV=test npm test
+```
+
+Tests cover the API smoke endpoints and integration placeholders without sending external messages or modifying third-party systems.
+
+## Workspace automation
+
+The repository also contains modules for authorized job collection, resume tailoring, pharmaceutical QA/IPQA matching, application-email drafting, and reporting. Review generated outputs before external use and follow each source platform's terms.
+
+## Deployment
+
+Install dependencies with `npm ci` and start the service with `npm start`. Configure environment variables through the hosting provider. The service must not expose credentials in logs or client-side bundles.
 
 ## Disclaimer
-This tool relies entirely on public and authorized sources. It is intended for personal automation and complies with standard platform usage guidelines.
+
+Use this project only with public or authorized data and with appropriate human review. The integration routes in this branch are validation-safe placeholders unless a real provider client is deliberately configured.
