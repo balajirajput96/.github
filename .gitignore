@@ -31,6 +31,9 @@ node_modules/
 web-app/client/build/
 web-app/server/coverage/
 
+# Runtime logs
+logs/
+
 # Workspace-generated data
 jobs/*.json
 jobs/*.csv
