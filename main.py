@@ -55,7 +55,7 @@ def get_github_repos():
     if not github_token or github_token.lower().startswith("your_"):
         raise HTTPException(
             status_code=400,
-            detail="GitHub token not configured. Set GITHUB_TOKEN in the environment.",
+            detail="GitHub token not configured. Please set it in your .env file.",
         )
 
     headers = {
@@ -88,9 +88,9 @@ def send_slack_message(message: SlackMessage):
     slack_token = os.getenv("SLACK_BOT_TOKEN")
     channel_id = os.getenv("SLACK_CHANNEL_ID")
     if not slack_token or slack_token.lower().startswith("your_"):
-        raise HTTPException(status_code=400, detail="Slack token not configured. Set SLACK_BOT_TOKEN in the environment.")
+        raise HTTPException(status_code=400, detail="Slack token not configured. Please set it in your .env file.")
     if not channel_id or channel_id.lower().startswith("your_"):
-        raise HTTPException(status_code=400, detail="Slack channel ID not configured. Set SLACK_CHANNEL_ID in the environment.")
+        raise HTTPException(status_code=400, detail="Slack channel ID not configured. Please set it in your .env file.")
 
     try:
         WebClient(token=slack_token).chat_postMessage(channel=channel_id, text=message.text)
