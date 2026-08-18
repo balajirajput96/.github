@@ -12,7 +12,7 @@ const maxRequestsPerWindow = 100;
 const ipRequestCounts = new Map();
 
 // Periodically clean up rate limiter map
-setInterval(() => {
+const cleanupInterval = setInterval(() => {
   const now = Date.now();
   for (const [ip, data] of ipRequestCounts.entries()) {
     if (now - data.startTime > rateLimitWindowMs) {
@@ -20,6 +20,7 @@ setInterval(() => {
     }
   }
 }, rateLimitWindowMs);
+cleanupInterval.unref();
 
 const rateLimiter = (req, res, next) => {
   const ip = req.ip || req.connection.remoteAddress;
@@ -58,7 +59,7 @@ app.use('/api/', rateLimiter);
  * @returns {object} 200 - A JSON object with a "Hello gamer!" message.
  */
 app.get('/api/hello', (req, res) => {
-  res.json({ message: 'Hello gamer!' });
+  res.json({ message: 'Hello from the AI Assistant Platform API!' });
 });
 
 /**
@@ -125,6 +126,10 @@ app.get(/(.*)/, (req, res) => {
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
-app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server listening at http://localhost:${port}`);
+  });
+}
+
+module.exports = { app };
