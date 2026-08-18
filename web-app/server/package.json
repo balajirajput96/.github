@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "heroku-postbuild": "cd ../client && npm ci --omit=dev && npm run build",
-    "test": "jest --runInBand"
+    "test": "jest index.test.js --runInBand"
   },
   "keywords": [],
   "author": "",
