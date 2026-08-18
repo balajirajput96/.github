@@ -19,3 +19,6 @@
 ## 2024-05-14 - React Animation State Updates Causing Unnecessary Re-renders
 **Learning:** High-frequency state updates (like typing animations using `setInterval` every 100ms) will trigger a full component re-render. If the component also renders a mapped list (like previous terminal lines), these elements will be needlessly recreated and reconciled on every frame of the animation, causing unnecessary CPU overhead and potential jank, even if they don't change.
 **Action:** Extract constant data arrays outside the component scope to avoid reallocation, and use `useMemo` to memoize the rendering of list elements that depend on a slow-changing state (e.g. `currentLine`) so they are isolated from the fast-changing state (e.g. `text` for the typing animation).
+## 2024-08-18 - Prevent Frequent Reconciliation in React Animation Loops
+**Learning:** In a codebase implementing custom text typing animations via rapid `setInterval` state updates (e.g., every 100ms in `TerminalPreview.tsx`), inline static JSX elements trigger unnecessary object allocations and diffing overhead on every tick.
+**Action:** Extract fully static, frequently rendered JSX subtrees into constants defined *outside* the component function to ensure they are created only once, allowing React's reconciler to completely bypass them during rapid render cycles.
