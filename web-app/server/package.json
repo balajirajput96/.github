@@ -1,12 +1,14 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
+  "description": "AI Automation Hub backend",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "heroku-postbuild": "cd ../client && npm ci --omit=dev && npm run build",
-    "test": "jest index.test.js --runInBand"
+    "test": "npm run test:jest && npm run test:node",
+    "test:jest": "jest index.test.js --runInBand",
+    "test:node": "node --test test/server.test.js"
   },
   "keywords": [],
   "author": "",
@@ -18,7 +20,7 @@
     "express": "^5.1.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "supertest": "^7.0.0"
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
   }
 }
