@@ -1,4 +1,4 @@
-# Job Dashboard — updated 2026-08-17
+# Job Dashboard — updated 2026-08-18
 
 - New added today: **0**  |  Total tracked: **0**
 - Walk-ins available: **0**
@@ -17,7 +17,8 @@
 
 _If 0 jobs, these lines show why (blocked fetch / JS-only page / LLM key or credits error)._
 
-- listing https://www.pharmatutor.org/pharma-jobs -> 5 posts
+- listing https://www.pharmatutor.org/pharma-jobs -> 6 posts
+- LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 - LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 - LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 - LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
