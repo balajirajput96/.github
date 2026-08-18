@@ -12,7 +12,7 @@ const maxRequestsPerWindow = 100;
 const ipRequestCounts = new Map();
 
 // Periodically clean up rate limiter map
-setInterval(() => {
+const cleanupInterval = setInterval(() => {
   const now = Date.now();
   for (const [ip, data] of ipRequestCounts.entries()) {
     if (now - data.startTime > rateLimitWindowMs) {
@@ -20,6 +20,7 @@ setInterval(() => {
     }
   }
 }, rateLimitWindowMs);
+cleanupInterval.unref();
 
 const rateLimiter = (req, res, next) => {
   const ip = req.ip || req.connection.remoteAddress;
@@ -125,6 +126,10 @@ app.get(/(.*)/, (req, res) => {
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
-app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server listening at http://localhost:${port}`);
+  });
+}
+
+module.exports = { app };
