@@ -9,8 +9,10 @@ The GitHub Actions workflow commits jobs.csv + dashboard.md back to the repo.
 NEVER sends anything. Only secret required: OPENROUTER_API_KEY.
 """
 import os, sys, json, csv, hashlib, datetime, pathlib, re
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 import requests
+import socket
+import ipaddress
 
 
 # ⚡ Bolt Optimization: Use a shared requests.Session to pool connections and reduce API latency
@@ -23,6 +25,7 @@ DASHBOARD = HERE / "dashboard.md"
 MODEL = os.getenv("LLM_MODEL", "openai/gpt-4o-mini")
 SCORE_THRESHOLD = int(os.getenv("SCORE_THRESHOLD", "55"))
 MAX_POSTS_PER_LISTING = int(os.getenv("MAX_POSTS_PER_LISTING", "12"))
+MAX_FETCH_REDIRECTS = 3
 
 DIAG = []   # human-readable diagnostics surfaced into dashboard.md
 
@@ -59,16 +62,67 @@ def prompt(name):
     return (HERE / "prompts" / f"{name}.md").read_text(encoding="utf-8")
 
 
-def fetch_html(url):
+def is_public_address(address):
+    ip = ipaddress.ip_address(address)
+    return not any((
+        ip.is_private,
+        ip.is_loopback,
+        ip.is_link_local,
+        ip.is_multicast,
+        ip.is_unspecified,
+        ip.is_reserved,
+    ))
+
+
+def is_safe_url(url):
     try:
-        r = session.get(url, timeout=45, headers={"User-Agent": "Mozilla/5.0"})
-        if r.status_code != 200:
-            DIAG.append(f"fetch HTTP {r.status_code}: {url}")
-        return r.text
-    except Exception as e:
-        DIAG.append(f"fetch ERROR {url}: {e}")
-        print(f"  ! fetch failed {url}: {e}")
-        return ""
+        parsed = urlparse(url)
+        if parsed.scheme not in ('http', 'https'):
+            return False
+        hostname = parsed.hostname
+        if not hostname or parsed.username or parsed.password:
+            return False
+        if parsed.port not in (None, 80, 443):
+            return False
+        addresses = {item[4][0] for item in socket.getaddrinfo(hostname, None, type=socket.SOCK_STREAM)}
+        return bool(addresses) and all(is_public_address(address) for address in addresses)
+    except Exception:
+        return False
+
+
+def fetch_html(url):
+    current_url = url
+    for _ in range(MAX_FETCH_REDIRECTS + 1):
+        if not is_safe_url(current_url):
+            DIAG.append(f"fetch BLOCKED (unsafe URL): {current_url}")
+            print(f"  ! fetch blocked (unsafe URL): {current_url}")
+            return ""
+        try:
+            response = session.get(
+                current_url,
+                timeout=45,
+                headers={"User-Agent": "Mozilla/5.0"},
+                allow_redirects=False,
+            )
+        except Exception as e:
+            DIAG.append(f"fetch ERROR {current_url}: {e}")
+            print(f"  ! fetch failed {current_url}: {e}")
+            return ""
+
+        if response.status_code in (301, 302, 303, 307, 308):
+            location = response.headers.get("Location")
+            if not location:
+                DIAG.append(f"fetch BLOCKED (redirect without location): {current_url}")
+                return ""
+            current_url = urljoin(current_url, location)
+            continue
+
+        if response.status_code != 200:
+            DIAG.append(f"fetch HTTP {response.status_code}: {current_url}")
+        return response.text
+
+    DIAG.append(f"fetch BLOCKED (too many redirects): {url}")
+    return ""
 
 
 def to_text(html):
