@@ -28,6 +28,31 @@ const TERMINAL_HEADER = (
   </div>
 );
 
+// PERFORMANCE OPTIMIZATION:
+// Extract purely static UI elements (prompt and cursor) completely outside
+// the component function. Because TerminalPreview uses a high-frequency
+// interval to update state (`text` and `currentLine`) for the typing animation,
+// it re-renders constantly. Hoisting these elements prevents React from
+// continuously re-allocating and diffing these nodes and their inline style
+// objects on every frame, saving CPU cycles.
+const TERMINAL_PROMPT = (
+  <>
+    <span style={{ color: 'var(--primary-accent)' }}>~</span>
+    <span style={{ color: 'var(--secondary-accent)' }}>$</span>
+  </>
+);
+
+const TERMINAL_CURSOR = (
+  <span className="cursor-blink" style={{
+    display: 'inline-block',
+    width: '8px',
+    height: '15px',
+    background: 'var(--fg-color)',
+    marginLeft: '2px',
+    verticalAlign: 'middle'
+  }} />
+);
+
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
   const [text, setText] = useState('');
@@ -41,8 +66,7 @@ export function TerminalPreview() {
         style={{ marginBottom: '1rem' }}
       >
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <span style={{ color: 'var(--primary-accent)' }}>~</span>
-          <span style={{ color: 'var(--secondary-accent)' }}>$</span>
+          {TERMINAL_PROMPT}
           <span style={{ color: 'var(--fg-color)' }}>{line.cmd}</span>
         </div>
         <div style={{ color: 'var(--muted-color)', paddingLeft: '2rem' }}>
@@ -102,34 +126,18 @@ export function TerminalPreview() {
 
             {currentLine < lines.length && (
               <div style={{ display: 'flex', gap: '1rem' }}>
-                <span style={{ color: 'var(--primary-accent)' }}>~</span>
-                <span style={{ color: 'var(--secondary-accent)' }}>$</span>
+                {TERMINAL_PROMPT}
                 <span style={{ color: 'var(--fg-color)' }}>
                   {text}
-                  <span className="cursor-blink" style={{
-                    display: 'inline-block',
-                    width: '8px',
-                    height: '15px',
-                    background: 'var(--fg-color)',
-                    marginLeft: '2px',
-                    verticalAlign: 'middle'
-                  }} />
+                  {TERMINAL_CURSOR}
                 </span>
               </div>
             )}
 
             {currentLine >= lines.length && (
               <div style={{ display: 'flex', gap: '1rem' }}>
-                <span style={{ color: 'var(--primary-accent)' }}>~</span>
-                <span style={{ color: 'var(--secondary-accent)' }}>$</span>
-                <span className="cursor-blink" style={{
-                  display: 'inline-block',
-                  width: '8px',
-                  height: '15px',
-                  background: 'var(--fg-color)',
-                  marginLeft: '2px',
-                  verticalAlign: 'middle'
-                }} />
+                {TERMINAL_PROMPT}
+                {TERMINAL_CURSOR}
               </div>
             )}
           </div>
