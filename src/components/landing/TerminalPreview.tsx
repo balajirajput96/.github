@@ -11,7 +11,7 @@ const lines = [
 ];
 
 const TERMINAL_HEADER = (
-  <div style={{
+  <div aria-hidden="true" style={{
     background: 'var(--surface-color)',
     padding: '0.75rem 1rem',
     borderBottom: '1px solid var(--border-color)',
@@ -36,14 +36,14 @@ const TERMINAL_HEADER = (
 // continuously re-allocating and diffing these nodes and their inline style
 // objects on every frame, saving CPU cycles.
 const TERMINAL_PROMPT = (
-  <>
+  <div aria-hidden="true" style={{ display: 'inline-flex', userSelect: 'none' }}>
     <span style={{ color: 'var(--primary-accent)' }}>~</span>
     <span style={{ color: 'var(--secondary-accent)' }}>$</span>
-  </>
+  </div>
 );
 
 const TERMINAL_CURSOR = (
-  <span className="cursor-blink" style={{
+  <span aria-hidden="true" className="cursor-blink" style={{
     display: 'inline-block',
     width: '8px',
     height: '15px',
