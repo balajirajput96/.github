@@ -8,6 +8,7 @@ import ClaudeAI from './pages/ClaudeAI';
 import YouTube from './pages/YouTube';
 import GoogleDrive from './pages/GoogleDrive';
 import GitHub from './pages/GitHub';
+import ErrorBoundary from './components/ErrorBoundary';
 
 /**
  * @description The main application component. It sets up the routing for the entire application,
@@ -17,15 +18,17 @@ import GitHub from './pages/GitHub';
 function App() {
   return (
     <Layout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/atlassian" element={<Atlassian />} />
-        <Route path="/slack" element={<Slack />} />
-        <Route path="/claude-ai" element={<ClaudeAI />} />
-        <Route path="/youtube" element={<YouTube />} />
-        <Route path="/google-drive" element={<GoogleDrive />} />
-        <Route path="/github" element={<GitHub />} />
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/atlassian" element={<Atlassian />} />
+          <Route path="/slack" element={<Slack />} />
+          <Route path="/claude-ai" element={<ClaudeAI />} />
+          <Route path="/youtube" element={<YouTube />} />
+          <Route path="/google-drive" element={<GoogleDrive />} />
+          <Route path="/github" element={<GitHub />} />
+        </Routes>
+      </ErrorBoundary>
     </Layout>
   );
 }
