@@ -17,6 +17,11 @@ NEVER sends anything. Secrets come ONLY from environment (GitHub Actions Secrets
 import os, sys, json, hashlib, datetime, pathlib, re
 import requests
 
+# PERFORMANCE OPTIMIZATION:
+# Use a shared session for connection pooling. This drastically reduces the overhead
+# of establishing new TCP connections and TLS handshakes for every API call,
+# significantly improving latency when calling the LLM API multiple times.
+session = requests.Session()
 HERE = pathlib.Path(__file__).resolve().parent
 MODEL = os.getenv("LLM_MODEL", "openai/gpt-4o-mini")
 SCORE_THRESHOLD = int(os.getenv("SCORE_THRESHOLD", "55"))
@@ -33,7 +38,7 @@ Ankleshwar, Bharuch. Experience fit: 1-3 / 2-5 / 2-7 years."""
 # ----------------------------------------------------------------- LLM helper
 def llm(system, user, json_out=True):
     key = os.environ["OPENROUTER_API_KEY"]
-    r = requests.post(
+    r = session.post(
         "https://openrouter.ai/api/v1/chat/completions",
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
         json={
@@ -58,7 +63,7 @@ def prompt(name):
 def fetch_text(url):
     try:
         from bs4 import BeautifulSoup
-        html = requests.get(url, timeout=45, headers={"User-Agent": "Mozilla/5.0"}).text
+        html = session.get(url, timeout=45, headers={"User-Agent": "Mozilla/5.0"}).text
         soup = BeautifulSoup(html, "html.parser")
         for t in soup(["script", "style", "noscript"]):
             t.extract()
