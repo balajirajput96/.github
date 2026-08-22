@@ -51,7 +51,9 @@ export function FAQ() {
                   overflow: 'hidden'
                 }}
               >
-                <button
+                <motion.button
+                  whileHover={{ backgroundColor: 'var(--surface-hover)' }}
+                  whileFocus={{ backgroundColor: 'var(--surface-hover)' }}
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                   style={{
                     width: '100%',
@@ -61,7 +63,8 @@ export function FAQ() {
                     justifyContent: 'space-between',
                     textAlign: 'left',
                     fontWeight: 500,
-                    fontSize: '1.125rem'
+                    fontSize: '1.125rem',
+                    transition: 'background-color 0.2s ease',
                   }}
                   aria-expanded={isOpen}
                   aria-controls={`faq-answer-${index}`}
@@ -75,7 +78,7 @@ export function FAQ() {
                       <polyline points="6 9 12 15 18 9"></polyline>
                     </svg>
                   </motion.div>
-                </button>
+                </motion.button>
 
                 <AnimatePresence>
                   {isOpen && (
