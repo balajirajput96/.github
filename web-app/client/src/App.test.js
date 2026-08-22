@@ -1,13 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 
-test('renders dashboard page on default route', () => {
+test('renders dashboard page on default route', async () => {
   render(
     <MemoryRouter>
       <App />
     </MemoryRouter>
   );
-  const headingElement = screen.getByRole('heading', { name: /Dashboard/i });
+  const headingElement = await screen.findByRole('heading', { name: /Dashboard/i });
   expect(headingElement).toBeInTheDocument();
 });
