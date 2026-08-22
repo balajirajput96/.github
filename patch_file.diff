@@ -1,0 +1,18 @@
+<<<<<<< SEARCH
+  const [currentLine, setCurrentLine] = useState(0);
+=======
+  const [currentLine, setCurrentLine] = useState(0);
+
+  const handleComplete = useCallback(() => {
+    setCurrentLine((prev) => prev + 1);
+  }, []);
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+              command={lines[currentLine]}
+              onComplete={() => setCurrentLine((prev) => prev + 1)}
+            />
+=======
+              command={lines[currentLine]}
+              onComplete={handleComplete}
+            />
+>>>>>>> REPLACE
