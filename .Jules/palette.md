@@ -13,3 +13,7 @@
 ## 2024-07-14 - Playwright Verification with Client-Side Routing
 **Learning:** Using `file://` to load the built index.html for Playwright testing fails because TanStack Router requires a proper server for client-side routing to function, otherwise elements like 'text=Defy gravity' won't render.
 **Action:** Always start a local server (e.g. `pnpm preview` on port 4173) and test against `http://localhost:4173` when verifying frontend changes in apps using client-side routing.
+
+## 2024-05-14 - Redundant screen reader announcements in mock terminals
+**Learning:** Purely decorative text characters used to simulate terminal UI elements (like `~` and `$` command prompts, or fake blinking cursors) are read aloud by screen readers, creating noisy and frustrating user experiences ("tilde dollar sign ag init").
+**Action:** Always add `aria-hidden="true"` to spans containing decorative terminal symbols or cursors that do not convey functional information, prioritizing the actual command text instead.
