@@ -1,0 +1,3 @@
+## 2026-07-22 - Keyboard Interaction Parity with Framer Motion and Inline Styles
+**Learning:** When using Framer Motion's `whileHover` or manually handling mouse enter/leave events for interactive elements (like buttons or navigation links), keyboard users do not automatically get the same visual feedback. The hover states must be explicitly duplicated for focus states (e.g., using `whileFocus` in Framer Motion, or `onFocus`/`onBlur` for manual event handlers).
+**Action:** Always verify that interactive elements with custom hover states (whether via Framer Motion animations or inline style changes) have corresponding focus states to ensure keyboard accessibility and interaction parity.
