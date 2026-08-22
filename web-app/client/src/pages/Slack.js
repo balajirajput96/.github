@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Typography,
   Button,
@@ -8,77 +8,87 @@ import {
   ListItem,
   ListItemText,
   Divider,
-  Alert
+  CircularProgress,
+  Alert,
 } from '@mui/material';
+import useFetch from '../hooks/useFetch';
 
 /**
  * @description The Slack page component. This page displays content related to Slack integration.
  * @returns {JSX.Element} The rendered Slack page.
  */
 const Slack = () => {
-  const [channels, setChannels] = useState([]);
-  const [error, setError] = useState(null);
+  const [shouldFetch, setShouldFetch] = useState(false);
+  const { data, loading, error } = useFetch(shouldFetch ? '/api/slack' : null);
 
-  const handleFetch = async () => {
-    setError(null);
-    try {
-      const response = await fetch('/api/slack');
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || `HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setChannels(data.channels || []);
-    } catch (error) {
-      setError(error.message);
-      setChannels([]);
-    }
+  const handleFetchData = () => {
+    setShouldFetch(true);
   };
 
-  useEffect(() => {
-    handleFetch();
-  }, []);
+  const rawChannels = data?.channels ?? data?.data?.channels ?? [];
+  const channels = rawChannels.map((channel, index) => (
+    typeof channel === 'string'
+      ? { id: `${channel}-${index}`, name: channel, purpose: '' }
+      : channel
+  ));
+  const errorMessage = error?.message ?? error;
 
   return (
-    <div>
+    <Box sx={{ flexGrow: 1 }}>
       <Typography variant="h4" gutterBottom>
         Slack Integration
       </Typography>
       <Typography paragraph>
-        A list of public channels in your Slack workspace.
+        Integrate with your Slack workspace to receive notifications, send messages, and automate communication tasks.
       </Typography>
-      <Button variant="contained" color="primary" onClick={handleFetch}>
-        Refresh Channels
-      </Button>
-      <Box mt={3}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
+
+      <Paper elevation={3} sx={{ p: 2, mt: 2 }}>
+        <Typography variant="h6">Connect to Slack</Typography>
+        <Typography paragraph>
+          Click the button below to fetch data from the Slack API. This is a sample interaction to demonstrate connectivity.
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleFetchData}
+          disabled={loading}
+        >
+          {loading ? <CircularProgress size={24} /> : 'Fetch Slack Data'}
+        </Button>
+
+        {errorMessage && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            Error: {errorMessage}
           </Alert>
         )}
-        <Paper elevation={3}>
-          <List>
-            {channels.length > 0 ? (
-              channels.map((channel, index) => (
-                <React.Fragment key={channel.id}>
+
+        {data && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="h6">API Response:</Typography>
+            {data.message && <Typography>Message: {data.message}</Typography>}
+            {data.data?.workspace && <Typography>Workspace: {data.data.workspace}</Typography>}
+            <Typography>Channels:</Typography>
+            <List>
+              {channels.length > 0 ? channels.map((channel, index) => (
+                <React.Fragment key={channel.id ?? `${channel.name}-${index}`}>
                   <ListItem>
                     <ListItemText
-                      primary={`#${channel.name}`}
+                      primary={channel.name ? `#${channel.name}` : `Channel ${index + 1}`}
                       secondary={channel.purpose || 'No purpose set'}
                     />
                   </ListItem>
                   {index < channels.length - 1 && <Divider />}
                 </React.Fragment>
-              ))
-            ) : (
-              <ListItem>
-                <ListItemText primary="No channels found or failed to fetch." />
-              </ListItem>
-            )}
-          </List>
-        </Paper>
-      </Box>
-    </div>
+              )) : (
+                <ListItem>
+                  <ListItemText primary="No channels found." />
+                </ListItem>
+              )}
+            </List>
+          </Box>
+        )}
+      </Paper>
+    </Box>
   );
 };
 
