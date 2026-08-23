@@ -1,5 +1,3 @@
-import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const lines = [
   { cmd: 'ag init', out: 'Initialized empty Antigravity repository.' },
@@ -54,49 +52,8 @@ const TERMINAL_CURSOR = (
 );
 
 export function TerminalPreview() {
-  const [currentLine, setCurrentLine] = useState(0);
-  const [text, setText] = useState('');
-
-  const completedLines = useMemo(() => {
-    return lines.slice(0, currentLine).map((line, i) => (
-      <motion.div
-        key={i}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        style={{ marginBottom: '1rem' }}
-      >
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          {TERMINAL_PROMPT}
-          <span style={{ color: 'var(--fg-color)' }}>{line.cmd}</span>
-        </div>
-        <div style={{ color: 'var(--muted-color)', paddingLeft: '2rem' }}>
-          {line.out}
-        </div>
-      </motion.div>
-    ));
-  }, [currentLine]);
-
-  useEffect(() => {
-    if (currentLine >= lines.length) return;
-
-    const fullText = lines[currentLine].cmd;
-    let charIndex = 0;
-
-    const typingInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setText(fullText.substring(0, charIndex));
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        setTimeout(() => {
-          setCurrentLine(prev => prev + 1);
-          setText('');
-        }, 1500); // Wait before next command
-      }
-    }, 100); // Typing speed
-
-    return () => clearInterval(typingInterval);
-  }, [currentLine]);
+  const lineDelay = 1.5; // seconds per line
+  const totalDuration = lines.length * lineDelay;
 
   return (
     <section style={{ padding: '8rem 0' }}>
@@ -120,26 +77,51 @@ export function TerminalPreview() {
             lineHeight: 1.6,
             minHeight: '320px'
           }}>
-            <AnimatePresence>
-              {completedLines}
-            </AnimatePresence>
-
-            {currentLine < lines.length && (
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                {TERMINAL_PROMPT}
-                <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
-                  {TERMINAL_CURSOR}
-                </span>
+            {lines.map((line, i) => (
+              <div
+                key={i}
+                className="terminal-line"
+                style={{
+                  marginBottom: '1rem',
+                  animationDelay: `${i * lineDelay}s`
+                }}
+              >
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  {TERMINAL_PROMPT}
+                  <span
+                    className="terminal-typewriter"
+                    style={{
+                      color: 'var(--fg-color)',
+                      animationDelay: `${i * lineDelay}s`
+                    }}
+                  >
+                    {line.cmd}
+                  </span>
+                </div>
+                <div
+                  className="terminal-line"
+                  style={{
+                    color: 'var(--muted-color)',
+                    paddingLeft: '2rem',
+                    animationDelay: `${(i * lineDelay) + 1}s`
+                  }}
+                >
+                  {line.out}
+                </div>
               </div>
-            )}
+            ))}
 
-            {currentLine >= lines.length && (
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                {TERMINAL_PROMPT}
-                {TERMINAL_CURSOR}
-              </div>
-            )}
+            <div
+              className="terminal-line"
+              style={{
+                display: 'flex',
+                gap: '1rem',
+                animationDelay: `${totalDuration}s`
+              }}
+            >
+              {TERMINAL_PROMPT}
+              {TERMINAL_CURSOR}
+            </div>
           </div>
         </div>
       </div>

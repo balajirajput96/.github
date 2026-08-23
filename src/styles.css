@@ -125,3 +125,28 @@ button {
   white-space: nowrap;
   border: 0;
 }
+
+
+/* Terminal Typing Animation */
+@keyframes terminal-typing {
+  from { max-width: 0 }
+  to { max-width: 100% }
+}
+
+.terminal-typewriter {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  animation: terminal-typing 1s steps(40, end) forwards;
+  max-width: 0;
+}
+
+@keyframes terminal-line-fade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.terminal-line {
+  opacity: 0;
+  animation: terminal-line-fade 0.1s forwards;
+}
