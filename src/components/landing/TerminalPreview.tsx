@@ -37,19 +37,20 @@ const TERMINAL_HEADER = (
 // objects on every frame, saving CPU cycles.
 const TERMINAL_PROMPT = (
   <>
-    <span style={{ color: 'var(--primary-accent)' }}>~</span>
-    <span style={{ color: 'var(--secondary-accent)' }}>$</span>
+    <span aria-hidden="true" style={{ color: 'var(--primary-accent)', userSelect: 'none' }}>~</span>
+    <span aria-hidden="true" style={{ color: 'var(--secondary-accent)', userSelect: 'none' }}>$</span>
   </>
 );
 
 const TERMINAL_CURSOR = (
-  <span className="cursor-blink" style={{
+  <span aria-hidden="true" className="cursor-blink" style={{
     display: 'inline-block',
     width: '8px',
     height: '15px',
     background: 'var(--fg-color)',
     marginLeft: '2px',
-    verticalAlign: 'middle'
+    verticalAlign: 'middle',
+    userSelect: 'none'
   }} />
 );
 
