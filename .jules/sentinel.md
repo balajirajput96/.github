@@ -9,3 +9,7 @@
 **Vulnerability:** The FastAPI endpoint `/predict` accepted a `List[float]` without length constraints in `PredictionInput`. A malicious user could send an excessively large list (e.g., millions of items), causing the application to consume excessive memory leading to a Denial of Service (DoS) attack.
 **Learning:** This is a common oversight when defining Pydantic schemas. By default, unbounded iterables (Lists, Dicts, Sets) lack size limits, making endpoints that deserialize large payloads vulnerable to resource exhaustion.
 **Prevention:** Constrain collections and iterables in Pydantic schemas using `Field(..., max_length=N)` where N represents a reasonable, expected upper bound for the business logic.
+## 2024-05-18 - SSRF and Path Traversal in GitHub Endpoint
+**Vulnerability:** The Express backend used URL parameters (`owner`, `repo`) without validation in `axios` requests to external APIs (GitHub).
+**Learning:** `req.params` inputs are untrusted and URL-encoded characters (like `%2F` for `/`) can be passed to external APIs causing path traversal or Server-Side Request Forgery if the external service handles path elements insecurely.
+**Prevention:** Strictly validate external-facing URL parameters using strict regexes (e.g., `/^[a-zA-Z0-9_.-]+$/`) before passing them to internal service requests.

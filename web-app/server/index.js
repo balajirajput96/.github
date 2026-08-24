@@ -76,6 +76,9 @@ app.get('/api/youtube', (req, res) => res.json({ message: 'YouTube API endpoint'
 app.get('/api/google-drive', (req, res) => res.json({ message: 'Google Drive API endpoint' }));
 
 app.get('/api/github/repos/:owner', async (req, res) => {
+  if (!/^[a-zA-Z0-9_.-]+$/.test(req.params.owner)) {
+    return res.status(400).json({ error: 'Invalid owner parameter.' });
+  }
   try {
     const response = await githubApi.get(`/users/${req.params.owner}/repos`);
     return res.json(response.data);
@@ -85,6 +88,9 @@ app.get('/api/github/repos/:owner', async (req, res) => {
 });
 
 app.post('/api/github/issues/:owner/:repo', async (req, res) => {
+  if (!/^[a-zA-Z0-9_.-]+$/.test(req.params.owner) || !/^[a-zA-Z0-9_.-]+$/.test(req.params.repo)) {
+    return res.status(400).json({ error: 'Invalid owner or repo parameter.' });
+  }
   const { title, body } = req.body || {};
   if (!title) return res.status(400).json({ error: 'title is required.' });
   try {
