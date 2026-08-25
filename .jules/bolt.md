@@ -19,3 +19,6 @@
 ## 2024-05-14 - React Animation State Updates Causing Unnecessary Re-renders
 **Learning:** High-frequency state updates (like typing animations using `setInterval` every 100ms) will trigger a full component re-render. If the component also renders a mapped list (like previous terminal lines), these elements will be needlessly recreated and reconciled on every frame of the animation, causing unnecessary CPU overhead and potential jank, even if they don't change.
 **Action:** Extract constant data arrays outside the component scope to avoid reallocation, and use `useMemo` to memoize the rendering of list elements that depend on a slow-changing state (e.g. `currentLine`) so they are isolated from the fast-changing state (e.g. `text` for the typing animation).
+## 2026-08-25 - Use requests.Session() for API connection pooling
+**Learning:** When making multiple API requests to the same domain (like OpenRouter) in a loop, reusing TCP connections via `requests.Session()` significantly reduces latency compared to individual `requests.get/post` calls.
+**Action:** Always instantiate and reuse a `requests.Session()` object for sequential HTTP calls in Python automation scripts.
