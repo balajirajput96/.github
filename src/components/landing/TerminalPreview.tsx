@@ -36,10 +36,10 @@ const TERMINAL_HEADER = (
 // continuously re-allocating and diffing these nodes and their inline style
 // objects on every frame, saving CPU cycles.
 const TERMINAL_PROMPT = (
-  <>
+  <span aria-hidden="true" style={{ userSelect: 'none', display: 'inline-flex', gap: '0.25rem' }}>
     <span style={{ color: 'var(--primary-accent)' }}>~</span>
     <span style={{ color: 'var(--secondary-accent)' }}>$</span>
-  </>
+  </span>
 );
 
 const TERMINAL_CURSOR = (
