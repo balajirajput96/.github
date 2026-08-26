@@ -55,7 +55,6 @@ const TERMINAL_CURSOR = (
 
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
-  const [text, setText] = useState('');
 
   const completedLines = useMemo(() => {
     return lines.slice(0, currentLine).map((line, i) => (
@@ -80,22 +79,17 @@ export function TerminalPreview() {
     if (currentLine >= lines.length) return;
 
     const fullText = lines[currentLine].cmd;
-    let charIndex = 0;
+    const typingDuration = fullText.length * 100; // 100ms per char
 
-    const typingInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setText(fullText.substring(0, charIndex));
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        setTimeout(() => {
-          setCurrentLine(prev => prev + 1);
-          setText('');
-        }, 1500); // Wait before next command
-      }
-    }, 100); // Typing speed
+    // PERFORMANCE OPTIMIZATION:
+    // Instead of forcing a React state update and re-render every 100ms
+    // for each character, we let CSS handle the typing animation smoothly.
+    // We just need a timeout to move to the next line after the typing finishes.
+    const nextLineTimeout = setTimeout(() => {
+      setCurrentLine(prev => prev + 1);
+    }, typingDuration + 1500); // typing time + wait before next command
 
-    return () => clearInterval(typingInterval);
+    return () => clearTimeout(nextLineTimeout);
   }, [currentLine]);
 
   return (
@@ -125,12 +119,22 @@ export function TerminalPreview() {
             </AnimatePresence>
 
             {currentLine < lines.length && (
-              <div style={{ display: 'flex', gap: '1rem' }}>
+              <div key={currentLine} style={{ display: 'flex', gap: '1rem' }}>
                 {TERMINAL_PROMPT}
-                <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
-                  {TERMINAL_CURSOR}
+                <span
+                  style={{
+                    color: 'var(--fg-color)',
+                    display: 'inline-block',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
+                    verticalAlign: 'bottom',
+                    width: `${lines[currentLine].cmd.length}ch`,
+                    animation: `typing ${lines[currentLine].cmd.length * 100}ms steps(${lines[currentLine].cmd.length}, end) forwards`
+                  }}
+                >
+                  {lines[currentLine].cmd}
                 </span>
+                {TERMINAL_CURSOR}
               </div>
             )}
 

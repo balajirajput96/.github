@@ -19,3 +19,8 @@
 ## 2024-05-14 - React Animation State Updates Causing Unnecessary Re-renders
 **Learning:** High-frequency state updates (like typing animations using `setInterval` every 100ms) will trigger a full component re-render. If the component also renders a mapped list (like previous terminal lines), these elements will be needlessly recreated and reconciled on every frame of the animation, causing unnecessary CPU overhead and potential jank, even if they don't change.
 **Action:** Extract constant data arrays outside the component scope to avoid reallocation, and use `useMemo` to memoize the rendering of list elements that depend on a slow-changing state (e.g. `currentLine`) so they are isolated from the fast-changing state (e.g. `text` for the typing animation).
+
+
+## 2024-05-18 - Replacing React-driven typing animations with CSS @keyframes
+**Learning:** High-frequency state updates in React components for animations (like updating a `text` string character-by-character every 100ms via `setInterval` for a typing effect) cause continuous React re-renders of the entire component subtree. While memoization helps, completely eliminating the state updates is far superior.
+**Action:** Instead of managing character-by-character animation in React state, delegate it to CSS. Inject the full text into the DOM once, and use a width-based `@keyframes` animation (`from { width: 0; }`) with `steps()` matching the string length (`ch` units). React should merely handle orchestrating line transitions via a single timeout, minimizing render cycles. Ensure you use a `key` to restart the CSS animation when the line changes.

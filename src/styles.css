@@ -125,3 +125,8 @@ button {
   white-space: nowrap;
   border: 0;
 }
+
+/* Terminal Typing Animation */
+@keyframes typing {
+  from { width: 0; }
+}
