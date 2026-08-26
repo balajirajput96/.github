@@ -76,8 +76,12 @@ app.get('/api/youtube', (req, res) => res.json({ message: 'YouTube API endpoint'
 app.get('/api/google-drive', (req, res) => res.json({ message: 'Google Drive API endpoint' }));
 
 app.get('/api/github/repos/:owner', async (req, res) => {
+  const { owner } = req.params;
+  if (!/^[a-zA-Z0-9_.-]+$/.test(owner)) {
+    return res.status(400).json({ error: 'Invalid owner parameter' });
+  }
   try {
-    const response = await githubApi.get(`/users/${req.params.owner}/repos`);
+    const response = await githubApi.get(`/users/${owner}/repos`);
     return res.json(response.data);
   } catch (error) {
     return forwardError(res, error, 'Failed to fetch GitHub repositories.');
@@ -85,16 +89,20 @@ app.get('/api/github/repos/:owner', async (req, res) => {
 });
 
 app.post('/api/github/issues/:owner/:repo', async (req, res) => {
+  const { owner, repo } = req.params;
+  if (!/^[a-zA-Z0-9_.-]+$/.test(owner) || !/^[a-zA-Z0-9_.-]+$/.test(repo)) {
+    return res.status(400).json({ error: 'Invalid owner or repo parameter' });
+  }
   const { title, body } = req.body || {};
   if (!title) return res.status(400).json({ error: 'title is required.' });
   try {
-    const response = await githubApi.post(`/repos/${req.params.owner}/${req.params.repo}/issues`, { title, body });
+    const response = await githubApi.post(`/repos/${owner}/${repo}/issues`, { title, body });
     const issue = response.data;
     const channel = '#general';
-    const text = `🚀 New GitHub issue created in ${req.params.owner}/${req.params.repo}:\n<${issue.html_url}|#${issue.number} ${issue.title}>`;
+    const text = `🚀 New GitHub issue created in ${owner}/${repo}:\n<${issue.html_url}|#${issue.number} ${issue.title}>`;
     slackApi.post('/chat.postMessage', { channel, text }).catch(() => {});
     if (process.env.DISCORD_WEBHOOK_URL) {
-      axios.post(process.env.DISCORD_WEBHOOK_URL, { content: `🚀 New GitHub issue created in **${req.params.owner}/${req.params.repo}**: [ #${issue.number} ${issue.title} ](${issue.html_url})` }).catch(() => {});
+      axios.post(process.env.DISCORD_WEBHOOK_URL, { content: `🚀 New GitHub issue created in **${owner}/${repo}**: [ #${issue.number} ${issue.title} ](${issue.html_url})` }).catch(() => {});
     }
     return res.status(201).json(issue);
   } catch (error) {
