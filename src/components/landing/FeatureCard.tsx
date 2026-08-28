@@ -15,6 +15,8 @@ export function FeatureCard({ icon, title, description, index }: FeatureCardProp
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       whileHover={{ y: -5, boxShadow: '0 10px 40px var(--shadow-color)' }}
+      whileFocus={{ y: -5, boxShadow: '0 10px 40px var(--shadow-color)' }}
+      tabIndex={0}
       style={{
         background: 'var(--surface-color)',
         border: '1px solid var(--border-color)',
@@ -58,7 +60,8 @@ export function FeatureCard({ icon, title, description, index }: FeatureCardProp
 
       <style>
         {`
-          div:hover > .card-glow {
+          div:hover > .card-glow,
+          div:focus-visible > .card-glow {
             opacity: 0.1;
           }
         `}
