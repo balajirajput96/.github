@@ -34,6 +34,17 @@ const rateLimiter = (req, res, next) => {
   return next();
 };
 
+const isSafeGithubIdentifier = (value) =>
+  typeof value === 'string' && /^[a-zA-Z0-9_.-]+$/.test(value) && value !== '.' && value !== '..';
+
+const requireGithubToken = (res) => {
+  if (!process.env.GITHUB_TOKEN) {
+    res.status(503).json({ error: 'GitHub integration is not configured.' });
+    return false;
+  }
+  return true;
+};
+
 app.disable('x-powered-by');
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -43,7 +54,7 @@ app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'");
   next();
 });
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use('/api/', rateLimiter);
 
 const githubApi = axios.create({
@@ -65,7 +76,7 @@ app.get('/', (req, res) => res.status(200).json({
 }));
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 app.get('/api-docs', (req, res) => res.json({
-  endpoints: ['/health', '/api/hello', '/api/github/repos/:owner', '/api/slack/message', '/api/discord/message', '/api/jira/issue', '/api/workflow/create'],
+  endpoints: ['/health', '/api/hello', '/api/github/repos/:owner', '/api/github/issues/:owner/:repo', '/api/slack/message', '/api/discord/message', '/api/jira/issue', '/api/workflow/create'],
 }));
 
 app.get('/api/hello', (req, res) => res.json({ message: 'Hello from the AI Assistant Platform API!' }));
@@ -76,8 +87,14 @@ app.get('/api/youtube', (req, res) => res.json({ message: 'YouTube API endpoint'
 app.get('/api/google-drive', (req, res) => res.json({ message: 'Google Drive API endpoint' }));
 
 app.get('/api/github/repos/:owner', async (req, res) => {
+  const { owner } = req.params;
+  if (!isSafeGithubIdentifier(owner)) return res.status(400).json({ error: 'Invalid GitHub owner.' });
+  if (!requireGithubToken(res)) return undefined;
   try {
-    const response = await githubApi.get(`/users/${req.params.owner}/repos`);
+    const response = await githubApi.get(`/users/${owner}/repos`, {
+      headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` },
+      params: { per_page: 100 },
+    });
     return res.json(response.data);
   } catch (error) {
     return forwardError(res, error, 'Failed to fetch GitHub repositories.');
@@ -85,16 +102,28 @@ app.get('/api/github/repos/:owner', async (req, res) => {
 });
 
 app.post('/api/github/issues/:owner/:repo', async (req, res) => {
+  const { owner, repo } = req.params;
+  if (!isSafeGithubIdentifier(owner) || !isSafeGithubIdentifier(repo)) {
+    return res.status(400).json({ error: 'Invalid GitHub owner or repository.' });
+  }
+  if (!requireGithubToken(res)) return undefined;
   const { title, body } = req.body || {};
-  if (!title) return res.status(400).json({ error: 'title is required.' });
+  if (!title || typeof title !== 'string' || title.length > 256) {
+    return res.status(400).json({ error: 'title is required and must be at most 256 characters.' });
+  }
+  if (body !== undefined && body !== null && typeof body !== 'string') {
+    return res.status(400).json({ error: 'body must be a string.' });
+  }
   try {
-    const response = await githubApi.post(`/repos/${req.params.owner}/${req.params.repo}/issues`, { title, body });
+    const response = await githubApi.post(`/repos/${owner}/${repo}/issues`, { title, body }, {
+      headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` },
+    });
     const issue = response.data;
-    const channel = '#general';
-    const text = `🚀 New GitHub issue created in ${req.params.owner}/${req.params.repo}:\n<${issue.html_url}|#${issue.number} ${issue.title}>`;
-    slackApi.post('/chat.postMessage', { channel, text }).catch(() => {});
+    const channel = process.env.SLACK_CHANNEL_ID || '#general';
+    const text = `🚀 New GitHub issue created in ${owner}/${repo}:\n<${issue.html_url}|#${issue.number} ${issue.title}>`;
+    if (process.env.SLACK_BOT_TOKEN) slackApi.post('/chat.postMessage', { channel, text }).catch(() => {});
     if (process.env.DISCORD_WEBHOOK_URL) {
-      axios.post(process.env.DISCORD_WEBHOOK_URL, { content: `🚀 New GitHub issue created in **${req.params.owner}/${req.params.repo}**: [ #${issue.number} ${issue.title} ](${issue.html_url})` }).catch(() => {});
+      axios.post(process.env.DISCORD_WEBHOOK_URL, { content: `🚀 New GitHub issue created in **${owner}/${repo}**: [ #${issue.number} ${issue.title} ](${issue.html_url})` }).catch(() => {});
     }
     return res.status(201).json(issue);
   } catch (error) {
@@ -103,6 +132,7 @@ app.post('/api/github/issues/:owner/:repo', async (req, res) => {
 });
 
 app.get('/api/slack/channels', async (req, res) => {
+  if (!process.env.SLACK_BOT_TOKEN) return res.status(503).json({ error: 'Slack integration is not configured.' });
   try {
     const response = await slackApi.get('/conversations.list');
     if (response.data && response.data.ok === false) return res.status(502).json({ error: response.data.error || 'Slack API request failed.' });
@@ -117,6 +147,7 @@ app.post('/api/slack/message', async (req, res) => {
   if (!channel || !text || typeof text !== 'string' || text.length > 40000) {
     return res.status(400).json({ error: 'channel and text are required.' });
   }
+  if (!process.env.SLACK_BOT_TOKEN) return res.status(503).json({ error: 'Slack integration is not configured.' });
   try {
     const response = await slackApi.post('/chat.postMessage', { channel, text });
     if (response.data && response.data.ok === false) return res.status(502).json({ error: response.data.error || 'Slack API request failed.' });
@@ -139,12 +170,8 @@ app.post('/api/discord/message', async (req, res) => {
   }
 });
 
-app.get('/api/jira/projects', (req, res) => res.json({ message: 'Fetching Jira projects' }));
-app.post('/api/jira/issue', (req, res) => {
-  const { projectKey, summary, description } = req.body || {};
-  if (!projectKey || !summary) return res.status(400).json({ error: 'projectKey and summary are required' });
-  return res.status(201).json({ message: 'Successfully created Jira issue', issue: { projectKey, summary, description: description || '' } });
-});
+app.get('/api/jira/projects', (req, res) => res.status(501).json({ error: 'Jira integration is not implemented in this repository.' }));
+app.post('/api/jira/issue', (req, res) => res.status(501).json({ error: 'Jira integration is not implemented in this repository.' }));
 app.post('/api/workflow/create', (req, res) => {
   const { workflowName, steps } = req.body || {};
   if (!workflowName || !Array.isArray(steps)) return res.status(400).json({ error: 'workflowName and steps are required' });

@@ -2,89 +2,106 @@ const request = require('supertest');
 const app = require('./index');
 const axios = require('axios');
 
-// The manual mock in __mocks__/axios.js is used automatically
+jest.mock('axios');
 const mockAxiosInstance = axios.create();
+const originalEnv = process.env;
 
 describe('Personal AI Platform API', () => {
   beforeEach(() => {
-    // Clear mock history before each test
-    mockAxiosInstance.get.mockClear();
-    mockAxiosInstance.post.mockClear();
-    axios.post.mockClear(); // Clear history for the top-level mock
-
-    // Set a default for the webhook URL
-    process.env.DISCORD_WEBHOOK_URL = 'http://discord.webhook.url';
+    process.env = { ...originalEnv, DISCORD_WEBHOOK_URL: 'http://discord.webhook.url', GITHUB_TOKEN: 'github-test-token', SLACK_BOT_TOKEN: 'slack-test-token' };
+    mockAxiosInstance.get.mockReset();
+    mockAxiosInstance.post.mockReset();
+    axios.post.mockReset();
   });
 
-  // Health Check and API Documentation
-  describe('GET /', () => {
-    it('should return a status object and API documentation link', async () => {
-      const res = await request(app).get('/');
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('status', '🚀 LIVE');
-    });
+  afterAll(() => { process.env = originalEnv; });
+
+  it('GET / returns the live status', async () => {
+    const res = await request(app).get('/');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('status', '🚀 LIVE');
   });
 
-  // GitHub Endpoints
-  describe('GitHub Integration', () => {
+  describe('GitHub', () => {
     const mockRepos = [{ id: 1, name: 'repo1' }];
     const mockIssue = { id: 1, number: 123, title: 'Test Issue', html_url: 'http://example.com' };
 
-    it('GET /api/github/repos/:owner should fetch repositories', async () => {
+    it('fetches repositories with the configured token', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockRepos });
       const res = await request(app).get('/api/github/repos/test-owner');
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual(mockRepos);
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/users/test-owner/repos');
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/users/test-owner/repos', {
+        headers: { Authorization: 'Bearer github-test-token' }, params: { per_page: 100 },
+      });
     });
 
-    it('POST /api/github/issues/:owner/:repo should trigger Slack and Discord notifications', async () => {
-      mockAxiosInstance.post.mockResolvedValueOnce({ data: mockIssue }); // GitHub
-      mockAxiosInstance.post.mockResolvedValueOnce({ data: { ok: true } }); // Slack
-      axios.post.mockResolvedValueOnce({ status: 204 }); // Discord
+    it('rejects unsafe owner input before calling GitHub', async () => {
+      const res = await request(app).get('/api/github/repos/%2Fetc%2Fpasswd');
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toEqual({ error: 'Invalid GitHub owner.' });
+      expect(mockAxiosInstance.get).not.toHaveBeenCalled();
+    });
 
-      const newIssue = { title: 'Test Issue', body: 'This is a test.' };
-      const res = await request(app).post('/api/github/issues/test-owner/test-repo').send(newIssue);
+    it('returns 503 without a GitHub token', async () => {
+      delete process.env.GITHUB_TOKEN;
+      const res = await request(app).get('/api/github/repos/test-owner');
+      expect(res.statusCode).toBe(503);
+      expect(res.body).toEqual({ error: 'GitHub integration is not configured.' });
+    });
+
+    it('creates an issue and triggers configured notifications', async () => {
+      mockAxiosInstance.post.mockResolvedValueOnce({ data: mockIssue });
+      mockAxiosInstance.post.mockResolvedValueOnce({ data: { ok: true } });
+      axios.post.mockResolvedValueOnce({ status: 204 });
+      const res = await request(app).post('/api/github/issues/test-owner/test-repo').send({ title: 'Test Issue', body: 'This is a test.' });
       expect(res.statusCode).toBe(201);
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/repos/test-owner/test-repo/issues', { title: 'Test Issue', body: 'This is a test.' }, { headers: { Authorization: 'Bearer github-test-token' } });
+      expect(axios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, { content: '🚀 New GitHub issue created in **test-owner/test-repo**: [ #123 Test Issue ](http://example.com)' });
+    });
 
-      const expectedSlackMessage = `🚀 New GitHub issue created in test-owner/test-repo:\n<http://example.com|#123 Test Issue>`;
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/chat.postMessage', { channel: '#general', text: expectedSlackMessage });
-
-      const expectedDiscordMessage = `🚀 New GitHub issue created in **test-owner/test-repo**: [ #${mockIssue.number} ${mockIssue.title} ](${mockIssue.html_url})`;
-      expect(axios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, { content: expectedDiscordMessage });
+    it('rejects unsafe repository input', async () => {
+      const res = await request(app).post('/api/github/issues/test-owner/%2Ftmp').send({ title: 'Test Issue' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toEqual({ error: 'Invalid GitHub owner or repository.' });
     });
   });
 
-  // Slack Endpoints
-  describe('Slack Integration', () => {
-    it('POST /api/slack/message should send a message', async () => {
-      mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
+  describe('Slack', () => {
+    it('sends a message with the configured bot token', async () => {
+      mockAxiosInstance.post.mockResolvedValue({ data: { ok: true, ts: '123.456' } });
       const message = { channel: '#general', text: 'Hello, world!' };
       const res = await request(app).post('/api/slack/message').send(message);
       expect(res.statusCode).toBe(200);
-      expect(res.body).toEqual({ message: 'Message sent to channel: #general' });
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/chat.postMessage', message);
+      expect(res.body).toEqual({ message: 'Message sent to channel: #general', ts: '123.456' });
+    });
+
+    it('returns 503 without a Slack token', async () => {
+      delete process.env.SLACK_BOT_TOKEN;
+      const res = await request(app).post('/api/slack/message').send({ channel: '#general', text: 'Hello' });
+      expect(res.statusCode).toBe(503);
     });
   });
 
-  // Discord Endpoints
-  describe('Discord Integration', () => {
-    it('POST /api/discord/message should send a message', async () => {
+  describe('Discord', () => {
+    it('sends a message with the configured webhook', async () => {
       axios.post.mockResolvedValue({ status: 204 });
       const message = { content: 'Hello, Discord!' };
       const res = await request(app).post('/api/discord/message').send(message);
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual({ message: 'Message sent to Discord' });
-      expect(axios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, message);
+    });
+
+    it('returns 503 without a webhook', async () => {
+      delete process.env.DISCORD_WEBHOOK_URL;
+      const res = await request(app).post('/api/discord/message').send({ content: 'Hello' });
+      expect(res.statusCode).toBe(503);
     });
   });
 
-  // Jira Integration (Placeholder)
-  describe('Jira Integration', () => {
-    it('POST /api/jira/issue should return a placeholder message', async () => {
-      const res = await request(app).post('/api/jira/issue').send({ projectKey: 'PROJ', summary: 'Test' });
-      expect(res.statusCode).toBe(201);
-      expect(res.body.message).toContain('Successfully created Jira issue');
-    });
+  it('does not claim Jira is implemented when it is not', async () => {
+    const res = await request(app).post('/api/jira/issue').send({ projectKey: 'PROJ', summary: 'Test' });
+    expect(res.statusCode).toBe(501);
+    expect(res.body).toEqual({ error: 'Jira integration is not implemented in this repository.' });
   });
 });
