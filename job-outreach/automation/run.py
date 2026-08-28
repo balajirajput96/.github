@@ -31,9 +31,10 @@ Ankleshwar, Bharuch. Experience fit: 1-3 / 2-5 / 2-7 years."""
 
 
 # ----------------------------------------------------------------- LLM helper
-def llm(system, user, json_out=True):
+def llm(system, user, session=None, json_out=True):
     key = os.environ["OPENROUTER_API_KEY"]
-    r = requests.post(
+    req = session if session else requests
+    r = req.post(
         "https://openrouter.ai/api/v1/chat/completions",
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
         json={
@@ -55,10 +56,11 @@ def prompt(name):
 
 
 # ----------------------------------------------------------------- fetching
-def fetch_text(url):
+def fetch_text(url, session=None):
     try:
         from bs4 import BeautifulSoup
-        html = requests.get(url, timeout=45, headers={"User-Agent": "Mozilla/5.0"}).text
+        req = session if session else requests
+        html = req.get(url, timeout=45, headers={"User-Agent": "Mozilla/5.0"}).text
         soup = BeautifulSoup(html, "html.parser")
         for t in soup(["script", "style", "noscript"]):
             t.extract()
@@ -154,12 +156,13 @@ def main():
     print(f"{len(urls)} candidate URLs")
 
     added = 0
+    session = requests.Session()
     for url in urls:
-        text = fetch_text(url)
+        text = fetch_text(url, session=session)
         if len(text) < 200:
             continue
         try:
-            data = llm(prompt("extract"), f"URL: {url}\n\nPAGE TEXT:\n{text}")
+            data = llm(prompt("extract"), f"URL: {url}\n\nPAGE TEXT:\n{text}", session=session)
         except Exception as e:
             print(f"  ! extract failed {url}: {e}")
             continue
@@ -175,7 +178,7 @@ def main():
             continue
 
         try:
-            sc = llm(prompt("score"), f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(data)}")
+            sc = llm(prompt("score"), f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(data)}", session=session)
             score = int(sc.get("match_score", 0))
         except Exception as e:
             print(f"  ! score failed: {e}")
@@ -185,7 +188,7 @@ def main():
         if score >= SCORE_THRESHOLD:
             try:
                 drafts = llm(prompt("draft"),
-                             f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(data)}")
+                             f"CANDIDATE:\n{CANDIDATE}\n\nJOB:\n{json.dumps(data)}", session=session)
             except Exception as e:
                 print(f"  ! draft failed: {e}")
 
