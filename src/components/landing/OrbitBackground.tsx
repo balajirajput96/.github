@@ -1,15 +1,16 @@
 import { motion } from 'framer-motion';
 
+// Stable static particles outside component to eliminate render jank and allocations
+const PARTICLES = Array.from({ length: 30 }).map((_, i) => ({
+  id: i,
+  size: Math.random() * 4 + 1,
+  left: `${Math.random() * 100}%`,
+  top: `${Math.random() * 100}%`,
+  duration: Math.random() * 20 + 10,
+  delay: Math.random() * 5,
+}));
+
 export function OrbitBackground() {
-  // Generate random particles
-  const particles = Array.from({ length: 30 }).map((_, i) => ({
-    id: i,
-    size: Math.random() * 4 + 1,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    duration: Math.random() * 20 + 10,
-    delay: Math.random() * 5,
-  }));
 
   return (
     <div style={{
@@ -70,7 +71,7 @@ export function OrbitBackground() {
       />
 
       {/* Particles */}
-      {particles.map((p) => (
+      {PARTICLES.map((p) => (
         <motion.div
           key={p.id}
           animate={{
