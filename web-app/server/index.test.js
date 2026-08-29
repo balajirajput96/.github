@@ -26,6 +26,24 @@ describe('Personal AI Platform API', () => {
     const mockRepos = [{ id: 1, name: 'repo1' }];
     const mockIssue = { id: 1, number: 123, title: 'Test Issue', html_url: 'http://example.com' };
 
+    it('fetches authenticated user repositories with GET /api/github', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: mockRepos });
+      const res = await request(app).get('/api/github');
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual(mockRepos);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/user/repos', {
+        headers: { Authorization: 'Bearer github-test-token' },
+        params: { per_page: 100, sort: 'updated' },
+      });
+    });
+
+    it('returns 503 for GET /api/github without a token', async () => {
+      delete process.env.GITHUB_TOKEN;
+      const res = await request(app).get('/api/github');
+      expect(res.statusCode).toBe(503);
+      expect(res.body).toEqual({ error: 'GitHub integration is not configured.' });
+    });
+
     it('fetches repositories with the configured token', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockRepos });
       const res = await request(app).get('/api/github/repos/test-owner');
@@ -80,6 +98,61 @@ describe('Personal AI Platform API', () => {
       delete process.env.SLACK_BOT_TOKEN;
       const res = await request(app).post('/api/slack/message').send({ channel: '#general', text: 'Hello' });
       expect(res.statusCode).toBe(503);
+    });
+
+    it('handles GET /api/slack with fallback channels when unconfigured', async () => {
+      delete process.env.SLACK_BOT_TOKEN;
+      const res = await request(app).get('/api/slack');
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('configured', false);
+      expect(Array.isArray(res.body.channels)).toBe(true);
+    });
+
+    it('handles POST /api/slack/oauth', async () => {
+      const res = await request(app).post('/api/slack/oauth').send({ code: 'temp-auth-code' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual({ ok: true, message: 'Slack connected successfully via OAuth.' });
+    });
+
+    it('handles POST /api/slack/test-message', async () => {
+      mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
+      const res = await request(app).post('/api/slack/test-message');
+      expect(res.statusCode).toBe(200);
+      expect(res.body.ok).toBe(true);
+    });
+  });
+
+  describe('Connectors and Integrations Status', () => {
+    it('GET /api/connectors returns all connector states', async () => {
+      const res = await request(app).get('/api/connectors');
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('github');
+      expect(res.body).toHaveProperty('slack');
+      expect(res.body).toHaveProperty('discord');
+      expect(res.body).toHaveProperty('google_drive');
+      expect(res.body).toHaveProperty('gemini');
+      expect(res.body).toHaveProperty('antigravity');
+      expect(res.body).toHaveProperty('datadog');
+      expect(res.body.antigravity.status).toBe('active');
+    });
+
+    it('GET /api/gemini/status returns status', async () => {
+      const res = await request(app).get('/api/gemini/status');
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('cli_installed', true);
+      expect(res.body).toHaveProperty('status', 'operational');
+    });
+
+    it('GET /api/datadog/status returns telemetry status', async () => {
+      const res = await request(app).get('/api/datadog/status');
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('service', 'Datadog');
+    });
+
+    it('GET /api/google-drive returns configured state', async () => {
+      const res = await request(app).get('/api/google-drive');
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('message');
     });
   });
 

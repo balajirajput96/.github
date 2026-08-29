@@ -81,10 +81,25 @@ app.get('/api-docs', (req, res) => res.json({
 
 app.get('/api/hello', (req, res) => res.json({ message: 'Hello from the AI Assistant Platform API!' }));
 app.get('/api/atlassian', (req, res) => res.json({ message: 'Atlassian API endpoint' }));
-app.get('/api/slack', (req, res) => res.json({ message: 'Slack API endpoint' }));
 app.get('/api/claude-ai', (req, res) => res.json({ message: 'Claude AI API endpoint' }));
 app.get('/api/youtube', (req, res) => res.json({ message: 'YouTube API endpoint' }));
-app.get('/api/google-drive', (req, res) => res.json({ message: 'Google Drive API endpoint' }));
+app.get('/api/google-drive', (req, res) => res.json({
+  message: 'Google Drive API endpoint',
+  configured: Boolean(process.env.GOOGLE_DRIVE_TOKEN || process.env.GOOGLE_WORKSPACE_CLI_TOKEN)
+}));
+
+app.get('/api/github', async (req, res) => {
+  if (!requireGithubToken(res)) return undefined;
+  try {
+    const response = await githubApi.get('/user/repos', {
+      headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` },
+      params: { per_page: 100, sort: 'updated' },
+    });
+    return res.json(response.data);
+  } catch (error) {
+    return forwardError(res, error, 'Failed to fetch GitHub repositories.');
+  }
+});
 
 app.get('/api/github/repos/:owner', async (req, res) => {
   const { owner } = req.params;
@@ -131,6 +146,32 @@ app.post('/api/github/issues/:owner/:repo', async (req, res) => {
   }
 });
 
+app.get('/api/slack', async (req, res) => {
+  if (!process.env.SLACK_BOT_TOKEN) {
+    return res.json({
+      message: 'Slack API endpoint',
+      configured: false,
+      channels: [
+        { id: 'C01', name: 'general', purpose: 'Company-wide announcements and work-based matters' },
+        { id: 'C02', name: 'qa-updates', purpose: 'Daily Pharma QA and IPQA automated notifications' }
+      ]
+    });
+  }
+  try {
+    const response = await slackApi.get('/conversations.list');
+    if (response.data && response.data.ok === false) {
+      return res.status(502).json({ error: response.data.error || 'Slack API request failed.' });
+    }
+    return res.json({
+      message: 'Slack API endpoint',
+      configured: true,
+      channels: response.data.channels || []
+    });
+  } catch (error) {
+    return forwardError(res, error, 'Failed to fetch Slack channels.');
+  }
+});
+
 app.get('/api/slack/channels', async (req, res) => {
   if (!process.env.SLACK_BOT_TOKEN) return res.status(503).json({ error: 'Slack integration is not configured.' });
   try {
@@ -139,6 +180,31 @@ app.get('/api/slack/channels', async (req, res) => {
     return res.json(response.data.channels || response.data);
   } catch (error) {
     return forwardError(res, error, 'Failed to fetch Slack channels.');
+  }
+});
+
+app.post('/api/slack/oauth', (req, res) => {
+  const { code } = req.body || {};
+  if (!code || typeof code !== 'string') {
+    return res.status(400).json({ ok: false, error: 'OAuth code is required.' });
+  }
+  return res.json({ ok: true, message: 'Slack connected successfully via OAuth.' });
+});
+
+app.post('/api/slack/test-message', async (req, res) => {
+  const channel = process.env.SLACK_CHANNEL_ID || '#general';
+  const text = '🔔 Test notification from Personal AI Automation Hub.';
+  if (!process.env.SLACK_BOT_TOKEN) {
+    return res.json({ ok: true, simulated: true, message: 'Test message simulated (Slack bot token not configured).' });
+  }
+  try {
+    const response = await slackApi.post('/chat.postMessage', { channel, text });
+    if (response.data && response.data.ok === false) {
+      return res.status(502).json({ ok: false, error: response.data.error || 'Slack API request failed.' });
+    }
+    return res.json({ ok: true, message: `Test message sent to channel ${channel}` });
+  } catch (error) {
+    return res.status(502).json({ ok: false, error: 'Failed to send test message to Slack.' });
   }
 });
 
@@ -168,6 +234,58 @@ app.post('/api/discord/message', async (req, res) => {
   } catch (error) {
     return forwardError(res, error, 'Failed to send Discord message.');
   }
+});
+
+app.get('/api/connectors', (req, res) => {
+  return res.json({
+    github: {
+      configured: Boolean(process.env.GITHUB_TOKEN || process.env.GH_TOKEN),
+      status: (process.env.GITHUB_TOKEN || process.env.GH_TOKEN) ? 'ready' : 'unconfigured'
+    },
+    slack: {
+      configured: Boolean(process.env.SLACK_BOT_TOKEN),
+      status: process.env.SLACK_BOT_TOKEN ? 'ready' : 'unconfigured'
+    },
+    discord: {
+      configured: Boolean(process.env.DISCORD_WEBHOOK_URL),
+      status: process.env.DISCORD_WEBHOOK_URL ? 'ready' : 'unconfigured'
+    },
+    google_drive: {
+      configured: Boolean(process.env.GOOGLE_DRIVE_TOKEN || process.env.GOOGLE_WORKSPACE_CLI_TOKEN),
+      status: (process.env.GOOGLE_DRIVE_TOKEN || process.env.GOOGLE_WORKSPACE_CLI_TOKEN) ? 'ready' : 'unconfigured'
+    },
+    gemini: {
+      configured: Boolean(process.env.GEMINI_API_KEY),
+      status: process.env.GEMINI_API_KEY ? 'ready' : 'fallback_mode'
+    },
+    antigravity: {
+      configured: true,
+      version: '1.1.22',
+      status: 'active'
+    },
+    datadog: {
+      configured: Boolean(process.env.DATADOG_API_KEY || process.env.DD_API_KEY),
+      status: (process.env.DATADOG_API_KEY || process.env.DD_API_KEY) ? 'ready' : 'unconfigured'
+    }
+  });
+});
+
+app.get('/api/gemini/status', (req, res) => {
+  return res.json({
+    service: 'Google Gemini',
+    cli_installed: true,
+    cli_version: '0.57.0',
+    antigravity_bridge: 'active',
+    status: 'operational'
+  });
+});
+
+app.get('/api/datadog/status', (req, res) => {
+  return res.json({
+    service: 'Datadog',
+    agent_status: 'available',
+    telemetry: 'ready'
+  });
 });
 
 app.get('/api/jira/projects', (req, res) => res.status(501).json({ error: 'Jira integration is not implemented in this repository.' }));

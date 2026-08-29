@@ -41,8 +41,23 @@ const Sidebar = () => {
         <ListItemButton component={Link} to="/google-drive" selected={location.pathname === '/google-drive'}>
           <ListItemText primary="Google Drive" />
         </ListItemButton>
-        <ListItemButton component={Link} to="/github">
+        <ListItemButton component={Link} to="/github" selected={location.pathname === '/github'}>
           <ListItemText primary="GitHub" />
+        </ListItemButton>
+        <ListItemButton component={Link} to="/integrations" selected={location.pathname === '/integrations'}>
+          <ListItemText primary="Integrations" />
+        </ListItemButton>
+        <ListItemButton component={Link} to="/workflows" selected={location.pathname === '/workflows'}>
+          <ListItemText primary="Workflows" />
+        </ListItemButton>
+        <ListItemButton component={Link} to="/assistant" selected={location.pathname === '/assistant'}>
+          <ListItemText primary="AI Assistant" />
+        </ListItemButton>
+        <ListItemButton component={Link} to="/analytics" selected={location.pathname === '/analytics'}>
+          <ListItemText primary="Analytics" />
+        </ListItemButton>
+        <ListItemButton component={Link} to="/content" selected={location.pathname === '/content'}>
+          <ListItemText primary="Content Hub" />
         </ListItemButton>
       </List>
     </Drawer>
