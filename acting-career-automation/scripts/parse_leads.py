@@ -30,3 +30,15 @@ def check_for_scams(lead):
         warnings.append("Missing project name")
 
     return warnings
+
+if __name__ == "__main__":
+    test_lead = {
+        "project": "Feature Film",
+        "role": "QA Specialist Lead",
+        "contact": "casting@gmail.com",
+        "contact_type": "email",
+        "notes": "Requires registration fee upfront"
+    }
+    warns = check_for_scams(test_lead)
+    assert len(warns) == 3, f"Expected 3 warnings, got {warns}"
+    print("✓ parse_leads scam check tests passed.")

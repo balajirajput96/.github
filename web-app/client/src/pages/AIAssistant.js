@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Typography, Paper, TextField, Button, List, ListItem, ListItemText, Avatar } from '@mui/material';
-import { SmartToy } from '@mui/icons-material';
 
 const messages = [
   { sender: 'ai', text: 'Hello! I\'m your AI assistant. You can give me commands in Hindi or English. Try asking me to create a JIRA ticket or send a Slack message!' },
@@ -20,7 +19,7 @@ function AIAssistant() {
         <List sx={{ flexGrow: 1, overflow: 'auto' }}>
           {messages.map((message, index) => (
             <ListItem key={index} sx={{ display: 'flex', justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start' }}>
-              {message.sender === 'ai' && <Avatar sx={{ mr: 2 }}><SmartToy /></Avatar>}
+              {message.sender === 'ai' && <Avatar sx={{ mr: 2 }}>🤖</Avatar>}
               <ListItemText
                 primary={message.text}
                 sx={{

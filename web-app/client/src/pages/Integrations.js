@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, Typography, Button, Grid, Paper, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton } from '@mui/material';
-import { Delete } from '@mui/icons-material';
 
 const initialIntegrations = [
   { name: 'Slack', connected: false },
@@ -106,7 +105,7 @@ function Integrations() {
                     )}
                     {integration.connected && (
                       <IconButton edge="end" aria-label="delete">
-                        <Delete />
+                        <span role="img" aria-label="delete">🗑️</span>
                       </IconButton>
                     )}
                   </ListItemSecondaryAction>
