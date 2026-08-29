@@ -8,7 +8,18 @@ const originalEnv = process.env;
 
 describe('Personal AI Platform API', () => {
   beforeEach(() => {
-    process.env = { ...originalEnv, API_KEY: 'test-api-key', DISCORD_WEBHOOK_URL: 'http://discord.webhook.url', GITHUB_TOKEN: 'github-test-token', SLACK_BOT_TOKEN: 'slack-test-token' };
+    process.env = {
+      ...originalEnv,
+      API_KEY: 'test-api-key',
+      DATADOG_API_KEY: 'datadog-test-key',
+      DISCORD_WEBHOOK_URL: 'http://discord.webhook.url',
+      GEMINI_API_KEY: 'gemini-test-key',
+      GITHUB_TOKEN: 'github-test-token',
+      SLACK_BOT_TOKEN: 'slack-test-token',
+      SLACK_CLIENT_ID: 'slack-client-id',
+      SLACK_CLIENT_SECRET: 'slack-client-secret',
+      ANTIGRAVITY_VERSION: 'test',
+    };
     mockAxiosInstance.get.mockReset();
     mockAxiosInstance.post.mockReset();
     axios.post.mockReset();
@@ -120,10 +131,29 @@ describe('Personal AI Platform API', () => {
       expect(Array.isArray(res.body.channels)).toBe(true);
     });
 
-    it('handles POST /api/slack/oauth', async () => {
-      const res = await request(app).post('/api/slack/oauth').send({ code: 'temp-auth-code' });
+    it('exchanges a Slack OAuth code when OAuth credentials are configured', async () => {
+      axios.post.mockResolvedValue({ data: { ok: true, team: { id: 'T1', name: 'Test Team' }, bot_user_id: 'U1' } });
+      const res = await request(app).post('/api/slack/oauth').send({ code: 'temporary-code' });
       expect(res.statusCode).toBe(200);
-      expect(res.body).toEqual({ ok: true, message: 'Slack connected successfully via OAuth.' });
+      expect(res.body).toEqual({
+        ok: true,
+        message: 'Slack connected successfully via OAuth.',
+        team: { id: 'T1', name: 'Test Team' },
+        bot_user_id: 'U1',
+      });
+      expect(axios.post).toHaveBeenCalledWith(
+        'https://slack.com/api/oauth.v2.access',
+        expect.stringContaining('code=temporary-code'),
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+      );
+    });
+
+    it('returns 503 when Slack OAuth is not configured', async () => {
+      delete process.env.SLACK_CLIENT_ID;
+      delete process.env.SLACK_CLIENT_SECRET;
+      const res = await request(app).post('/api/slack/oauth').send({ code: 'temporary-code' });
+      expect(res.statusCode).toBe(503);
+      expect(res.body).toEqual({ ok: false, error: 'Slack OAuth is not configured.' });
     });
 
     it('handles POST /api/slack/test-message', async () => {
@@ -135,30 +165,29 @@ describe('Personal AI Platform API', () => {
   });
 
   describe('Connectors and Integrations Status', () => {
-    it('GET /api/connectors returns all connector states', async () => {
+    it('GET /api/connectors returns truthful connector states', async () => {
       const res = await request(app).get('/api/connectors');
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('github');
-      expect(res.body).toHaveProperty('slack');
-      expect(res.body).toHaveProperty('discord');
-      expect(res.body).toHaveProperty('google_drive');
-      expect(res.body).toHaveProperty('gemini');
-      expect(res.body).toHaveProperty('antigravity');
-      expect(res.body).toHaveProperty('datadog');
-      expect(res.body.antigravity.status).toBe('active');
+      expect(res.body.github.status).toBe('configured');
+      expect(res.body.slack.status).toBe('configured');
+      expect(res.body.discord.status).toBe('configured');
+      expect(res.body.google_drive.status).toBe('unconfigured');
+      expect(res.body.gemini.status).toBe('configured');
+      expect(res.body.antigravity.status).toBe('configured');
+      expect(res.body.datadog.status).toBe('configured');
     });
 
-    it('GET /api/gemini/status returns status', async () => {
+    it('GET /api/gemini/status reports configuration without claiming CLI availability', async () => {
       const res = await request(app).get('/api/gemini/status');
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('cli_installed', true);
-      expect(res.body).toHaveProperty('status', 'operational');
+      expect(res.body).toMatchObject({ configured: true, cli_installed: false, status: 'configured' });
+      expect(res.body.cli_version).toBeNull();
     });
 
-    it('GET /api/datadog/status returns telemetry status', async () => {
+    it('GET /api/datadog/status reports configuration without claiming agent telemetry', async () => {
       const res = await request(app).get('/api/datadog/status');
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('service', 'Datadog');
+      expect(res.body).toEqual({ service: 'Datadog', configured: true, agent_status: 'configured', telemetry: 'configured' });
     });
 
     it('GET /api/google-drive returns configured state', async () => {
@@ -191,23 +220,28 @@ describe('Personal AI Platform API', () => {
   });
 
   describe('AI Assistant', () => {
-    it('POST /api/assistant/chat responds with answer to pharma query', async () => {
-      const res = await request(app).post('/api/assistant/chat').send({ prompt: 'Tell me about Sun Pharma QA role' });
+    it('POST /api/assistant/chat uses Gemini when configured', async () => {
+      axios.post.mockResolvedValue({ data: { candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] } });
+      const res = await request(app).post('/api/assistant/chat').send({ prompt: 'Say hello' });
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('reply');
-      expect(res.body.reply).toContain('Quality Assurance & IPQA Agent active');
+      expect(res.body.reply).toBe('Gemini response');
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/v1beta/models/gemini-2.5-flash:generateContent'),
+        { contents: [{ parts: [{ text: 'Say hello' }] }] },
+        { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' } },
+      );
     });
 
-    it('POST /api/assistant/chat handles Hindi input', async () => {
-      const res = await request(app).post('/api/assistant/chat').send({ prompt: 'नमस्ते असिस्टेंट' });
-      expect(res.statusCode).toBe(200);
-      expect(res.body.reply).toContain('नमस्ते');
+    it('POST /api/assistant/chat returns 503 when Gemini is not configured', async () => {
+      delete process.env.GEMINI_API_KEY;
+      const res = await request(app).post('/api/assistant/chat').send({ prompt: 'Say hello' });
+      expect(res.statusCode).toBe(503);
+      expect(res.body).toEqual({ error: 'Gemini integration is not configured.' });
     });
 
-    it('POST /api/assistant/chat returns 400 when prompt is missing', async () => {
-      const res = await request(app).post('/api/assistant/chat').send({});
+    it('POST /api/assistant/chat rejects oversized prompts', async () => {
+      const res = await request(app).post('/api/assistant/chat').send({ prompt: 'x'.repeat(20001) });
       expect(res.statusCode).toBe(400);
-      expect(res.body).toEqual({ error: 'prompt is required.' });
     });
   });
 
@@ -215,5 +249,12 @@ describe('Personal AI Platform API', () => {
     const res = await request(app).post('/api/jira/issue').send({ projectKey: 'PROJ', summary: 'Test' });
     expect(res.statusCode).toBe(501);
     expect(res.body).toEqual({ error: 'Jira integration is not implemented in this repository.' });
+  });
+
+  it('does not claim unimplemented integrations are operational', async () => {
+    for (const endpoint of ['/api/atlassian', '/api/claude-ai', '/api/youtube']) {
+      const res = await request(app).get(endpoint);
+      expect(res.statusCode).toBe(501);
+    }
   });
 });
