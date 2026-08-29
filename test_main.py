@@ -1,4 +1,6 @@
-import os
+import hashlib
+import hmac
+import json
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -6,10 +8,22 @@ from fastapi.testclient import TestClient
 from main import app
 
 client = TestClient(app)
+SECRET = "test-secret"
+SAMPLE_PAYLOAD = {
+    "action": "opened",
+    "issue": {
+        "title": "Test Issue",
+        "html_url": "https://github.com/test/repo/issues/1",
+    },
+}
+
+
+def signature(body: bytes) -> str:
+    return "sha256=" + hmac.new(SECRET.encode(), body, hashlib.sha256).hexdigest()
 
 
 def test_home_and_health():
-    assert client.get("/").json() == {"message": "API Running!", "status": "active"}
+    assert client.get("/").json() == {"message": "AI Automation Platform is running", "status": "active"}
     assert client.get("/health").json() == {"status": "healthy"}
 
 
@@ -66,3 +80,49 @@ def test_slack_message_is_sent(monkeypatch):
     assert response.status_code == 200
     assert response.json() == {"ok": True, "message": "Message sent successfully."}
     mock_client.assert_called_once_with(token="dummy-token")
+
+
+def test_webhook_requires_signature(monkeypatch):
+    monkeypatch.setenv("GITHUB_WEBHOOK_SECRET", SECRET)
+    response = client.post("/webhook/github", json=SAMPLE_PAYLOAD)
+    assert response.status_code == 400
+    assert "missing" in response.json()["detail"]
+
+
+def test_webhook_rejects_invalid_signature(monkeypatch):
+    monkeypatch.setenv("GITHUB_WEBHOOK_SECRET", SECRET)
+    response = client.post(
+        "/webhook/github",
+        json=SAMPLE_PAYLOAD,
+        headers={"X-Hub-Signature-256": "sha256=invalid"},
+    )
+    assert response.status_code == 400
+    assert "does not match" in response.json()["detail"]
+
+
+def test_webhook_ignores_non_opened_action(monkeypatch):
+    monkeypatch.setenv("GITHUB_WEBHOOK_SECRET", SECRET)
+    payload = dict(SAMPLE_PAYLOAD)
+    payload["action"] = "closed"
+    body = json.dumps(payload).encode("utf-8")
+    response = client.post(
+        "/webhook/github",
+        content=body,
+        headers={"Content-Type": "application/json", "X-Hub-Signature-256": signature(body)},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"message": "Ignoring action: closed"}
+
+
+def test_webhook_requires_jira_credentials(monkeypatch):
+    monkeypatch.setenv("GITHUB_WEBHOOK_SECRET", SECRET)
+    for key in ("JIRA_DOMAIN", "JIRA_USERNAME", "JIRA_API_TOKEN", "JIRA_PROJECT_KEY"):
+        monkeypatch.delenv(key, raising=False)
+    body = json.dumps(SAMPLE_PAYLOAD).encode("utf-8")
+    response = client.post(
+        "/webhook/github",
+        content=body,
+        headers={"Content-Type": "application/json", "X-Hub-Signature-256": signature(body)},
+    )
+    assert response.status_code == 500
+    assert "Jira credentials are not fully configured" in response.json()["detail"]
