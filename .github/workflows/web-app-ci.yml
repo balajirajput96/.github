@@ -1,20 +1,26 @@
-name: Web App CI
+name: CI Pipeline
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'web-app/**'
-      - '.github/workflows/web-app-ci.yml'
   pull_request:
-    paths:
-      - 'web-app/**'
-      - '.github/workflows/web-app-ci.yml'
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
+  python-agents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python scripts/demo_run.py --test
+      - run: python job-outreach/automation/test_url_safety.py
+      - run: python acting-career-automation/scripts/parse_leads.py
   server:
     runs-on: ubuntu-latest
     defaults:

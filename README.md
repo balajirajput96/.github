@@ -82,15 +82,40 @@ npm start
 
 The development frontend opens at `http://localhost:3000` and communicates with the backend according to the client configuration.
 
-## Testing
+## Testing & Unified Validation
 
-Run the backend test command from `web-app/server`:
+To execute the entire 16-stage unified validation suite covering Python agents, FastAPI endpoints, SSRF safety guards, scam detection, outreach runners, Express API, React client, TypeScript compiler, ESLint, and production builds:
 
 ```bash
-NODE_ENV=test npm test
+bash scripts/run_all_validations.sh
 ```
 
-If no test files are present, the package script reports that tests have not been configured for that package. Python tests, when present, can be run with `pytest` from the repository root.
+### Individual Test Suites
+
+- **Python Agents & FastAPI Tests:**
+  ```bash
+  python3 scripts/demo_run.py --test
+  ```
+
+- **Backend Express & Integration Tests (Jest + Node:test):**
+  ```bash
+  cd web-app/server && npm test
+  ```
+
+- **Frontend React Client Tests:**
+  ```bash
+  cd web-app/client && npm test -- --watchAll=false
+  ```
+
+- **URL Safety & SSRF Validation:**
+  ```bash
+  python3 job-outreach/automation/test_url_safety.py
+  ```
+
+- **Career Lead & Scam Detection:**
+  ```bash
+  python3 acting-career-automation/scripts/parse_leads.py
+  ```
 
 ## Security and Responsible Use
 
