@@ -9,3 +9,8 @@
 **Vulnerability:** The FastAPI endpoint `/predict` accepted a `List[float]` without length constraints in `PredictionInput`. A malicious user could send an excessively large list (e.g., millions of items), causing the application to consume excessive memory leading to a Denial of Service (DoS) attack.
 **Learning:** This is a common oversight when defining Pydantic schemas. By default, unbounded iterables (Lists, Dicts, Sets) lack size limits, making endpoints that deserialize large payloads vulnerable to resource exhaustion.
 **Prevention:** Constrain collections and iterables in Pydantic schemas using `Field(..., max_length=N)` where N represents a reasonable, expected upper bound for the business logic.
+
+## 2026-08-30 - Authenticate External Write Proxies
+**Vulnerability:** Express endpoints that proxy GitHub issue creation and Slack/Discord messages can otherwise be abused as unauthenticated outbound proxies using the application's configured integration credentials.
+**Learning:** Any endpoint that performs third-party write operations on behalf of callers must enforce application-level authentication before invoking the provider API.
+**Prevention:** Require a private `x-api-key` matching `API_KEY` on all external write-proxy routes and cover both authenticated and rejected requests with automated tests.
