@@ -15,6 +15,23 @@ function Integrations() {
   const location = useLocation();
 
   useEffect(() => {
+    fetch('/api/connectors')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.connectors) {
+          setIntegrations([
+            { name: 'GitHub', connected: Boolean(data.connectors.github?.configured) },
+            { name: 'Slack', connected: Boolean(data.connectors.slack?.configured) },
+            { name: 'Discord', connected: Boolean(data.connectors.discord?.configured) },
+            { name: 'Google Drive', connected: Boolean(data.connectors.googleDrive?.configured) },
+            { name: 'Gemini AI', connected: Boolean(data.connectors.gemini?.configured) },
+            { name: 'Antigravity CLI', connected: Boolean(data.connectors.antigravity?.configured) },
+            { name: 'Datadog', connected: Boolean(data.connectors.datadog?.configured) },
+          ]);
+        }
+      })
+      .catch(() => {});
+
     const query = new URLSearchParams(location.search);
     const code = query.get('code');
 
@@ -35,7 +52,8 @@ function Integrations() {
               )
             );
           }
-        });
+        })
+        .catch(() => {});
     }
   }, [location]);
 
