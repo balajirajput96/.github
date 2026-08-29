@@ -53,6 +53,18 @@ const TERMINAL_CURSOR = (
   }} />
 );
 
+const SR_ONLY_STYLE = {
+  position: 'absolute' as const,
+  width: '1px',
+  height: '1px',
+  padding: 0,
+  margin: '-1px',
+  overflow: 'hidden' as const,
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap' as const,
+  borderWidth: 0,
+};
+
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
   const [text, setText] = useState('');
@@ -81,6 +93,7 @@ export function TerminalPreview() {
 
     const fullText = lines[currentLine].cmd;
     let charIndex = 0;
+    let completionTimeout: ReturnType<typeof setTimeout> | undefined;
 
     const typingInterval = setInterval(() => {
       if (charIndex <= fullText.length) {
@@ -88,20 +101,34 @@ export function TerminalPreview() {
         charIndex++;
       } else {
         clearInterval(typingInterval);
-        setTimeout(() => {
+        completionTimeout = setTimeout(() => {
           setCurrentLine(prev => prev + 1);
           setText('');
         }, 1500); // Wait before next command
       }
     }, 100); // Typing speed
 
-    return () => clearInterval(typingInterval);
+    return () => {
+      clearInterval(typingInterval);
+      if (completionTimeout) clearTimeout(completionTimeout);
+    };
   }, [currentLine]);
 
   return (
     <section style={{ padding: '8rem 0' }}>
       <div className="container">
-        <div style={{
+        <div style={SR_ONLY_STYLE}>
+          Terminal preview showing Antigravity CLI commands:
+          <ul>
+            {lines.map((line, i) => (
+              <li key={i}>
+                Command: {line.cmd}. Output: {line.out}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div aria-hidden="true" style={{
           background: 'var(--bg-color)',
           border: '1px solid var(--border-color)',
           borderRadius: '12px',
