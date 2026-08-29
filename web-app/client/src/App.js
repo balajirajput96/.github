@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const Home = React.lazy(() => import('./pages/Home'));
 const Atlassian = React.lazy(() => import('./pages/Atlassian'));
@@ -23,22 +24,24 @@ const AIAssistant = React.lazy(() => import('./pages/AIAssistant'));
 function App() {
   return (
     <Layout>
-      <Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/atlassian" element={<Atlassian />} />
-          <Route path="/slack" element={<Slack />} />
-          <Route path="/claude-ai" element={<ClaudeAI />} />
-          <Route path="/youtube" element={<YouTube />} />
-          <Route path="/google-drive" element={<GoogleDrive />} />
-          <Route path="/github" element={<GitHub />} />
-          <Route path="/integrations" element={<Integrations />} />
-          <Route path="/workflows" element={<Workflows />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/content" element={<ContentHub />} />
-          <Route path="/assistant" element={<AIAssistant />} />
-        </Routes>
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/atlassian" element={<Atlassian />} />
+            <Route path="/slack" element={<Slack />} />
+            <Route path="/claude-ai" element={<ClaudeAI />} />
+            <Route path="/youtube" element={<YouTube />} />
+            <Route path="/google-drive" element={<GoogleDrive />} />
+            <Route path="/github" element={<GitHub />} />
+            <Route path="/integrations" element={<Integrations />} />
+            <Route path="/workflows" element={<Workflows />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/content" element={<ContentHub />} />
+            <Route path="/assistant" element={<AIAssistant />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </Layout>
   );
 }
