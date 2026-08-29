@@ -29,13 +29,13 @@ test('API hello endpoint returns JSON and security headers', async (t) => {
   assert.equal(response.headers['x-frame-options'], 'DENY');
 });
 
-test('Atlassian endpoint returns its integration message', async (t) => {
+test('Atlassian endpoint honestly reports that integration is unimplemented', async (t) => {
   const server = app.listen(0);
   t.after(() => server.close());
 
   const response = await request(server, '/api/atlassian');
-  assert.equal(response.statusCode, 200);
+  assert.equal(response.statusCode, 501);
   assert.deepEqual(JSON.parse(response.body), {
-    message: 'Atlassian API endpoint',
+    error: 'Atlassian integration is not implemented in this repository.',
   });
 });
