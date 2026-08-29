@@ -21,6 +21,7 @@ jobs:
       - run: python scripts/demo_run.py --test
       - run: python job-outreach/automation/test_url_safety.py
       - run: python acting-career-automation/scripts/parse_leads.py
+
   server:
     runs-on: ubuntu-latest
     defaults:
@@ -31,8 +32,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: web-app/server/package.json
       - run: npm install
       - run: npm test
 
@@ -46,8 +45,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: web-app/client/package.json
       - run: npm install
       - run: npm test -- --watchAll=false
       - run: npm run build
