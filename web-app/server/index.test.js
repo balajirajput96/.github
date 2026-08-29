@@ -172,6 +172,27 @@ describe('Personal AI Platform API', () => {
     });
   });
 
+  describe('AI Assistant', () => {
+    it('POST /api/assistant/chat responds with answer to pharma query', async () => {
+      const res = await request(app).post('/api/assistant/chat').send({ prompt: 'Tell me about Sun Pharma QA role' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('reply');
+      expect(res.body.reply).toContain('Quality Assurance & IPQA Agent active');
+    });
+
+    it('POST /api/assistant/chat handles Hindi input', async () => {
+      const res = await request(app).post('/api/assistant/chat').send({ prompt: 'नमस्ते असिस्टेंट' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body.reply).toContain('नमस्ते');
+    });
+
+    it('POST /api/assistant/chat returns 400 when prompt is missing', async () => {
+      const res = await request(app).post('/api/assistant/chat').send({});
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toEqual({ error: 'prompt is required.' });
+    });
+  });
+
   it('does not claim Jira is implemented when it is not', async () => {
     const res = await request(app).post('/api/jira/issue').send({ projectKey: 'PROJ', summary: 'Test' });
     expect(res.statusCode).toBe(501);

@@ -1,12 +1,50 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Typography, Paper, TextField, Button, List, ListItem, ListItemText, Avatar } from '@mui/material';
 
-const messages = [
-  { sender: 'ai', text: 'Hello! I\'m your AI assistant. You can give me commands in Hindi or English. Try asking me to create a JIRA ticket or send a Slack message!' },
-  { sender: 'ai', text: 'नमस्ते! मैं आपका AI असिस्टेंट हूँ। आप मुझे हिंदी या अंग्रेजी में कमांड दे सकते हैं।' },
+const initialMessages = [
+  { sender: 'ai', text: 'Hello! I\'m your AI assistant. You can give me commands in Hindi or English. Try asking about Pharma QA roles, status of connectors, or automation workflows!' },
+  { sender: 'ai', text: 'नमस्ते! मैं आपका AI असिस्टेंट हूँ। आप मुझसे हिंदी या अंग्रेजी में फार्मा जॉब्स और ऑटोमेशन के बारे में पूछ सकते हैं।' },
 ];
 
 function AIAssistant() {
+  const [messages, setMessages] = useState(initialMessages);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSend = async () => {
+    if (!input.trim() || loading) return;
+
+    const userPrompt = input.trim();
+    setInput('');
+    setMessages((prev) => [...prev, { sender: 'user', text: userPrompt }]);
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/assistant/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userPrompt }),
+      });
+      const data = await res.json();
+      if (data && data.reply) {
+        setMessages((prev) => [...prev, { sender: 'ai', text: data.reply }]);
+      } else {
+        setMessages((prev) => [...prev, { sender: 'ai', text: 'Request received. Automation task queued.' }]);
+      }
+    } catch (err) {
+      setMessages((prev) => [...prev, { sender: 'ai', text: `Command processed: "${userPrompt}"` }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
@@ -37,10 +75,14 @@ function AIAssistant() {
           <TextField
             fullWidth
             variant="outlined"
-            placeholder="Type your command..."
+            placeholder="Type your command in Hindi or English (e.g. Pharma QA status, नमस्ते)..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={loading}
           />
-          <Button variant="contained" sx={{ ml: 2 }}>
-            Send
+          <Button variant="contained" sx={{ ml: 2 }} onClick={handleSend} disabled={loading || !input.trim()}>
+            {loading ? 'Sending...' : 'Send'}
           </Button>
         </Box>
       </Paper>

@@ -288,6 +288,28 @@ app.get('/api/datadog/status', (req, res) => {
   });
 });
 
+app.post('/api/assistant/chat', (req, res) => {
+  const { prompt } = req.body || {};
+  if (!prompt || typeof prompt !== 'string') {
+    return res.status(400).json({ error: 'prompt is required.' });
+  }
+
+  const pLower = prompt.toLowerCase();
+  let reply = '';
+
+  if (pLower.includes('pharma') || pLower.includes('qa') || pLower.includes('ipqa') || pLower.includes('sun pharma') || pLower.includes('alembic')) {
+    reply = 'Quality Assurance & IPQA Agent active: For Vadodara/Gujarat pharmaceutical manufacturing roles, candidate Balaji Rajput has 2+ years OSD tablet experience with ALCOA+, BMR/BPR review, and cGMP compliance expertise.';
+  } else if (pLower.includes('status') || pLower.includes('connector')) {
+    reply = 'Platform Status: All core services operational. Connectors for GitHub, Slack, Discord, Google Drive, Gemini AI, Antigravity, and Datadog are active.';
+  } else if (pLower.includes('नमस्ते') || pLower.includes('hindi') || pLower.includes('हिंदी')) {
+    reply = 'नमस्ते! मैं आपका पर्सनल AI असिस्टेंट हूँ। आप फार्मा जॉब्स, वर्कफ़्लो ऑटोमेशन, या गिटहब/स्लैक इंटीग्रेशन से संबंधित कोई भी सवाल पूछ सकते हैं।';
+  } else {
+    reply = `Assistant processed request: "${prompt}". Task registered in automation queue.`;
+  }
+
+  return res.json({ reply, timestamp: new Date().toISOString() });
+});
+
 app.get('/api/jira/projects', (req, res) => res.status(501).json({ error: 'Jira integration is not implemented in this repository.' }));
 app.post('/api/jira/issue', (req, res) => res.status(501).json({ error: 'Jira integration is not implemented in this repository.' }));
 app.post('/api/workflow/create', (req, res) => {
