@@ -1,0 +1,89 @@
+name: Security Auth Repair
+
+on:
+  push:
+    branches:
+      - fix/security-auth-verified-20260830
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply authentication patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          index = Path('web-app/server/index.js')
+          text = index.read_text()
+          if 'const requireAuth = (req, res, next) =>' not in text:
+              needle = "const isSafeGithubIdentifier = (value) =>\n  typeof value === 'string' && /^[a-zA-Z0-9_.-]+$/.test(value) && value !== '.' && value !== '..';\n"
+              insert = needle + "\nconst requireAuth = (req, res, next) => {\n  const apiKey = req.headers['x-api-key'];\n  if (!apiKey || !process.env.API_KEY || apiKey !== process.env.API_KEY) {\n    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key.' });\n  }\n  return next();\n};\n"
+              if needle not in text:
+                  raise SystemExit('Expected GitHub identifier helper not found')
+              text = text.replace(needle, insert, 1)
+
+          replacements = {
+              "app.post('/api/github/issues/:owner/:repo', async (req, res) => {": "app.post('/api/github/issues/:owner/:repo', requireAuth, async (req, res) => {",
+              "app.post('/api/slack/message', async (req, res) => {": "app.post('/api/slack/message', requireAuth, async (req, res) => {",
+              "app.post('/api/discord/message', async (req, res) => {": "app.post('/api/discord/message', requireAuth, async (req, res) => {",
+          }
+          for old, new in replacements.items():
+              if old in text and new not in text:
+                  text = text.replace(old, new, 1)
+          index.write_text(text)
+
+          env = Path('.env.example')
+          env_text = env.read_text()
+          if 'API_KEY=' not in env_text:
+              env.write_text(env_text.rstrip() + '\nAPI_KEY=your_api_key_here\n')
+
+          sentinel = Path('.jules/sentinel.md')
+          s = sentinel.read_text()
+          if 'Webhook Proxies Acting as Unauthenticated Open Proxies' not in s:
+              sentinel.write_text(s.rstrip() + '''\n\n## Webhook proxy authentication\n**Prevention:** Require a private API key on every endpoint that proxies authenticated GitHub, Slack, or Discord write operations.\n''')
+
+          test = Path('web-app/server/index.test.js')
+          t = test.read_text()
+          if "API_KEY: 'test-api-key'" not in t:
+              t = t.replace("process.env = { ...originalEnv,", "process.env = { ...originalEnv, API_KEY: 'test-api-key',", 1)
+          t = t.replace(".post('/api/github/issues/test-owner/test-repo').send(", ".post('/api/github/issues/test-owner/test-repo').set('x-api-key', 'test-api-key').send(")
+          t = t.replace(".post('/api/github/issues/test-owner/%2Ftmp').send(", ".post('/api/github/issues/test-owner/%2Ftmp').set('x-api-key', 'test-api-key').send(")
+          t = t.replace(".post('/api/slack/message').send(", ".post('/api/slack/message').set('x-api-key', 'test-api-key').send(")
+          t = t.replace(".post('/api/discord/message').send(", ".post('/api/discord/message').set('x-api-key', 'test-api-key').send(")
+
+          marker = "describe('Personal AI Platform API', () => {"
+          if "without API key" not in t:
+              additions = '''\n    it('returns 401 for unauthenticated GitHub issue creation', async () => {\n      const res = await request(app).post('/api/github/issues/test-owner/test-repo').send({ title: 'Test Issue' });\n      expect(res.statusCode).toBe(401);\n    });\n\n    it('returns 401 for unauthenticated Slack message', async () => {\n      const res = await request(app).post('/api/slack/message').send({ channel: '#general', text: 'Hello' });\n      expect(res.statusCode).toBe(401);\n    });\n\n    it('returns 401 for unauthenticated Discord message', async () => {\n      const res = await request(app).post('/api/discord/message').send({ content: 'Hello' });\n      expect(res.statusCode).toBe(401);\n    });\n'''
+              t = t.replace(marker, marker + additions, 1)
+          test.write_text(t)
+          PY
+
+          node --check web-app/server/index.js
+
+      - name: Install server dependencies
+        working-directory: web-app/server
+        run: npm install
+
+      - name: Run server tests
+        working-directory: web-app/server
+        run: npm test
+
+      - name: Commit repaired code
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No repair changes needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .env.example .jules/sentinel.md web-app/server/index.js web-app/server/index.test.js
+          git commit -m 'fix(security): protect external write proxies'
+          git push
