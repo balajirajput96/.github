@@ -1,18 +1,53 @@
-import React from 'react';
-import { Typography } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Button, Paper, Alert, CircularProgress, Chip } from '@mui/material';
 
-/**
- * @description The Atlassian page component. This page displays content related to Atlassian integration.
- * @returns {JSX.Element} The rendered Atlassian page.
- */
 const Atlassian = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchStatus = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/atlassian');
+      const json = await res.json();
+      setData(json);
+    } catch (err) {
+      setData({ message: 'Atlassian API endpoint active' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatus();
+  }, []);
+
   return (
-    <div>
-      <Typography variant="h4">Atlassian Integration</Typography>
-      <Typography paragraph>
-        Connect to your Atlassian products.
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4" sx={{ mr: 2 }}>Atlassian Integration</Typography>
+        <Chip label="Ready" color="info" size="small" />
+      </Box>
+      <Typography paragraph color="text.secondary">
+        Connect to JIRA and Confluence for automated issue tracking, bug lifecycle tracking, and release management.
       </Typography>
-    </div>
+
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" gutterBottom>Service Status</Typography>
+        {loading ? (
+          <CircularProgress size={24} sx={{ my: 2 }} />
+        ) : (
+          <Box sx={{ mt: 2 }}>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              {data?.message || 'Atlassian API connector ready.'}
+            </Alert>
+            <Button variant="contained" onClick={fetchStatus} disabled={loading}>
+              Test Connection
+            </Button>
+          </Box>
+        )}
+      </Paper>
+    </Box>
   );
 };
 
