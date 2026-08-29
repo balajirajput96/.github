@@ -18,6 +18,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      - run: python -m pip install pytest
       - run: python scripts/demo_run.py --test
       - run: python job-outreach/automation/test_url_safety.py
       - run: python acting-career-automation/scripts/parse_leads.py
