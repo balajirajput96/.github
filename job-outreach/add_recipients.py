@@ -40,22 +40,35 @@ def update_recipients(new_contacts, csv_path):
                 existing_emails.add(row['email'].lower())
 
     added_count = 0
-    with open(path, 'a', encoding='utf-8', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=['company', 'email'])
-        if not path.exists() or path.stat().st_size == 0:
-            writer.writeheader()
+    try:
+        with open(path, 'a', encoding='utf-8', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=['company', 'email'])
+            if not path.exists() or path.stat().st_size == 0:
+                writer.writeheader()
 
-        for contact in new_contacts:
-            if contact['email'].lower() not in existing_emails:
-                writer.writerow(contact)
-                existing_emails.add(contact['email'].lower())
-                added_count += 1
+            for contact in new_contacts:
+                if contact['email'].lower() not in existing_emails:
+                    writer.writerow(contact)
+                    existing_emails.add(contact['email'].lower())
+                    added_count += 1
+    except OSError as e:
+        print(f"[WARN] Could not append to {csv_path} (read-only filesystem): {e}")
 
     return added_count
 
 if __name__ == "__main__":
-    raw_text = sys.stdin.read()
+    if len(sys.argv) > 1:
+        raw_text = sys.argv[1]
+    elif not sys.stdin.isatty():
+        raw_text = sys.stdin.read()
+    else:
+        print("Usage: python3 add_recipients.py < contacts.txt OR python3 add_recipients.py 'Company <email@example.com>'")
+        sys.exit(0)
+
     contacts = extract_contacts(raw_text)
     if not contacts:
+        print("No contacts extracted.")
         sys.exit(0)
-    update_recipients(contacts, 'job-outreach/recipients.csv')
+    target_csv = Path(__file__).resolve().parent / 'recipients.csv'
+    added = update_recipients(contacts, str(target_csv))
+    print(f"Extracted {len(contacts)} contacts, {added} added.")

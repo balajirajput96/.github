@@ -20,9 +20,9 @@
 # ====================================================================
 set -uo pipefail
 cd "$(dirname "$0")"
-
 LOG="run_weekly.log"
-{
+
+run_pipeline() {
   echo ""
   echo "=================================================="
   echo "Weekly run started: $(date)"
@@ -42,7 +42,12 @@ LOG="run_weekly.log"
   python3 send_applications.py --report || true
 
   echo "Weekly run finished: $(date)"
-} >> "$LOG" 2>&1
+}
 
-echo "Weekly run complete. Full output in: $(pwd)/$LOG"
-tail -n 25 "$LOG"
+if touch "$LOG" 2>/dev/null; then
+  run_pipeline 2>&1 | tee -a "$LOG"
+  echo "Weekly run complete. Full output in: $(pwd)/$LOG"
+else
+  run_pipeline
+  echo "Weekly run complete."
+fi

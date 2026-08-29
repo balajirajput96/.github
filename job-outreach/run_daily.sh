@@ -11,12 +11,10 @@
 #
 #  Credentials are read from the .env file in this folder.
 #  Usage:   ./run_daily.sh
-# ====================================================================
-set -uo pipefail
 cd "$(dirname "$0")"
-
 LOG="run_daily.log"
-{
+
+run_pipeline() {
   echo ""
   echo "=================================================="
   echo "Daily run started: $(date)"
@@ -35,7 +33,12 @@ LOG="run_daily.log"
   python3 send_applications.py --report || true
 
   echo "Daily run finished: $(date)"
-} >> "$LOG" 2>&1
+}
 
-echo "Daily run complete. Full output appended to: $(pwd)/$LOG"
-tail -n 20 "$LOG"
+if touch "$LOG" 2>/dev/null; then
+  run_pipeline 2>&1 | tee -a "$LOG"
+  echo "Daily run complete. Full output appended to: $(pwd)/$LOG"
+else
+  run_pipeline
+  echo "Daily run complete."
+fi
