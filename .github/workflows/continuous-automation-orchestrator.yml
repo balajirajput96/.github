@@ -11,6 +11,10 @@ on:
       - 'agents/**'
       - 'web-app/**'
 
+concurrency:
+  group: continuous-automation-orchestrator
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
