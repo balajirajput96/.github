@@ -21,6 +21,7 @@ jobs:
       - run: python scripts/demo_run.py --test
       - run: python job-outreach/automation/test_url_safety.py
       - run: python acting-career-automation/scripts/parse_leads.py
+      - run: python -m pytest -q test_main.py
 
   server:
     runs-on: ubuntu-latest
