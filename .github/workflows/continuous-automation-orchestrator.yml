@@ -1,0 +1,58 @@
+name: 24/7 Continuous Automation & Self-Healing Orchestrator
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"      # Runs every 4 hours, 24/7
+  workflow_dispatch: {}         # Manual trigger
+  push:
+    branches: [ main ]
+    paths:
+      - 'job-outreach/**'
+      - 'agents/**'
+      - 'web-app/**'
+
+permissions:
+  contents: write
+
+jobs:
+  orchestrator:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Python Dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r job-outreach/automation/requirements.txt
+
+      - name: Install Server & Client Dependencies
+        run: |
+          npm --prefix web-app/server install
+          npm --prefix web-app/client install
+
+      - name: Execute Full Automation Cycle
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          LLM_MODEL: openai/gpt-4o-mini
+          SCORE_THRESHOLD: "55"
+        run: python scripts/continuous_orchestrator.py --once
+
+      - name: Commit & Sync Automation Results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add job-outreach/automation/jobs.csv job-outreach/automation/dashboard.md logs/ 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "chore(auto): 24/7 orchestrator cycle update [skip ci]"
+          git push origin HEAD:main || true

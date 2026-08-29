@@ -154,3 +154,5 @@ reports/*.csv
 database/*.db
 !database/.keep
 node_modules/
+logs/
+*.log
