@@ -1,10 +1,12 @@
+import hashlib
+import hmac
 import os
 from typing import List
 
 import numpy as np
 import requests
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -14,7 +16,7 @@ from utils.logger import setup_logger
 load_dotenv()
 logger = setup_logger(__name__)
 
-app = FastAPI(title="ML, GitHub, and Slack API")
+app = FastAPI(title="AI Automation Platform")
 
 
 class PredictionInput(BaseModel):
@@ -26,9 +28,19 @@ class SlackMessage(BaseModel):
     text: str = Field(..., min_length=1, max_length=40_000)
 
 
+class GitHubIssue(BaseModel):
+    title: str
+    html_url: str
+
+
+class GitHubPayload(BaseModel):
+    action: str
+    issue: GitHubIssue
+
+
 @app.get("/")
 def home():
-    return {"message": "API Running!", "status": "active"}
+    return {"message": "AI Automation Platform is running", "status": "active"}
 
 
 @app.get("/health")
@@ -98,3 +110,66 @@ def send_slack_message(message: SlackMessage):
     except Exception as exc:
         logger.exception("Unexpected Slack error")
         raise HTTPException(status_code=502, detail="Slack API request failed.") from exc
+
+
+def create_jira_issue(issue_title: str, issue_url: str):
+    jira_domain = os.getenv("JIRA_DOMAIN", "").strip().removeprefix("https://").removeprefix("http://").rstrip("/")
+    jira_username = os.getenv("JIRA_USERNAME")
+    jira_api_token = os.getenv("JIRA_API_TOKEN")
+    jira_project_key = os.getenv("JIRA_PROJECT_KEY")
+    if not all([jira_domain, jira_username, jira_api_token, jira_project_key]):
+        raise HTTPException(status_code=500, detail="Jira credentials are not fully configured.")
+
+    payload = {
+        "fields": {
+            "project": {"key": jira_project_key},
+            "summary": issue_title[:255],
+            "description": {
+                "type": "doc",
+                "version": 1,
+                "content": [{
+                    "type": "paragraph",
+                    "content": [{"type": "text", "text": f"Original GitHub issue: {issue_url}"}],
+                }],
+            },
+            "issuetype": {"name": "Task"},
+        }
+    }
+    try:
+        response = requests.post(
+            f"https://{jira_domain}/rest/api/3/issue",
+            headers={"Accept": "application/json", "Content-Type": "application/json"},
+            json=payload,
+            auth=(jira_username, jira_api_token),
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.HTTPError as exc:
+        logger.warning("Jira API returned HTTP %s", response.status_code)
+        raise HTTPException(status_code=response.status_code, detail=f"Jira API error: HTTP {response.status_code}.") from exc
+    except requests.RequestException as exc:
+        logger.warning("Jira API request failed: %s", exc)
+        raise HTTPException(status_code=502, detail="Jira API request failed.") from exc
+
+
+@app.post("/webhook/github")
+async def github_webhook(request: Request, payload: GitHubPayload):
+    secret = os.getenv("GITHUB_WEBHOOK_SECRET")
+    if not secret or secret.lower().startswith("your_"):
+        raise HTTPException(status_code=500, detail="GitHub webhook secret not configured.")
+
+    signature_header = request.headers.get("X-Hub-Signature-256")
+    if not signature_header:
+        raise HTTPException(status_code=400, detail="X-Hub-Signature-256 header is missing.")
+
+    body = await request.body()
+    expected_signature = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected_signature, signature_header):
+        raise HTTPException(status_code=400, detail="Request signature does not match.")
+
+    if payload.action != "opened":
+        return {"message": f"Ignoring action: {payload.action}"}
+
+    jira_response = create_jira_issue(payload.issue.title, payload.issue.html_url)
+    return {"message": "New GitHub issue processed and Jira issue created.", "jira_issue": jira_response}
