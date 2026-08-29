@@ -1,0 +1,72 @@
+name: Security Auth PR Repair
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-test:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Apply minimal auth patch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('web-app/server/index.js')
+          s = p.read_text()
+          if 'const requireAuth = (req, res, next) =>' not in s:
+              needle = "const isSafeGithubIdentifier = (value) =>\n  typeof value === 'string' && /^[a-zA-Z0-9_.-]+$/.test(value) && value !== '.' && value !== '..';"
+              insert = needle + "\n\nconst requireAuth = (req, res, next) => {\n  const apiKey = req.headers['x-api-key'];\n  if (!apiKey || !process.env.API_KEY || apiKey !== process.env.API_KEY) {\n    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key.' });\n  }\n  return next();\n};"
+              if needle not in s:
+                  raise SystemExit('security patch anchor not found')
+              s = s.replace(needle, insert, 1)
+          for old, new in {
+              "app.post('/api/github/issues/:owner/:repo', async (req, res) => {": "app.post('/api/github/issues/:owner/:repo', requireAuth, async (req, res) => {",
+              "app.post('/api/slack/message', async (req, res) => {": "app.post('/api/slack/message', requireAuth, async (req, res) => {",
+              "app.post('/api/discord/message', async (req, res) => {": "app.post('/api/discord/message', requireAuth, async (req, res) => {",
+          }.items():
+              s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          env = Path('.env.example')
+          es = env.read_text()
+          if 'API_KEY=' not in es:
+              env.write_text(es.rstrip() + '\nAPI_KEY=your_api_key_here\n')
+
+          test = Path('web-app/server/index.test.js')
+          t = test.read_text()
+          if "API_KEY: 'test-api-key'" not in t:
+              t = t.replace('process.env = { ...originalEnv,', "process.env = { ...originalEnv, API_KEY: 'test-api-key',", 1)
+          t = t.replace(".post('/api/github/issues/test-owner/test-repo').send(", ".post('/api/github/issues/test-owner/test-repo').set('x-api-key', 'test-api-key').send(")
+          t = t.replace(".post('/api/github/issues/test-owner/%2Ftmp').send(", ".post('/api/github/issues/test-owner/%2Ftmp').set('x-api-key', 'test-api-key').send(")
+          t = t.replace(".post('/api/slack/message').send(", ".post('/api/slack/message').set('x-api-key', 'test-api-key').send(")
+          t = t.replace(".post('/api/discord/message').send(", ".post('/api/discord/message').set('x-api-key', 'test-api-key').send(")
+          if 'returns 401 for unauthenticated GitHub issue creation' not in t:
+              marker = "describe('Personal AI Platform API', () => {"
+              extra = "\n    it('returns 401 for unauthenticated GitHub issue creation', async () => { const res = await request(app).post('/api/github/issues/test-owner/test-repo').send({ title: 'Test Issue' }); expect(res.statusCode).toBe(401); });\n    it('returns 401 for unauthenticated Slack message', async () => { const res = await request(app).post('/api/slack/message').send({ channel: '#general', text: 'Hello' }); expect(res.statusCode).toBe(401); });\n    it('returns 401 for unauthenticated Discord message', async () => { const res = await request(app).post('/api/discord/message').send({ content: 'Hello' }); expect(res.statusCode).toBe(401); });\n"
+              t = t.replace(marker, marker + extra, 1)
+          test.write_text(t)
+          PY
+
+      - name: Install and test server
+        working-directory: web-app/server
+        run: npm install && npm test
+
+      - name: Commit verified patch
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .env.example web-app/server/index.js web-app/server/index.test.js
+          git commit -m 'fix(security): protect external write proxies'
+          git push
