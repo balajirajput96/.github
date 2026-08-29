@@ -37,6 +37,14 @@ const rateLimiter = (req, res, next) => {
 const isSafeGithubIdentifier = (value) =>
   typeof value === 'string' && /^[a-zA-Z0-9_.-]+$/.test(value) && value !== '.' && value !== '..';
 
+const requireAuth = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  if (!apiKey || !process.env.API_KEY || apiKey !== process.env.API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key.' });
+  }
+  return next();
+};
+
 const requireGithubToken = (res) => {
   if (!process.env.GITHUB_TOKEN) {
     res.status(503).json({ error: 'GitHub integration is not configured.' });
@@ -116,7 +124,7 @@ app.get('/api/github/repos/:owner', async (req, res) => {
   }
 });
 
-app.post('/api/github/issues/:owner/:repo', async (req, res) => {
+app.post('/api/github/issues/:owner/:repo', requireAuth, async (req, res) => {
   const { owner, repo } = req.params;
   if (!isSafeGithubIdentifier(owner) || !isSafeGithubIdentifier(repo)) {
     return res.status(400).json({ error: 'Invalid GitHub owner or repository.' });
@@ -208,7 +216,7 @@ app.post('/api/slack/test-message', async (req, res) => {
   }
 });
 
-app.post('/api/slack/message', async (req, res) => {
+app.post('/api/slack/message', requireAuth, async (req, res) => {
   const { channel, text } = req.body || {};
   if (!channel || !text || typeof text !== 'string' || text.length > 40000) {
     return res.status(400).json({ error: 'channel and text are required.' });
@@ -223,7 +231,7 @@ app.post('/api/slack/message', async (req, res) => {
   }
 });
 
-app.post('/api/discord/message', async (req, res) => {
+app.post('/api/discord/message', requireAuth, async (req, res) => {
   const { content } = req.body || {};
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
   if (!content || typeof content !== 'string' || content.length > 2000) return res.status(400).json({ error: 'content is required.' });

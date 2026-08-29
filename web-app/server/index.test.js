@@ -7,8 +7,12 @@ const mockAxiosInstance = axios.create();
 const originalEnv = process.env;
 
 describe('Personal AI Platform API', () => {
+    it('returns 401 for unauthenticated GitHub issue creation', async () => { const res = await request(app).post('/api/github/issues/test-owner/test-repo').send({ title: 'Test Issue' }); expect(res.statusCode).toBe(401); });
+    it('returns 401 for unauthenticated Slack message', async () => { const res = await request(app).post('/api/slack/message').send({ channel: '#general', text: 'Hello' }); expect(res.statusCode).toBe(401); });
+    it('returns 401 for unauthenticated Discord message', async () => { const res = await request(app).post('/api/discord/message').send({ content: 'Hello' }); expect(res.statusCode).toBe(401); });
+
   beforeEach(() => {
-    process.env = { ...originalEnv, DISCORD_WEBHOOK_URL: 'http://discord.webhook.url', GITHUB_TOKEN: 'github-test-token', SLACK_BOT_TOKEN: 'slack-test-token' };
+    process.env = { ...originalEnv, API_KEY: 'test-api-key', DISCORD_WEBHOOK_URL: 'http://discord.webhook.url', GITHUB_TOKEN: 'github-test-token', SLACK_BOT_TOKEN: 'slack-test-token' };
     mockAxiosInstance.get.mockReset();
     mockAxiosInstance.post.mockReset();
     axios.post.mockReset();
@@ -72,14 +76,14 @@ describe('Personal AI Platform API', () => {
       mockAxiosInstance.post.mockResolvedValueOnce({ data: mockIssue });
       mockAxiosInstance.post.mockResolvedValueOnce({ data: { ok: true } });
       axios.post.mockResolvedValueOnce({ status: 204 });
-      const res = await request(app).post('/api/github/issues/test-owner/test-repo').send({ title: 'Test Issue', body: 'This is a test.' });
+      const res = await request(app).post('/api/github/issues/test-owner/test-repo').set('x-api-key', 'test-api-key').send({ title: 'Test Issue', body: 'This is a test.' });
       expect(res.statusCode).toBe(201);
       expect(mockAxiosInstance.post).toHaveBeenCalledWith('/repos/test-owner/test-repo/issues', { title: 'Test Issue', body: 'This is a test.' }, { headers: { Authorization: 'Bearer github-test-token' } });
       expect(axios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, { content: '🚀 New GitHub issue created in **test-owner/test-repo**: [ #123 Test Issue ](http://example.com)' });
     });
 
     it('rejects unsafe repository input', async () => {
-      const res = await request(app).post('/api/github/issues/test-owner/%2Ftmp').send({ title: 'Test Issue' });
+      const res = await request(app).post('/api/github/issues/test-owner/%2Ftmp').set('x-api-key', 'test-api-key').send({ title: 'Test Issue' });
       expect(res.statusCode).toBe(400);
       expect(res.body).toEqual({ error: 'Invalid GitHub owner or repository.' });
     });
@@ -89,14 +93,14 @@ describe('Personal AI Platform API', () => {
     it('sends a message with the configured bot token', async () => {
       mockAxiosInstance.post.mockResolvedValue({ data: { ok: true, ts: '123.456' } });
       const message = { channel: '#general', text: 'Hello, world!' };
-      const res = await request(app).post('/api/slack/message').send(message);
+      const res = await request(app).post('/api/slack/message').set('x-api-key', 'test-api-key').send(message);
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual({ message: 'Message sent to channel: #general', ts: '123.456' });
     });
 
     it('returns 503 without a Slack token', async () => {
       delete process.env.SLACK_BOT_TOKEN;
-      const res = await request(app).post('/api/slack/message').send({ channel: '#general', text: 'Hello' });
+      const res = await request(app).post('/api/slack/message').set('x-api-key', 'test-api-key').send({ channel: '#general', text: 'Hello' });
       expect(res.statusCode).toBe(503);
     });
 
@@ -160,14 +164,14 @@ describe('Personal AI Platform API', () => {
     it('sends a message with the configured webhook', async () => {
       axios.post.mockResolvedValue({ status: 204 });
       const message = { content: 'Hello, Discord!' };
-      const res = await request(app).post('/api/discord/message').send(message);
+      const res = await request(app).post('/api/discord/message').set('x-api-key', 'test-api-key').send(message);
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual({ message: 'Message sent to Discord' });
     });
 
     it('returns 503 without a webhook', async () => {
       delete process.env.DISCORD_WEBHOOK_URL;
-      const res = await request(app).post('/api/discord/message').send({ content: 'Hello' });
+      const res = await request(app).post('/api/discord/message').set('x-api-key', 'test-api-key').send({ content: 'Hello' });
       expect(res.statusCode).toBe(503);
     });
   });
