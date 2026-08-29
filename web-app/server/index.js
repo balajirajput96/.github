@@ -88,9 +88,9 @@ app.get('/api-docs', (req, res) => res.json({
 }));
 
 app.get('/api/hello', (req, res) => res.json({ message: 'Hello from the AI Assistant Platform API!' }));
-app.get('/api/atlassian', (req, res) => res.json({ message: 'Atlassian API endpoint' }));
-app.get('/api/claude-ai', (req, res) => res.json({ message: 'Claude AI API endpoint' }));
-app.get('/api/youtube', (req, res) => res.json({ message: 'YouTube API endpoint' }));
+app.get('/api/atlassian', (req, res) => res.status(501).json({ error: 'Atlassian integration is not implemented in this repository.' }));
+app.get('/api/claude-ai', (req, res) => res.status(501).json({ error: 'Claude AI integration is not implemented in this repository.' }));
+app.get('/api/youtube', (req, res) => res.status(501).json({ error: 'YouTube integration is not implemented in this repository.' }));
 app.get('/api/google-drive', (req, res) => res.json({
   message: 'Google Drive API endpoint',
   configured: Boolean(process.env.GOOGLE_DRIVE_TOKEN || process.env.GOOGLE_WORKSPACE_CLI_TOKEN)
@@ -191,12 +191,35 @@ app.get('/api/slack/channels', async (req, res) => {
   }
 });
 
-app.post('/api/slack/oauth', (req, res) => {
+app.post('/api/slack/oauth', async (req, res) => {
   const { code } = req.body || {};
   if (!code || typeof code !== 'string') {
     return res.status(400).json({ ok: false, error: 'OAuth code is required.' });
   }
-  return res.json({ ok: true, message: 'Slack connected successfully via OAuth.' });
+  const clientId = process.env.SLACK_CLIENT_ID;
+  const clientSecret = process.env.SLACK_CLIENT_SECRET;
+  const redirectUri = process.env.SLACK_REDIRECT_URI;
+  if (!clientId || !clientSecret) {
+    return res.status(503).json({ ok: false, error: 'Slack OAuth is not configured.' });
+  }
+  try {
+    const params = new URLSearchParams({ code, client_id: clientId, client_secret: clientSecret });
+    if (redirectUri) params.set('redirect_uri', redirectUri);
+    const response = await axios.post('https://slack.com/api/oauth.v2.access', params.toString(), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    if (!response.data?.ok) {
+      return res.status(502).json({ ok: false, error: response.data?.error || 'Slack OAuth exchange failed.' });
+    }
+    return res.json({
+      ok: true,
+      message: 'Slack connected successfully via OAuth.',
+      team: response.data.team ? { id: response.data.team.id, name: response.data.team.name } : undefined,
+      bot_user_id: response.data.bot_user_id || undefined,
+    });
+  } catch (error) {
+    return res.status(502).json({ ok: false, error: 'Failed to complete Slack OAuth exchange.' });
+  }
 });
 
 app.post('/api/slack/test-message', async (req, res) => {
@@ -245,77 +268,70 @@ app.post('/api/discord/message', requireAuth, async (req, res) => {
 });
 
 app.get('/api/connectors', (req, res) => {
+  const githubConfigured = Boolean(process.env.GITHUB_TOKEN || process.env.GH_TOKEN);
+  const slackConfigured = Boolean(process.env.SLACK_BOT_TOKEN);
+  const discordConfigured = Boolean(process.env.DISCORD_WEBHOOK_URL);
+  const googleDriveConfigured = Boolean(process.env.GOOGLE_DRIVE_TOKEN || process.env.GOOGLE_WORKSPACE_CLI_TOKEN);
+  const geminiConfigured = Boolean(process.env.GEMINI_API_KEY);
+  const datadogConfigured = Boolean(process.env.DATADOG_API_KEY || process.env.DD_API_KEY);
+  const antigravityConfigured = Boolean(process.env.ANTIGRAVITY_VERSION || process.env.ANTIGRAVITY_CLI_PATH);
   return res.json({
-    github: {
-      configured: Boolean(process.env.GITHUB_TOKEN || process.env.GH_TOKEN),
-      status: (process.env.GITHUB_TOKEN || process.env.GH_TOKEN) ? 'ready' : 'unconfigured'
-    },
-    slack: {
-      configured: Boolean(process.env.SLACK_BOT_TOKEN),
-      status: process.env.SLACK_BOT_TOKEN ? 'ready' : 'unconfigured'
-    },
-    discord: {
-      configured: Boolean(process.env.DISCORD_WEBHOOK_URL),
-      status: process.env.DISCORD_WEBHOOK_URL ? 'ready' : 'unconfigured'
-    },
-    google_drive: {
-      configured: Boolean(process.env.GOOGLE_DRIVE_TOKEN || process.env.GOOGLE_WORKSPACE_CLI_TOKEN),
-      status: (process.env.GOOGLE_DRIVE_TOKEN || process.env.GOOGLE_WORKSPACE_CLI_TOKEN) ? 'ready' : 'unconfigured'
-    },
-    gemini: {
-      configured: Boolean(process.env.GEMINI_API_KEY),
-      status: process.env.GEMINI_API_KEY ? 'ready' : 'fallback_mode'
-    },
+    github: { configured: githubConfigured, status: githubConfigured ? 'configured' : 'unconfigured' },
+    slack: { configured: slackConfigured, status: slackConfigured ? 'configured' : 'unconfigured' },
+    discord: { configured: discordConfigured, status: discordConfigured ? 'configured' : 'unconfigured' },
+    google_drive: { configured: googleDriveConfigured, status: googleDriveConfigured ? 'configured' : 'unconfigured' },
+    gemini: { configured: geminiConfigured, status: geminiConfigured ? 'configured' : 'unconfigured' },
     antigravity: {
-      configured: true,
-      version: '1.1.22',
-      status: 'active'
+      configured: antigravityConfigured,
+      version: process.env.ANTIGRAVITY_VERSION || null,
+      status: antigravityConfigured ? 'configured' : 'unverified'
     },
-    datadog: {
-      configured: Boolean(process.env.DATADOG_API_KEY || process.env.DD_API_KEY),
-      status: (process.env.DATADOG_API_KEY || process.env.DD_API_KEY) ? 'ready' : 'unconfigured'
-    }
+    datadog: { configured: datadogConfigured, status: datadogConfigured ? 'configured' : 'unconfigured' }
   });
 });
 
 app.get('/api/gemini/status', (req, res) => {
+  const configured = Boolean(process.env.GEMINI_API_KEY);
   return res.json({
     service: 'Google Gemini',
-    cli_installed: true,
-    cli_version: '0.57.0',
-    antigravity_bridge: 'active',
-    status: 'operational'
+    configured,
+    cli_installed: false,
+    cli_version: null,
+    antigravity_bridge: 'unverified',
+    status: configured ? 'configured' : 'unconfigured'
   });
 });
 
 app.get('/api/datadog/status', (req, res) => {
+  const configured = Boolean(process.env.DATADOG_API_KEY || process.env.DD_API_KEY);
   return res.json({
     service: 'Datadog',
-    agent_status: 'available',
-    telemetry: 'ready'
+    configured,
+    agent_status: configured ? 'configured' : 'unconfigured',
+    telemetry: configured ? 'configured' : 'unconfigured'
   });
 });
 
-app.post('/api/assistant/chat', (req, res) => {
+app.post('/api/assistant/chat', async (req, res) => {
   const { prompt } = req.body || {};
-  if (!prompt || typeof prompt !== 'string') {
-    return res.status(400).json({ error: 'prompt is required.' });
+  if (!prompt || typeof prompt !== 'string' || prompt.length > 20000) {
+    return res.status(400).json({ error: 'prompt is required and must be at most 20000 characters.' });
   }
-
-  const pLower = prompt.toLowerCase();
-  let reply = '';
-
-  if (pLower.includes('pharma') || pLower.includes('qa') || pLower.includes('ipqa') || pLower.includes('sun pharma') || pLower.includes('alembic')) {
-    reply = 'Quality Assurance & IPQA Agent active: For Vadodara/Gujarat pharmaceutical manufacturing roles, candidate Balaji Rajput has 2+ years OSD tablet experience with ALCOA+, BMR/BPR review, and cGMP compliance expertise.';
-  } else if (pLower.includes('status') || pLower.includes('connector')) {
-    reply = 'Platform Status: All core services operational. Connectors for GitHub, Slack, Discord, Google Drive, Gemini AI, Antigravity, and Datadog are active.';
-  } else if (pLower.includes('नमस्ते') || pLower.includes('hindi') || pLower.includes('हिंदी')) {
-    reply = 'नमस्ते! मैं आपका पर्सनल AI असिस्टेंट हूँ। आप फार्मा जॉब्स, वर्कफ़्लो ऑटोमेशन, या गिटहब/स्लैक इंटीग्रेशन से संबंधित कोई भी सवाल पूछ सकते हैं।';
-  } else {
-    reply = `Assistant processed request: "${prompt}". Task registered in automation queue.`;
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'Gemini integration is not configured.' });
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  try {
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+      { contents: [{ parts: [{ text: prompt }] }] },
+      { params: { key: apiKey }, headers: { 'Content-Type': 'application/json' } }
+    );
+    const reply = response.data?.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim();
+    if (!reply) return res.status(502).json({ error: 'Gemini returned an empty response.' });
+    return res.json({ reply, timestamp: new Date().toISOString() });
+  } catch (error) {
+    return res.status(error.response?.status || 502).json({ error: 'Failed to process request with Gemini.' });
   }
-
-  return res.json({ reply, timestamp: new Date().toISOString() });
 });
 
 app.get('/api/jira/projects', (req, res) => res.status(501).json({ error: 'Jira integration is not implemented in this repository.' }));
