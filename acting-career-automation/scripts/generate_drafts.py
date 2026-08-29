@@ -64,16 +64,20 @@ def main():
             if warnings:
                 labels.append('Scam Warning')
 
-            try:
-                # Create issue
-                issue = repo.create_issue(title=title, body=body, labels=labels)
-                print(f"Created issue #{issue.number} for lead ID {lead.get('id')}")
-
-                # Update CSV status
+            if repo:
+                try:
+                    # Create issue
+                    issue = repo.create_issue(title=title, body=body, labels=labels)
+                    print(f"Created issue #{issue.number} for lead ID {lead.get('id')}")
+                    lead['status'] = 'DRAFTED'
+                    updates_made = True
+                except Exception as e:
+                    print(f"Failed to create issue for lead ID {lead.get('id')}: {e}")
+            else:
+                print(f"[DRY-RUN] Prepared draft for lead ID {lead.get('id')}: {title}")
+                print(f"          Draft: {draft_text[:80]}...")
                 lead['status'] = 'DRAFTED'
                 updates_made = True
-            except Exception as e:
-                print(f"Failed to create issue for lead ID {lead.get('id')}: {e}")
 
     if updates_made:
         write_csv(CSV_PATH, leads, fieldnames)

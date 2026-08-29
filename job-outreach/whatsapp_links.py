@@ -83,9 +83,13 @@ def main():
         f"<h2>WhatsApp outreach ({len(rows)} contacts)</h2>"
         "<p>Click a button, review the pre-filled message, then press send in "
         "WhatsApp. Only message people who are open to being contacted.</p>"
-        + cards)
-    OUT_HTML.write_text(html, encoding="utf-8")
-    print(f"Wrote {OUT_HTML.name} ({len(rows)} contacts). Open it in a browser and click each button.")
+        + cards
+    )
+    try:
+        OUT_HTML.write_text(html, encoding="utf-8")
+        print(f"Wrote {OUT_HTML.name} ({len(rows)} contacts). Open it in a browser and click each button.")
+    except OSError as e:
+        print(f"[WARN] Generated links for {len(rows)} contacts, but could not write {OUT_HTML.name} (read-only filesystem): {e}")
 
 
 if __name__ == "__main__":

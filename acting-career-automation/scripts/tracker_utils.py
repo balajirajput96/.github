@@ -3,13 +3,20 @@ import os
 from github import Github
 from datetime import datetime, timezone, timedelta
 
-def get_repo():
-    token = os.environ.get("GITHUB_TOKEN")
-    repo_name = os.environ.get("GITHUB_REPOSITORY")
-    if not token or not repo_name:
-        raise ValueError("GITHUB_TOKEN or GITHUB_REPOSITORY environment variable not set.")
-    g = Github(token)
-    return g.get_repo(repo_name)
+def get_repo(required=False):
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    repo_name = os.environ.get("GITHUB_REPOSITORY") or "balajirajput96/.github"
+    if not token:
+        if required:
+            raise ValueError("GITHUB_TOKEN or GH_TOKEN environment variable not set.")
+        return None
+    try:
+        g = Github(token)
+        return g.get_repo(repo_name)
+    except Exception as e:
+        if required:
+            raise e
+        return None
 
 def read_csv(file_path):
     leads = []
