@@ -1,13 +1,18 @@
 import csv
 import os
-from github import Github
+try:
+    from github import Github
+except ImportError:
+    Github = None
 from datetime import datetime, timezone, timedelta
 
 def get_repo(required=False):
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     repo_name = os.environ.get("GITHUB_REPOSITORY") or "balajirajput96/.github"
-    if not token:
+    if not token or Github is None:
         if required:
+            if Github is None:
+                raise ImportError("PyGithub package is not installed.")
             raise ValueError("GITHUB_TOKEN or GH_TOKEN environment variable not set.")
         return None
     try:
