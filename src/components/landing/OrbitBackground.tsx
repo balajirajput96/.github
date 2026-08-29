@@ -1,15 +1,21 @@
 import { motion } from 'framer-motion';
 
+
+// PERFORMANCE OPTIMIZATION:
+// Extract static particles array completely outside the component function.
+// Generating random data arrays inline within a functional component causes
+// the array and its random values to be re-created on every render, forcing
+// React to unnecessarily re-diff elements and wasting CPU cycles.
+const PARTICLES = Array.from({ length: 30 }).map((_, i) => ({
+  id: i,
+  size: Math.random() * 4 + 1,
+  left: `${Math.random() * 100}%`,
+  top: `${Math.random() * 100}%`,
+  duration: Math.random() * 20 + 10,
+  delay: Math.random() * 5,
+}));
+
 export function OrbitBackground() {
-  // Generate random particles
-  const particles = Array.from({ length: 30 }).map((_, i) => ({
-    id: i,
-    size: Math.random() * 4 + 1,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    duration: Math.random() * 20 + 10,
-    delay: Math.random() * 5,
-  }));
 
   return (
     <div style={{
@@ -70,7 +76,7 @@ export function OrbitBackground() {
       />
 
       {/* Particles */}
-      {particles.map((p) => (
+      {PARTICLES.map((p) => (
         <motion.div
           key={p.id}
           animate={{
