@@ -12,7 +12,7 @@ on:
       - 'web-app/**'
 
 concurrency:
-  group: continuous-automation-orchestrator
+  group: automation-main-writer
   cancel-in-progress: false
 
 permissions:

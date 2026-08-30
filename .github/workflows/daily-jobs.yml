@@ -5,6 +5,10 @@ on:
     - cron: "30 3 * * *"     # 09:00 IST daily
   workflow_dispatch: {}       # manual "Run workflow" button
 
+concurrency:
+  group: automation-main-writer
+  cancel-in-progress: false
+
 permissions:
   contents: write             # allow committing jobs.csv + dashboard.md back
 
@@ -15,14 +19,18 @@ jobs:
       run:
         working-directory: job-outreach/automation
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+          cache: pip
+          cache-dependency-path: job-outreach/automation/requirements.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: python -m pip install -r requirements.txt
 
       - name: Run daily scan (fetch -> extract -> score -> draft -> dashboard)
         env:
@@ -31,10 +39,15 @@ jobs:
           SCORE_THRESHOLD: "55"
         run: python run_repo.py
 
-      - name: Commit results
+      - name: Commit and publish results safely
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add jobs.csv dashboard.md
-          git diff --staged --quiet || git commit -m "chore: daily job scan update"
+          if git diff --staged --quiet; then
+            echo "No job-scan changes to publish."
+            exit 0
+          fi
+          git commit -m "chore: daily job scan update"
+          git pull --rebase origin main
           git push origin HEAD:main
