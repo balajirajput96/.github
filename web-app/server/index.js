@@ -312,7 +312,7 @@ app.get('/api/datadog/status', (req, res) => {
   });
 });
 
-app.post('/api/assistant/chat', async (req, res) => {
+app.post('/api/assistant/chat', requireAuth, async (req, res) => {
   const { prompt } = req.body || {};
   if (!prompt || typeof prompt !== 'string' || prompt.length > 20000) {
     return res.status(400).json({ error: 'prompt is required and must be at most 20000 characters.' });

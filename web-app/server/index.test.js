@@ -222,7 +222,7 @@ describe('Personal AI Platform API', () => {
   describe('AI Assistant', () => {
     it('POST /api/assistant/chat uses Gemini when configured', async () => {
       axios.post.mockResolvedValue({ data: { candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] } });
-      const res = await request(app).post('/api/assistant/chat').send({ prompt: 'Say hello' });
+      const res = await request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'Say hello' });
       expect(res.statusCode).toBe(200);
       expect(res.body.reply).toBe('Gemini response');
       expect(axios.post).toHaveBeenCalledWith(
@@ -232,15 +232,21 @@ describe('Personal AI Platform API', () => {
       );
     });
 
+    it('returns 401 when calling chat without API key', async () => {
+      const res = await request(app).post('/api/assistant/chat').send({ prompt: 'Say hello' });
+      expect(res.statusCode).toBe(401);
+      expect(res.body).toEqual({ error: 'Unauthorized: Invalid or missing API key.' });
+    });
+
     it('POST /api/assistant/chat returns 503 when Gemini is not configured', async () => {
       delete process.env.GEMINI_API_KEY;
-      const res = await request(app).post('/api/assistant/chat').send({ prompt: 'Say hello' });
+      const res = await request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'Say hello' });
       expect(res.statusCode).toBe(503);
       expect(res.body).toEqual({ error: 'Gemini integration is not configured.' });
     });
 
     it('POST /api/assistant/chat rejects oversized prompts', async () => {
-      const res = await request(app).post('/api/assistant/chat').send({ prompt: 'x'.repeat(20001) });
+      const res = await request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'x'.repeat(20001) });
       expect(res.statusCode).toBe(400);
     });
   });
