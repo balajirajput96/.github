@@ -30,8 +30,12 @@ function CodeSnippet({ code }: { code: string }) {
       justifyContent: 'space-between',
       gap: '1rem',
     }}>
-      <div style={{ overflowX: 'auto', whiteSpace: 'pre', paddingRight: '2rem' }}>
-        {code}
+      <div
+        tabIndex={0}
+        aria-label="Code snippet"
+        style={{ overflowX: 'auto', whiteSpace: 'pre', paddingRight: '2rem' }}
+      >
+        <code style={{ userSelect: 'all' }}>{code}</code>
       </div>
 
       <motion.button
