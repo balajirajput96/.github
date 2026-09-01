@@ -31,15 +31,18 @@ jobs:
         run: npm test
       - name: Build dashboard
         run: npm run build
-      - name: Publish validated migration
+      - name: Publish lockfile and remove validation workflow
         working-directory: .
         shell: bash
         run: |
           set -euo pipefail
           rm -f .github/workflows/vite-migration-validation.yml
-          git add web-app/client/package.json web-app/client/package-lock.json web-app/client/vite.config.mjs web-app/client/index.html web-app/client/src/index.js web-app/client/src/setupTests.js web-app/client/src/components/ErrorBoundary.test.js web-app/server/package.json .github/workflows/vite-migration-validation.yml
-          git diff --cached --quiet && { echo 'No validated migration changes to commit.'; exit 0; }
+          git add web-app/client/package.json web-app/client/package-lock.json .github/workflows/vite-migration-validation.yml
+          if git diff --cached --quiet; then
+            echo 'No lockfile changes produced.'
+            exit 0
+          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'refactor(client): modernize dashboard build and test toolchain'
+          git commit -m 'build(client): commit audited npm lockfile'
           git push origin HEAD:hardening/client-vite-20260901
