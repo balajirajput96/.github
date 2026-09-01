@@ -9,3 +9,7 @@
 ## 2024-11-20 - Framer Motion CSS Transition Conflict
 **Learning:** Applying a generic `transition: 'all ...'` via inline styles or CSS classes to a `<motion.element>` component intercepts Framer Motion's internal JavaScript-driven animation values. For example, if Framer Motion tries to smoothly animate a `transform` (like `scale` or `y`) on `whileHover`, the CSS `transition: all` forces the browser to apply its own timing function over the JS animation, causing severe visual jank and stuttering.
 **Action:** When styling a `motion` component that uses interaction properties (`whileHover`, `whileTap`, `whileFocus`), never use `transition: all`. Explicitly specify which CSS properties should be transitioned (e.g., `transition: background-color 0.2s, color 0.2s`), explicitly omitting `transform` or `opacity` if Framer Motion controls them.
+
+## 2024-11-20 - Code snippet selection and keyboard scrolling
+**Learning:** Users often triple-click or try to carefully highlight code snippets to copy them, which can be frustrating. Furthermore, `overflow-x: auto` containers used for long code blocks are not focusable by default, meaning keyboard-only users cannot scroll horizontally to read the full command.
+**Action:** Use `userSelect: 'all'` on code snippets so a single click selects the entire text. Additionally, always add `tabIndex={0}` and an appropriate `aria-label` to `overflow-x: auto` containers to ensure they are keyboard accessible.

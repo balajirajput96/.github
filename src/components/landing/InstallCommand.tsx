@@ -35,7 +35,10 @@ export function InstallCommand() {
         overflow: 'hidden'
       }}
     >
-      <div style={{
+      <div
+        tabIndex={0}
+        aria-label="Install command snippet"
+        style={{
         fontFamily: 'var(--font-code)',
         color: 'var(--fg-color)',
         fontSize: '0.875rem',
@@ -48,9 +51,9 @@ export function InstallCommand() {
         gap: '1rem'
       }}>
         <span aria-hidden="true" style={{ color: 'var(--muted-color)', userSelect: 'none' }}>$</span>
-        <span>
+        <code style={{ userSelect: 'all' }}>
           <span style={{ color: 'var(--secondary-accent)' }}>curl</span> -fsSL https://antigravity.google/cli/install.sh | <span style={{ color: 'var(--primary-accent)' }}>bash</span>
-        </span>
+        </code>
       </div>
 
       <div aria-live="polite" className="sr-only">
