@@ -65,6 +65,24 @@ const SR_ONLY_STYLE = {
   borderWidth: 0,
 };
 
+// PERFORMANCE OPTIMIZATION:
+// Extract static SR-only JSX block outside of the component.
+// Because TerminalPreview triggers frequent state-driven re-renders (setInterval
+// for typing animation), this prevents React from needlessly recreating and diffing
+// this static block of elements and their mapped lists on every animation frame.
+const SR_ONLY_CONTENT = (
+  <div style={SR_ONLY_STYLE}>
+    Terminal preview showing Antigravity CLI commands:
+    <ul>
+      {lines.map((line, i) => (
+        <li key={i}>
+          Command: {line.cmd}. Output: {line.out}
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
   const [text, setText] = useState('');
@@ -117,16 +135,7 @@ export function TerminalPreview() {
   return (
     <section style={{ padding: '8rem 0' }}>
       <div className="container">
-        <div style={SR_ONLY_STYLE}>
-          Terminal preview showing Antigravity CLI commands:
-          <ul>
-            {lines.map((line, i) => (
-              <li key={i}>
-                Command: {line.cmd}. Output: {line.out}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {SR_ONLY_CONTENT}
 
         <div aria-hidden="true" style={{
           background: 'var(--bg-color)',
