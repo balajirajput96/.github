@@ -13,7 +13,20 @@ from slack_sdk.errors import SlackApiError
 
 from utils.logger import setup_logger
 
-load_dotenv()
+from pathlib import Path
+
+_repo_root = Path(__file__).resolve().parent
+_repo_env = _repo_root / ".env"
+if _repo_env.exists() and _repo_env.is_file():
+    try:
+        load_dotenv(dotenv_path=_repo_env)
+    except Exception:
+        pass
+else:
+    try:
+        load_dotenv()
+    except Exception:
+        pass
 logger = setup_logger(__name__)
 
 app = FastAPI(title="AI Automation Platform")
