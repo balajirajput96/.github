@@ -220,6 +220,12 @@ describe('Personal AI Platform API', () => {
   });
 
   describe('AI Assistant', () => {
+    it('returns 401 when calling chat without API key', async () => {
+      const res = await request(app).post('/api/assistant/chat').send({ prompt: 'Say hello' });
+      expect(res.statusCode).toBe(401);
+      expect(res.body).toEqual({ error: 'Unauthorized: Invalid or missing API key.' });
+    });
+
     it('POST /api/assistant/chat uses Gemini when configured', async () => {
       axios.post.mockResolvedValue({ data: { candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] } });
       const res = await request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'Say hello' });
