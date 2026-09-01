@@ -14,3 +14,7 @@
 **Vulnerability:** Express endpoints that proxy GitHub issue creation and Slack/Discord messages can otherwise be abused as unauthenticated outbound proxies using the application's configured integration credentials.
 **Learning:** Any endpoint that performs third-party write operations on behalf of callers must enforce application-level authentication before invoking the provider API.
 **Prevention:** Require a private `x-api-key` matching `API_KEY` on all external write-proxy routes and cover both authenticated and rejected requests with automated tests.
+## 2024-05-24 - Missing Authentication on Sensitive Endpoints
+**Vulnerability:** The Express backend exposed several sensitive endpoints (`/api/assistant/chat`, `/api/workflow/create`, `/api/workflow/sync`) that process incoming data and interact with external APIs (like Gemini) without authentication, making them vulnerable to unauthorized access and resource abuse.
+**Learning:** Endpoints that consume third-party API quotas or mutate state must always be protected. While a custom `requireAuth` middleware existed in the file, it wasn't applied to all POST endpoints. Tests using `supertest` can verify endpoint protection by asserting `401 Unauthorized` when an API key is missing.
+**Prevention:** Ensure all state-mutating or cost-incurring endpoints are wrapped with an authentication middleware (`requireAuth`). Always write unit tests that explicitly verify unauthenticated access is rejected for these endpoints.

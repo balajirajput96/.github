@@ -312,7 +312,7 @@ app.get('/api/datadog/status', (req, res) => {
   });
 });
 
-app.post('/api/assistant/chat', async (req, res) => {
+app.post('/api/assistant/chat', requireAuth, async (req, res) => {
   const { prompt } = req.body || {};
   if (!prompt || typeof prompt !== 'string' || prompt.length > 20000) {
     return res.status(400).json({ error: 'prompt is required and must be at most 20000 characters.' });
@@ -336,12 +336,12 @@ app.post('/api/assistant/chat', async (req, res) => {
 
 app.get('/api/jira/projects', (req, res) => res.status(501).json({ error: 'Jira integration is not implemented in this repository.' }));
 app.post('/api/jira/issue', (req, res) => res.status(501).json({ error: 'Jira integration is not implemented in this repository.' }));
-app.post('/api/workflow/create', (req, res) => {
+app.post('/api/workflow/create', requireAuth, (req, res) => {
   const { workflowName, steps } = req.body || {};
   if (!workflowName || !Array.isArray(steps)) return res.status(400).json({ error: 'workflowName and steps are required' });
   return res.status(201).json({ message: `Workflow '${workflowName}' created successfully.`, steps });
 });
-app.post('/api/workflow/sync', (req, res) => {
+app.post('/api/workflow/sync', requireAuth, (req, res) => {
   const { source, destination } = req.body || {};
   if (!source || !destination) return res.status(400).json({ error: 'source and destination are required' });
   return res.json({ message: `Sync workflow from ${source} to ${destination} initiated.` });
