@@ -17,7 +17,7 @@ export function Button({ variant = 'primary', size = 'md', children, style, ...p
     fontWeight: 600,
     fontFamily: 'var(--font-display)',
     letterSpacing: '0.5px',
-    transition: 'all 0.2s ease',
+    transition: 'background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
   };
 
   const sizes: Record<string, React.CSSProperties> = {
