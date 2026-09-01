@@ -34,8 +34,11 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - run: npm install
+          cache: npm
+          cache-dependency-path: web-app/server/package-lock.json
+      - run: npm ci
       - run: npm test
+      - run: npm audit --audit-level=high
 
   client:
     runs-on: ubuntu-latest
@@ -47,6 +50,23 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - run: npm install
-      - run: npm test -- --watchAll=false
+          cache: npm
+          cache-dependency-path: web-app/client/package-lock.json
+      - run: npm ci
+      - run: npm test
       - run: npm run build
+      - run: npm audit --omit=dev --audit-level=moderate
+
+  landing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm audit --audit-level=high
