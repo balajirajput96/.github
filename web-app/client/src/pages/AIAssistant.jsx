@@ -22,6 +22,40 @@ function AIAssistant() {
     scrollToBottom();
   }, [messages]);
 
+  
+  const handleRunJobs = async () => {
+    setMessages((prev) => [...prev, { sender: 'user', text: 'Run Pharma Job Automation' }, { sender: 'ai', text: 'Running the automation script in the background...', isStreaming: true }]);
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/jobs/run', {
+        headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+      });
+      const data = await res.json();
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        const last = newMessages[newMessages.length - 1];
+        last.text = `**Job Automation Completed!**
+
+\`\`\`text
+${data.output || data.error}
+\`\`\``;
+        last.isStreaming = false;
+        return newMessages;
+      });
+    } catch (err) {
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        const last = newMessages[newMessages.length - 1];
+        last.text = `**Error**: ${err.message}`;
+        last.isStreaming = false;
+        return newMessages;
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || loading) return;
 
@@ -141,7 +175,12 @@ function AIAssistant() {
           ))}
           <div ref={messagesEndRef} />
         </Box>
+        
         <Box sx={{ display: 'flex', mt: 2, alignItems: 'flex-end' }}>
+          <Button variant="outlined" sx={{ mr: 2, height: '56px', whiteSpace: 'nowrap' }} onClick={handleRunJobs} disabled={loading}>
+            Run Job Scan
+          </Button>
+
           <TextField
             fullWidth
             multiline
