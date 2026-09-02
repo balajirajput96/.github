@@ -1,57 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Paper, Alert, CircularProgress, Chip } from '@mui/material';
+import { Typography, Button, Box, Paper, List, ListItem, ListItemText, Divider, Alert, CircularProgress, Chip } from '@mui/material';
 
 const GoogleDrive = () => {
-  const [data, setData] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState('Checking...');
 
-  const fetchDriveStatus = async () => {
+  const handleFetch = async () => {
+    setError(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/google-drive');
-      const json = await res.json();
-      setData(json);
-      setStatus(json.configured ? 'Connected' : 'Configured (Token Active)');
-    } catch (err) {
-      setStatus('Operational');
-      setData({ message: 'Google Drive integration endpoint operational' });
+      const response = await fetch('/api/google-drive');
+      if (!response.ok) throw new Error('Failed to fetch from Google Drive');
+      const data = await response.json();
+      setFiles(data.files || []);
+    } catch (error) {
+      setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchDriveStatus();
-  }, []);
+  useEffect(() => { handleFetch(); }, []);
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4" sx={{ mr: 2 }}>Google Drive Integration</Typography>
-        <Chip label={status} color="success" size="small" />
+      <Typography variant="h4" gutterBottom>Google Drive Integration</Typography>
+      <Typography paragraph>Access and sync your Pharma QA/IPQA reports and resumes to Drive.</Typography>
+      <Button variant="contained" onClick={handleFetch} disabled={loading}>
+        {loading ? <CircularProgress size={24} /> : 'Sync Files'}
+      </Button>
+      <Box mt={3}>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <Paper elevation={3}>
+          <List>
+            {files.length > 0 ? (
+              files.map((file, i) => (
+                <React.Fragment key={i}>
+                  <ListItem sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <ListItemText primary={file.name} secondary={file.mimeType} />
+                    <Chip label="Synced" size="small" color="success" />
+                  </ListItem>
+                  {i < files.length - 1 && <Divider />}
+                </React.Fragment>
+              ))
+            ) : (
+              <ListItem><ListItemText primary={loading ? 'Loading...' : 'No files found or integration not configured.'} /></ListItem>
+            )}
+          </List>
+        </Paper>
       </Box>
-      <Typography paragraph color="text.secondary">
-        Manage automated resume backups, outreach reports, and company CSV directories synchronized to your Google Drive.
-      </Typography>
-
-      <Paper sx={{ p: 3, mt: 3 }}>
-        <Typography variant="h6" gutterBottom>Integration Status</Typography>
-        {loading ? (
-          <CircularProgress size={24} sx={{ my: 2 }} />
-        ) : (
-          <Box sx={{ mt: 2 }}>
-            <Alert severity="info" sx={{ mb: 2 }}>
-              {data?.message || 'Google Drive integration ready.'}
-            </Alert>
-            <Button variant="contained" onClick={fetchDriveStatus} disabled={loading}>
-              Refresh Status
-            </Button>
-          </Box>
-        )}
-      </Paper>
     </Box>
   );
 };
-
 export default GoogleDrive;

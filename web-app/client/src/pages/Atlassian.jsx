@@ -1,54 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Paper, Alert, CircularProgress, Chip } from '@mui/material';
+import { Typography, Button, Box, Paper, List, ListItem, ListItemText, Divider, Alert, CircularProgress, Chip } from '@mui/material';
 
 const Atlassian = () => {
-  const [data, setData] = useState(null);
+  const [projects, setProjects] = useState([]);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchStatus = async () => {
+  const handleFetch = async () => {
+    setError(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/atlassian');
-      const json = await res.json();
-      setData(json);
-    } catch (err) {
-      setData({ message: 'Atlassian API endpoint active' });
+      const response = await fetch('/api/jira/projects');
+      if (!response.ok) throw new Error('Failed to fetch from Jira');
+      const data = await response.json();
+      setProjects(data.projects || []);
+    } catch (error) {
+      setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchStatus();
-  }, []);
+  useEffect(() => { handleFetch(); }, []);
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4" sx={{ mr: 2 }}>Atlassian Integration</Typography>
-        <Chip label="Ready" color="info" size="small" />
+      <Typography variant="h4" gutterBottom>Atlassian / Jira Integration</Typography>
+      <Typography paragraph>Manage agile tasks, job tracking, and workflows.</Typography>
+      <Button variant="contained" onClick={handleFetch} disabled={loading}>
+        {loading ? <CircularProgress size={24} /> : 'Sync Projects'}
+      </Button>
+      <Box mt={3}>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <Paper elevation={3}>
+          <List>
+            {projects.length > 0 ? (
+              projects.map((proj, i) => (
+                <React.Fragment key={i}>
+                  <ListItem sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <ListItemText primary={proj.name} secondary={`Key: ${proj.key}`} />
+                    <Chip label="Active" size="small" color="primary" />
+                  </ListItem>
+                  {i < projects.length - 1 && <Divider />}
+                </React.Fragment>
+              ))
+            ) : (
+              <ListItem><ListItemText primary={loading ? 'Loading...' : 'No projects found or Jira not configured.'} /></ListItem>
+            )}
+          </List>
+        </Paper>
       </Box>
-      <Typography paragraph color="text.secondary">
-        Connect to JIRA and Confluence for automated issue tracking, bug lifecycle tracking, and release management.
-      </Typography>
-
-      <Paper sx={{ p: 3, mt: 3 }}>
-        <Typography variant="h6" gutterBottom>Service Status</Typography>
-        {loading ? (
-          <CircularProgress size={24} sx={{ my: 2 }} />
-        ) : (
-          <Box sx={{ mt: 2 }}>
-            <Alert severity="info" sx={{ mb: 2 }}>
-              {data?.message || 'Atlassian API connector ready.'}
-            </Alert>
-            <Button variant="contained" onClick={fetchStatus} disabled={loading}>
-              Test Connection
-            </Button>
-          </Box>
-        )}
-      </Paper>
     </Box>
   );
 };
-
 export default Atlassian;
