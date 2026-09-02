@@ -105,7 +105,7 @@ def run_single_cycle() -> dict:
 
     # Task 7: React Client Tests
     success, out = run_command(
-        "npm test -- --watchAll=false",
+        "npm test",
         cwd=os.path.join(REPO_ROOT, "web-app", "client"),
         description="React Client Test Suite"
     )
