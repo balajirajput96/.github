@@ -18,3 +18,7 @@
 **Vulnerability:** The Express backend exposed several sensitive endpoints (`/api/assistant/chat`, `/api/workflow/create`, `/api/workflow/sync`) that process incoming data and interact with external APIs (like Gemini) without authentication, making them vulnerable to unauthorized access and resource abuse.
 **Learning:** Endpoints that consume third-party API quotas or mutate state must always be protected. While a custom `requireAuth` middleware existed in the file, it wasn't applied to all POST endpoints. Tests using `supertest` can verify endpoint protection by asserting `401 Unauthorized` when an API key is missing.
 **Prevention:** Ensure all state-mutating or cost-incurring endpoints are wrapped with an authentication middleware (`requireAuth`). Always write unit tests that explicitly verify unauthenticated access is rejected for these endpoints.
+## 2024-05-30 - [Fix timing attack vulnerability in API key verification]
+**Vulnerability:** Timing attack vulnerability in `requireAuth` middleware due to unsafe string comparison.
+**Learning:** `crypto.timingSafeEqual` should be used instead of `!==` to compare secrets. Also, when using `crypto.timingSafeEqual` in Node.js to compare secrets, strictly ensure you check the byte lengths of the generated `Buffer` objects, rather than the lengths of the original strings, to avoid errors or timing leaks with multibyte characters.
+**Prevention:** Use `crypto.timingSafeEqual` for sensitive string comparisons, and always convert strings to Buffers first and check their byte lengths before comparison.
