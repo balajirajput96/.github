@@ -19,7 +19,7 @@ test('renders children when there is no error', () => {
 
 test('shows a recoverable fallback when a child throws', () => {
   const originalError = console.error;
-  console.error = jest.fn();
+  console.error = vi.fn();
 
   render(
     <ErrorBoundary>
@@ -35,7 +35,7 @@ test('shows a recoverable fallback when a child throws', () => {
 
 test('allows retrying the failed render', async () => {
   const originalError = console.error;
-  console.error = jest.fn();
+  console.error = vi.fn();
   let shouldBreak = true;
 
   function ToggleComponent() {

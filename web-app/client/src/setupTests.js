@@ -1,5 +1,5 @@
-// jest-dom adds custom jest matchers for asserting on DOM nodes.
-// allows you to do things like:
-// expect(element).toHaveTextContent(/react/i)
-// learn more: https://github.com/testing-library/jest-dom
-import '@testing-library/jest-dom';
+import { vi } from 'vitest';
+import '@testing-library/jest-dom/vitest';
+
+// Keep legacy tests that use jest.fn() working while the runner is migrated to Vitest.
+globalThis.jest = vi;

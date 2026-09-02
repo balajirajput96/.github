@@ -1,0 +1,45 @@
+diff --git a/.jules/sentinel.md b/.jules/sentinel.md
+index 55154b11..dd161cff 100644
+--- a/.jules/sentinel.md
++++ b/.jules/sentinel.md
+@@ -18,3 +18,7 @@
+ **Vulnerability:** The Express backend exposed several sensitive endpoints (`/api/assistant/chat`, `/api/workflow/create`, `/api/workflow/sync`) that process incoming data and interact with external APIs (like Gemini) without authentication, making them vulnerable to unauthorized access and resource abuse.
+ **Learning:** Endpoints that consume third-party API quotas or mutate state must always be protected. While a custom `requireAuth` middleware existed in the file, it wasn't applied to all POST endpoints. Tests using `supertest` can verify endpoint protection by asserting `401 Unauthorized` when an API key is missing.
+ **Prevention:** Ensure all state-mutating or cost-incurring endpoints are wrapped with an authentication middleware (`requireAuth`). Always write unit tests that explicitly verify unauthenticated access is rejected for these endpoints.
++## 2024-05-30 - [Fix timing attack vulnerability in API key verification]
++**Vulnerability:** Timing attack vulnerability in `requireAuth` middleware due to unsafe string comparison.
++**Learning:** `crypto.timingSafeEqual` should be used instead of `!==` to compare secrets. Also, when using `crypto.timingSafeEqual` in Node.js to compare secrets, strictly ensure you check the byte lengths of the generated `Buffer` objects, rather than the lengths of the original strings, to avoid errors or timing leaks with multibyte characters.
++**Prevention:** Use `crypto.timingSafeEqual` for sensitive string comparisons, and always convert strings to Buffers first and check their byte lengths before comparison.
+diff --git a/web-app/server/index.js b/web-app/server/index.js
+index d69c48a0..690b1237 100644
+--- a/web-app/server/index.js
++++ b/web-app/server/index.js
+@@ -2,6 +2,7 @@ require('dotenv').config();
+ const express = require('express');
+ const axios = require('axios');
+ const path = require('path');
++const crypto = require('crypto');
+ 
+ const app = express();
+ app.set('trust proxy', 1);
+@@ -39,9 +40,19 @@ const isSafeGithubIdentifier = (value) =>
+ 
+ const requireAuth = (req, res, next) => {
+   const apiKey = req.headers['x-api-key'];
+-  if (!apiKey || !process.env.API_KEY || apiKey !== process.env.API_KEY) {
++  const envKey = process.env.API_KEY;
++
++  if (!apiKey || !envKey) {
++    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key.' });
++  }
++
++  const apiKeyBuffer = Buffer.from(apiKey);
++  const envKeyBuffer = Buffer.from(envKey);
++
++  if (apiKeyBuffer.length !== envKeyBuffer.length || !crypto.timingSafeEqual(apiKeyBuffer, envKeyBuffer)) {
+     return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key.' });
+   }
++
+   return next();
+ };
+ 

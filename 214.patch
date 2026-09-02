@@ -1,0 +1,80 @@
+diff --git a/.jules/palette.md b/.jules/palette.md
+index bcb255c2..0fbbce52 100644
+--- a/.jules/palette.md
++++ b/.jules/palette.md
+@@ -13,3 +13,7 @@
+ ## 2024-11-20 - Code snippet selection and keyboard scrolling
+ **Learning:** Users often triple-click or try to carefully highlight code snippets to copy them, which can be frustrating. Furthermore, `overflow-x: auto` containers used for long code blocks are not focusable by default, meaning keyboard-only users cannot scroll horizontally to read the full command.
+ **Action:** Use `userSelect: 'all'` on code snippets so a single click selects the entire text. Additionally, always add `tabIndex={0}` and an appropriate `aria-label` to `overflow-x: auto` containers to ensure they are keyboard accessible.
++
++## 2024-11-20 - Synchronizing keyboard focus with in-page scroll targets
++**Learning:** When implementing in-page navigation (like "Skip to main content" links or "Scroll to section" buttons using `scrollIntoView`), visually scrolling the page does not automatically move the browser's active keyboard focus to the new section. If focus is left behind, keyboard users (and screen readers) will resume navigation from the original button, effectively ignoring the visual scroll.
++**Action:** When scrolling to an element via JS or anchor links, ensure the target container (e.g., `<main>`, `<section>`) has `tabIndex={-1}` and `style={{ outline: 'none' }}`. Then, programmatically call `.focus({ preventScroll: true })` on the target element immediately after scrolling.
+diff --git a/src/components/landing/Features.tsx b/src/components/landing/Features.tsx
+index ed524c49..16f4d9e0 100644
+--- a/src/components/landing/Features.tsx
++++ b/src/components/landing/Features.tsx
+@@ -46,7 +46,7 @@ export function Features() {
+   ];
+ 
+   return (
+-    <section id="features" style={{ padding: '8rem 0' }}>
++    <section id="features" tabIndex={-1} style={{ padding: '8rem 0', outline: 'none' }}>
+       <div className="container">
+         <SectionHeading
+           title="Designed for modern workflows"
+diff --git a/src/components/landing/Hero.tsx b/src/components/landing/Hero.tsx
+index 936571e2..243b390b 100644
+--- a/src/components/landing/Hero.tsx
++++ b/src/components/landing/Hero.tsx
+@@ -97,10 +97,22 @@ export function Hero() {
+               marginTop: '2rem'
+             }}
+           >
+-            <Button size="lg" onClick={() => document.getElementById('quickstart')?.scrollIntoView({ behavior: 'smooth' })}>
++            <Button size="lg" onClick={() => {
++              const el = document.getElementById('quickstart');
++              if (el) {
++                el.scrollIntoView({ behavior: 'smooth' });
++                el.focus({ preventScroll: true });
++              }
++            }}>
+               Get Started
+             </Button>
+-            <Button variant="secondary" size="lg" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
++            <Button variant="secondary" size="lg" onClick={() => {
++              const el = document.getElementById('features');
++              if (el) {
++                el.scrollIntoView({ behavior: 'smooth' });
++                el.focus({ preventScroll: true });
++              }
++            }}>
+               View Features
+             </Button>
+           </motion.div>
+diff --git a/src/components/landing/Quickstart.tsx b/src/components/landing/Quickstart.tsx
+index aacd2f0a..45ef839d 100644
+--- a/src/components/landing/Quickstart.tsx
++++ b/src/components/landing/Quickstart.tsx
+@@ -133,7 +133,7 @@ export function Quickstart() {
+   ];
+ 
+   return (
+-    <section id="quickstart" style={{ padding: '8rem 0', background: 'var(--surface-color)' }}>
++    <section id="quickstart" tabIndex={-1} style={{ padding: '8rem 0', background: 'var(--surface-color)', outline: 'none' }}>
+       <div className="container">
+         <SectionHeading
+           title="From zero to orbit in minutes"
+diff --git a/src/routes/index.tsx b/src/routes/index.tsx
+index 424c2f82..67400f84 100644
+--- a/src/routes/index.tsx
++++ b/src/routes/index.tsx
+@@ -73,7 +73,7 @@ function LandingPage() {
+         </nav>
+       </header>
+ 
+-      <main id="main-content">
++      <main id="main-content" tabIndex={-1} style={{ outline: 'none' }}>
+         <Hero />
+         <Features />
+         <Quickstart />
