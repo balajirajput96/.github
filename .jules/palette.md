@@ -13,3 +13,7 @@
 ## 2024-11-20 - Code snippet selection and keyboard scrolling
 **Learning:** Users often triple-click or try to carefully highlight code snippets to copy them, which can be frustrating. Furthermore, `overflow-x: auto` containers used for long code blocks are not focusable by default, meaning keyboard-only users cannot scroll horizontally to read the full command.
 **Action:** Use `userSelect: 'all'` on code snippets so a single click selects the entire text. Additionally, always add `tabIndex={0}` and an appropriate `aria-label` to `overflow-x: auto` containers to ensure they are keyboard accessible.
+
+## 2024-11-20 - Synchronizing keyboard focus with in-page scroll targets
+**Learning:** When implementing in-page navigation (like "Skip to main content" links or "Scroll to section" buttons using `scrollIntoView`), visually scrolling the page does not automatically move the browser's active keyboard focus to the new section. If focus is left behind, keyboard users (and screen readers) will resume navigation from the original button, effectively ignoring the visual scroll.
+**Action:** When scrolling to an element via JS or anchor links, ensure the target container (e.g., `<main>`, `<section>`) has `tabIndex={-1}` and `style={{ outline: 'none' }}`. Then, programmatically call `.focus({ preventScroll: true })` on the target element immediately after scrolling.
