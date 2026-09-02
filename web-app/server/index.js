@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -39,9 +40,19 @@ const isSafeGithubIdentifier = (value) =>
 
 const requireAuth = (req, res, next) => {
   const apiKey = req.headers['x-api-key'];
-  if (!apiKey || !process.env.API_KEY || apiKey !== process.env.API_KEY) {
+  const envKey = process.env.API_KEY;
+
+  if (!apiKey || !envKey) {
     return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key.' });
   }
+
+  const apiKeyBuffer = Buffer.from(apiKey);
+  const envKeyBuffer = Buffer.from(envKey);
+
+  if (apiKeyBuffer.length !== envKeyBuffer.length || !crypto.timingSafeEqual(apiKeyBuffer, envKeyBuffer)) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key.' });
+  }
+
   return next();
 };
 
