@@ -97,10 +97,22 @@ export function Hero() {
               marginTop: '2rem'
             }}
           >
-            <Button size="lg" onClick={() => document.getElementById('quickstart')?.scrollIntoView({ behavior: 'smooth' })}>
+            <Button size="lg" onClick={() => {
+              const el = document.getElementById('quickstart');
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+                el.focus({ preventScroll: true });
+              }
+            }}>
               Get Started
             </Button>
-            <Button variant="secondary" size="lg" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
+            <Button variant="secondary" size="lg" onClick={() => {
+              const el = document.getElementById('features');
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+                el.focus({ preventScroll: true });
+              }
+            }}>
               View Features
             </Button>
           </motion.div>

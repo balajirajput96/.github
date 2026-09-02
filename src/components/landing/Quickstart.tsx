@@ -133,7 +133,7 @@ export function Quickstart() {
   ];
 
   return (
-    <section id="quickstart" style={{ padding: '8rem 0', background: 'var(--surface-color)' }}>
+    <section id="quickstart" tabIndex={-1} style={{ padding: '8rem 0', background: 'var(--surface-color)', outline: 'none' }}>
       <div className="container">
         <SectionHeading
           title="From zero to orbit in minutes"

@@ -46,7 +46,7 @@ export function Features() {
   ];
 
   return (
-    <section id="features" style={{ padding: '8rem 0' }}>
+    <section id="features" tabIndex={-1} style={{ padding: '8rem 0', outline: 'none' }}>
       <div className="container">
         <SectionHeading
           title="Designed for modern workflows"
