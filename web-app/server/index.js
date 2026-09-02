@@ -324,24 +324,70 @@ app.get('/api/datadog/status', (req, res) => {
 });
 
 app.post('/api/assistant/chat', requireAuth, async (req, res) => {
-  const { prompt } = req.body || {};
+  const { prompt, history } = req.body || {};
   if (!prompt || typeof prompt !== 'string' || prompt.length > 20000) {
     return res.status(400).json({ error: 'prompt is required and must be at most 20000 characters.' });
   }
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return res.status(503).json({ error: 'Gemini integration is not configured.' });
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const formattedHistory = [];
+  if (history && Array.isArray(history)) {
+    for (const msg of history) {
+      if (msg.sender === 'user') {
+        formattedHistory.push({ role: 'user', parts: [{ text: msg.text }] });
+      } else if (msg.sender === 'ai') {
+        formattedHistory.push({ role: 'model', parts: [{ text: msg.text }] });
+      }
+    }
+  }
+  formattedHistory.push({ role: 'user', parts: [{ text: prompt }] });
+
   try {
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-      { contents: [{ parts: [{ text: prompt }] }] },
-      { params: { key: apiKey }, headers: { 'Content-Type': 'application/json' } }
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`,
+      { contents: formattedHistory },
+      { params: { key: apiKey }, headers: { 'Content-Type': 'application/json' }, responseType: 'stream' }
     );
-    const reply = response.data?.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim();
-    if (!reply) return res.status(502).json({ error: 'Gemini returned an empty response.' });
-    return res.json({ reply, timestamp: new Date().toISOString() });
+    
+    response.data.on('data', (chunk) => {
+      const lines = chunk.toString().split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+          try {
+            const parsed = JSON.parse(line.slice(6));
+            const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (text) {
+              res.write(`data: ${JSON.stringify({ type: 'FINAL_RESPONSE', content: text })}\n\n`);
+            }
+          } catch (e) {}
+        }
+      }
+    });
+
+    response.data.on('end', () => {
+      res.write('data: [DONE]\n\n');
+      res.end();
+    });
+
+    response.data.on('error', (err) => {
+      res.write(`data: ${JSON.stringify({ type: 'FINAL_RESPONSE', content: '\n\n**Error**: Connection failed.' })}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
+    });
+
   } catch (error) {
-    return res.status(error.response?.status || 502).json({ error: 'Failed to process request with Gemini.' });
+    if (!res.headersSent) {
+      return res.status(error.response?.status || 502).json({ error: 'Failed to process request with Gemini.' });
+    }
+    res.write(`data: ${JSON.stringify({ type: 'FINAL_RESPONSE', content: '\n\n**API Error**: Failed to connect.' })}\n\n`);
+    res.write('data: [DONE]\n\n');
+    res.end();
   }
 });
 
