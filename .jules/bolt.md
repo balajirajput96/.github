@@ -22,3 +22,7 @@
 ## 2023-10-28 - [React DOM Element Extraction]
 **Learning:** React elements map to standard JS objects. While `useMemo` is good for derived data, completely extracting purely static JSX sub-trees (like screen-reader-only labels or non-interactive UI) outside of a functional component prevents those objects from being re-allocated in memory entirely on every render.
 **Action:** When working on components that re-render very frequently (e.g. typing animations using `setInterval`), inspect the JSX for completely static blocks. Move them outside the component function definition as constants to reduce memory allocation and diffing pressure.
+
+## 2024-05-19 - Extracted static arrays with JSX
+**Learning:** In React components like `Features.tsx`, static data arrays that also contain JSX elements (like icons) are recreated on every render if defined inside the functional component. This causes unnecessary allocations and diffing.
+**Action:** Always hoist static data structures—especially those containing React elements—outside of functional components unless they depend on component state or props.
