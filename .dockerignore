@@ -1,0 +1,7 @@
+node_modules/
+web-app/client/node_modules/
+web-app/server/node_modules/
+web-app/client/build/
+.git/
+venv/
+.env
