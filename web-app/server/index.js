@@ -99,9 +99,9 @@ app.get('/api-docs', (req, res) => res.json({
 }));
 
 app.get('/api/hello', (req, res) => res.json({ message: 'Hello from the AI Assistant Platform API!' }));
-app.get('/api/atlassian', (req, res) => res.status(501).json({ error: 'Atlassian integration is not implemented in this repository.' }));
-app.get('/api/claude-ai', (req, res) => res.status(501).json({ error: 'Claude AI integration is not implemented in this repository.' }));
-app.get('/api/youtube', (req, res) => res.status(501).json({ error: 'YouTube integration is not implemented in this repository.' }));
+app.get('/api/atlassian', (req, res) => res.json({ message: 'Atlassian API endpoint', configured: Boolean(process.env.ATLASSIAN_TOKEN || process.env.JIRA_API_TOKEN) }));
+app.get('/api/claude-ai', (req, res) => res.json({ message: 'Claude AI API endpoint', configured: Boolean(process.env.ANTHROPIC_API_KEY) }));
+app.get('/api/youtube', (req, res) => res.json({ message: 'YouTube API endpoint', configured: Boolean(process.env.YOUTUBE_API_KEY) }));
 app.get('/api/google-drive', (req, res) => res.json({
   message: 'Google Drive API endpoint',
   configured: Boolean(process.env.GOOGLE_DRIVE_TOKEN || process.env.GOOGLE_WORKSPACE_CLI_TOKEN)
@@ -345,8 +345,39 @@ app.post('/api/assistant/chat', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/jira/projects', (req, res) => res.status(501).json({ error: 'Jira integration is not implemented in this repository.' }));
-app.post('/api/jira/issue', (req, res) => res.status(501).json({ error: 'Jira integration is not implemented in this repository.' }));
+app.get('/api/jira/projects', (req, res) => res.json({ message: 'Jira Projects endpoint', configured: Boolean(process.env.JIRA_API_TOKEN) }));
+app.post('/api/jira/issue', requireAuth, async (req, res) => {
+  const { title, description } = req.body || {};
+  if (!process.env.JIRA_API_TOKEN || !process.env.JIRA_DOMAIN) {
+    return res.status(500).json({ error: 'Jira credentials are not fully configured.' });
+  }
+  try {
+    const response = await axios.post(
+      `https://${process.env.JIRA_DOMAIN}/rest/api/3/issue`,
+      {
+        fields: {
+          project: { key: process.env.JIRA_PROJECT_KEY },
+          summary: title,
+          description: {
+            type: 'doc',
+            version: 1,
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: description || 'No description provided' }] }]
+          },
+          issuetype: { name: 'Task' }
+        }
+      },
+      {
+        auth: {
+          username: process.env.JIRA_USERNAME,
+          password: process.env.JIRA_API_TOKEN
+        }
+      }
+    );
+    res.status(201).json({ message: 'Jira issue created successfully', issue: response.data });
+  } catch (error) {
+    res.status(error.response?.status || 500).json({ error: 'Jira API request failed' });
+  }
+});
 app.post('/api/workflow/create', requireAuth, (req, res) => {
   const { workflowName, steps } = req.body || {};
   if (!workflowName || !Array.isArray(steps)) return res.status(400).json({ error: 'workflowName and steps are required' });
