@@ -251,16 +251,16 @@ describe('Personal AI Platform API', () => {
     });
   });
 
-  it('does not claim Jira is implemented when it is not', async () => {
+  it('returns 401 when creating Jira issue without API key', async () => {
     const res = await request(app).post('/api/jira/issue').send({ projectKey: 'PROJ', summary: 'Test' });
-    expect(res.statusCode).toBe(501);
-    expect(res.body).toEqual({ error: 'Jira integration is not implemented in this repository.' });
+    expect(res.statusCode).toBe(401);
   });
 
-  it('does not claim unimplemented integrations are operational', async () => {
+  it('returns configuration status for new integrations', async () => {
     for (const endpoint of ['/api/atlassian', '/api/claude-ai', '/api/youtube']) {
       const res = await request(app).get(endpoint);
-      expect(res.statusCode).toBe(501);
+      expect(res.statusCode).toBe(200);
+      expect(res.body.configured).toBeDefined();
     }
   });
 });
