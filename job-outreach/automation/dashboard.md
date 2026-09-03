@@ -1,4 +1,4 @@
-# Job Dashboard — updated 2026-09-02
+# Job Dashboard — updated 2026-09-03
 
 - New added today: **0**  |  Total tracked: **9**
 - Walk-ins available: **9**
@@ -43,9 +43,9 @@ _If 0 jobs, these lines show why (blocked fetch / JS-only page / LLM key or cred
 - fetch HTTP 403: https://www.pharmatutor.org/pharma-jobs
 - fetch HTTP 403: https://www.pharmatutor.org/pharma-jobs
 - little text (16 chars, maybe JS-only): https://www.pharmatutor.org/pharma-jobs
-- LLM extract ERROR: 402 Client Error: Payment Required for url: https://openrouter.ai/api/v1/chat/completions
-- LLM extract ERROR: 402 Client Error: Payment Required for url: https://openrouter.ai/api/v1/chat/completions
-- LLM extract ERROR: 402 Client Error: Payment Required for url: https://openrouter.ai/api/v1/chat/completions
+- LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
+- LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
+- LLM extract ERROR: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 - fetch HTTP 403: https://www.torrentpharma.com/careers/join-us/
 - fetch HTTP 403: https://www.torrentpharma.com/careers/join-us/
 - little text (16 chars, maybe JS-only): https://www.torrentpharma.com/careers/join-us/
