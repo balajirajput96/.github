@@ -46,7 +46,24 @@ class JobCollector:
         logger.info(f"Collected {len(mock_jobs)} jobs.")
         return mock_jobs
 
+
+    def save_to_db(self, db_path: str = "jobs.db"):
+        import sqlite3
+        conn = sqlite3.connect(db_path)
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS jobs
+                     (id TEXT PRIMARY KEY, title TEXT, company TEXT, location TEXT, description TEXT, url TEXT)''')
+        for job in self.jobs:
+            c.execute("INSERT OR REPLACE INTO jobs VALUES (?, ?, ?, ?, ?, ?)",
+                      (job['id'], job['title'], job['company'], job['location'], job['description'], job['url']))
+        conn.commit()
+        conn.close()
+        logger.info(f"Saved collected jobs to SQLite database at {db_path}")
+
     def save_to_json(self, filepath: str = "jobs/collected_jobs.json"):
+        self.save_to_db()
+
+    def save_to_json_original(self, filepath: str = "jobs/collected_jobs.json"):
         """Saves collected jobs to a JSON file."""
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         with open(filepath, 'w') as f:

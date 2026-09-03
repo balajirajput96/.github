@@ -470,6 +470,25 @@ app.get('/api/resume/download', requireAuth, (req, res) => {
   });
 });
 
+
+app.get('/api/jobs/db', requireAuth, (req, res) => {
+  const sqlite3 = require('sqlite3').verbose();
+  const path = require('path');
+  const dbPath = path.join(__dirname, '..', '..', 'jobs.db');
+  
+  const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
+    if (err) return res.status(500).json({ error: 'Database not found. Run Job Scan first.' });
+  });
+
+  db.all("SELECT * FROM jobs", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ jobs: rows });
+  });
+  db.close();
+});
+
 const clientBuildPath = path.join(__dirname, '..', 'client', 'build');
 app.use(express.static(clientBuildPath));
 app.get(/(.*)/, (req, res) => res.sendFile(path.join(clientBuildPath, 'index.html')));

@@ -15,6 +15,7 @@ const Workflows = React.lazy(() => import('./pages/Workflows'));
 const Analytics = React.lazy(() => import('./pages/Analytics'));
 const ContentHub = React.lazy(() => import('./pages/ContentHub'));
 const AIAssistant = React.lazy(() => import('./pages/AIAssistant'));
+const JobDatabase = React.lazy(() => import('./pages/JobDatabase'));
 
 /**
  * @description The main application component. It sets up routing and lazy-loads
@@ -39,6 +40,7 @@ function App() {
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/content" element={<ContentHub />} />
             <Route path="/assistant" element={<AIAssistant />} />
+            <Route path="/jobs-db" element={<JobDatabase />} />
           </Routes>
         </Suspense>
       </ErrorBoundary>
