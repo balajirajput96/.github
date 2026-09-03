@@ -11,6 +11,32 @@ const initialMessages = [
 function AIAssistant() {
   const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState('');
+
+  const [isListening, setIsListening] = useState(false);
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser does not support Voice AI.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-IN';
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      setIsListening(false);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognition.start();
+  };
+
+  const handleDownloadResume = () => {
+    const token = localStorage.getItem('token');
+    window.open(`/api/resume/download?token=${token}`, '_blank');
+  };
+
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 

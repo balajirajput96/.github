@@ -435,6 +435,41 @@ app.post('/api/workflow/sync', requireAuth, (req, res) => {
   return res.json({ message: `Sync workflow from ${source} to ${destination} initiated.` });
 });
 
+app.get('/api/jobs/run', requireAuth, (req, res) => {
+  const { exec } = require('child_process');
+  const path = require('path');
+  const scriptPath = path.join(__dirname, '..', '..', 'scripts', 'demo_run.py');
+  
+  exec(`python3 ${scriptPath}`, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`exec error: ${error}`);
+      return res.status(500).json({ error: 'Failed to run Pharma Job Automation script', details: stderr });
+    }
+    res.json({ success: true, output: stdout });
+  });
+});
+
+
+app.get('/api/resume/download', requireAuth, (req, res) => {
+  const { exec } = require('child_process');
+  const path = require('path');
+  const fs = require('fs');
+  const scriptPath = path.join(__dirname, '..', '..', 'resume', 'resume.py');
+  const pdfPath = path.join(__dirname, '..', '..', 'Balaji_Rajput_QA_Officer_Resume.pdf');
+  
+  exec(`python3 ${scriptPath}`, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`exec error: ${error}`);
+      return res.status(500).json({ error: 'Failed to generate PDF' });
+    }
+    if (fs.existsSync(pdfPath)) {
+      res.download(pdfPath, 'Balaji_Rajput_Optimized_Resume.pdf');
+    } else {
+      res.status(404).json({ error: 'PDF not found' });
+    }
+  });
+});
+
 const clientBuildPath = path.join(__dirname, '..', 'client', 'build');
 app.use(express.static(clientBuildPath));
 app.get(/(.*)/, (req, res) => res.sendFile(path.join(clientBuildPath, 'index.html')));
