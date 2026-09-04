@@ -27,3 +27,8 @@
 **Vulnerability:** Command injection vulnerability in `app.get("/api/jobs/run")` and `app.get("/api/resume/download")` due to using `child_process.exec` with interpolated command strings.
 **Learning:** `exec` invokes a shell which can be problematic and insecure if the absolute path (`__dirname`) happens to contain spaces or shell metacharacters. `execFile` directly spawns the executable without an intermediary shell, resolving this risk.
 **Prevention:** To prevent command injection and path handling issues in Node.js (e.g., when passing `__dirname` containing spaces to scripts), use `child_process.execFile` with arguments as an array rather than `child_process.exec` with interpolated command strings.
+
+## 2024-06-01 - [Fix test timeouts with mocked streams]
+**Vulnerability:** Not a vulnerability, but a test failure issue.
+**Learning:** When testing Express Server-Sent Events (SSE) streaming endpoints with a mocked `axios.post` in Jest, use `require("stream").PassThrough()` to simulate the response stream. Wrap the mock stream`s `.emit("data", ...)` and `.emit("end")` calls in a `setTimeout` to give the asynchronous route handler enough time to attach `.on("data")` listeners, preventing test timeouts or 502 errors.
+**Prevention:** Always ensure mocked stream responses are delayed using `setTimeout` when testing endpoints that consume them to avoid race conditions.
