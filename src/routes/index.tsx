@@ -15,22 +15,9 @@ export const Route = createRoute({
 });
 
 function LandingPage() {
-  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-    e.preventDefault();
-    const href = e.currentTarget.getAttribute('href');
-    if (!href || !href.startsWith('#')) return;
-
-    const id = href.slice(1);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      element.focus({ preventScroll: true });
-    }
-  };
-
   return (
     <div style={{ width: '100%', minHeight: '100vh' }}>
-      <a href="#main-content" className="skip-link" onClick={handleScroll}>Skip to main content</a>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
 
       <header style={{
         position: 'absolute',
@@ -66,16 +53,14 @@ function LandingPage() {
              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-color)'}
              onFocus={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
-             onBlur={(e) => e.currentTarget.style.color = 'var(--muted-color)'}
-             onClick={handleScroll}>
+             onBlur={(e) => e.currentTarget.style.color = 'var(--muted-color)'}>
             Features
           </a>
           <a href="#quickstart" style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)' }}
              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-color)'}
              onFocus={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
-             onBlur={(e) => e.currentTarget.style.color = 'var(--muted-color)'}
-             onClick={handleScroll}>
+             onBlur={(e) => e.currentTarget.style.color = 'var(--muted-color)'}>
             Quickstart
           </a>
           <a href="https://github.com" style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)' }}
