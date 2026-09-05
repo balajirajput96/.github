@@ -436,13 +436,13 @@ app.post('/api/workflow/sync', requireAuth, (req, res) => {
 });
 
 app.get('/api/jobs/run', requireAuth, (req, res) => {
-  const { exec } = require('child_process');
+  const { execFile } = require('child_process');
   const path = require('path');
   const scriptPath = path.join(__dirname, '..', '..', 'scripts', 'demo_run.py');
   
-  exec(`python3 ${scriptPath}`, (error, stdout, stderr) => {
+  execFile('python3', [scriptPath], (error, stdout, stderr) => {
     if (error) {
-      console.error(`exec error: ${error}`);
+      console.error(`execFile error: ${error}`);
       return res.status(500).json({ error: 'Failed to run Pharma Job Automation script', details: stderr });
     }
     res.json({ success: true, output: stdout });
@@ -451,15 +451,15 @@ app.get('/api/jobs/run', requireAuth, (req, res) => {
 
 
 app.get('/api/resume/download', requireAuth, (req, res) => {
-  const { exec } = require('child_process');
+  const { execFile } = require('child_process');
   const path = require('path');
   const fs = require('fs');
   const scriptPath = path.join(__dirname, '..', '..', 'resume', 'resume.py');
   const pdfPath = path.join(__dirname, '..', '..', 'Balaji_Rajput_QA_Officer_Resume.pdf');
   
-  exec(`python3 ${scriptPath}`, (error, stdout, stderr) => {
+  execFile('python3', [scriptPath], (error, stdout, stderr) => {
     if (error) {
-      console.error(`exec error: ${error}`);
+      console.error(`execFile error: ${error}`);
       return res.status(500).json({ error: 'Failed to generate PDF' });
     }
     if (fs.existsSync(pdfPath)) {
