@@ -85,7 +85,6 @@ const SR_ONLY_CONTENT = (
 
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
-  const [text, setText] = useState('');
 
   const completedLines = useMemo(() => {
     return lines.slice(0, currentLine).map((line, i) => (
@@ -106,29 +105,24 @@ export function TerminalPreview() {
     ));
   }, [currentLine]);
 
+  // PERFORMANCE OPTIMIZATION:
+  // Replaced high-frequency setInterval state updates (which cause costly React re-renders)
+  // with a single setTimeout that simply advances the line, while relying on a pure CSS
+  // animation (.typing-effect) to handle the visual typing. This offloads work to the browser's
+  // compositor and drastically reduces memory allocations and JS thread blocking.
   useEffect(() => {
     if (currentLine >= lines.length) return;
 
-    const fullText = lines[currentLine].cmd;
-    let charIndex = 0;
-    let completionTimeout: ReturnType<typeof setTimeout> | undefined;
+    const currentCommandLength = lines[currentLine].cmd.length;
+    // Dynamic wait time matching original logic: 100ms per character + 1500ms wait
+    const waitTime = (currentCommandLength * 100) + 1500;
 
-    const typingInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setText(fullText.substring(0, charIndex));
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        completionTimeout = setTimeout(() => {
-          setCurrentLine(prev => prev + 1);
-          setText('');
-        }, 1500); // Wait before next command
-      }
-    }, 100); // Typing speed
+    const timeout = setTimeout(() => {
+      setCurrentLine(prev => prev + 1);
+    }, waitTime);
 
     return () => {
-      clearInterval(typingInterval);
-      if (completionTimeout) clearTimeout(completionTimeout);
+      clearTimeout(timeout);
     };
   }, [currentLine]);
 
@@ -164,7 +158,9 @@ export function TerminalPreview() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 {TERMINAL_PROMPT}
                 <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
+                  <span key={currentLine} className="typing-effect" style={{"--char-count": lines[currentLine].cmd.length} as React.CSSProperties}>
+                    {lines[currentLine].cmd}
+                  </span>
                   {TERMINAL_CURSOR}
                 </span>
               </div>
