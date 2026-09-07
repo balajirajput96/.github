@@ -1,10 +1,20 @@
 import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
+interface BaseButtonProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
 }
+
+type ButtonAsButtonProps = BaseButtonProps & HTMLMotionProps<"button"> & {
+  href?: never;
+};
+
+type ButtonAsAnchorProps = BaseButtonProps & HTMLMotionProps<"a"> & {
+  href: string;
+};
+
+type ButtonProps = ButtonAsButtonProps | ButtonAsAnchorProps;
 
 export function Button({ variant = 'primary', size = 'md', children, style, ...props }: ButtonProps) {
 
@@ -48,13 +58,30 @@ export function Button({ variant = 'primary', size = 'md', children, style, ...p
     }
   };
 
+  const commonProps = {
+    whileHover: { y: -2, scale: 1.02 },
+    whileFocus: { y: -2, scale: 1.02 },
+    whileTap: { y: 0, scale: 0.98 },
+    style: { ...baseStyle, ...sizes[size], ...variants[variant], ...style },
+  };
+
+  if ('href' in props && props.href !== undefined) {
+    const { href, ...restProps } = props as ButtonAsAnchorProps;
+    return (
+      <motion.a
+        href={href}
+        {...commonProps}
+        {...restProps}
+      >
+        {children}
+      </motion.a>
+    );
+  }
+
   return (
     <motion.button
-      whileHover={{ y: -2, scale: 1.02 }}
-      whileFocus={{ y: -2, scale: 1.02 }}
-      whileTap={{ y: 0, scale: 0.98 }}
-      style={{ ...baseStyle, ...sizes[size], ...variants[variant], ...style }}
-      {...props}
+      {...commonProps}
+      {...(props as ButtonAsButtonProps)}
     >
       {children}
     </motion.button>
