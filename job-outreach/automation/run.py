@@ -14,7 +14,7 @@ Flow (daily, via GitHub Actions):
 NEVER sends anything. Secrets come ONLY from environment (GitHub Actions Secrets):
   OPENROUTER_API_KEY, GOOGLE_SA_JSON, SHEET_ID
 """
-import os, sys, json, hashlib, datetime, pathlib, re
+import os, sys, json, hashlib, datetime, pathlib, re, functools
 import requests
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -80,6 +80,8 @@ def llm(system, user, session=None, json_out=True):
     return json.loads(content) if json_out else content
 
 
+@functools.lru_cache(maxsize=None)
+# Performance: Cache prompt templates to eliminate redundant disk I/O in job loop
 def prompt(name):
     return (HERE / "prompts" / f"{name}.md").read_text(encoding="utf-8")
 
