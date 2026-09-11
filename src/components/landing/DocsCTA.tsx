@@ -60,13 +60,13 @@ export function DocsCTA() {
             zIndex: 1,
             flexWrap: 'wrap'
           }}>
-            <Button size="lg" href="#">
+            <Button size="lg" onClick={() => window.location.href = '#'}>
               Documentation
             </Button>
-            <Button variant="outline" size="lg" href="#">
+            <Button variant="outline" size="lg" onClick={() => window.location.href = '#'}>
               GitHub
             </Button>
-            <Button variant="ghost" size="lg" href="#">
+            <Button variant="ghost" size="lg" onClick={() => window.location.href = '#'}>
               Changelog
             </Button>
           </div>
