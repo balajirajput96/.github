@@ -113,24 +113,25 @@ function CodeSnippet({ code }: { code: string }) {
   );
 }
 
+const STATIC_STEPS = [
+  {
+    title: 'Install',
+    description: 'Get the CLI tool installed on your machine using our one-line installer.',
+    code: 'curl -fsSL https://antigravity.google/cli/install.sh | bash'
+  },
+  {
+    title: 'Authenticate',
+    description: 'Securely link your Google account to enable cloud features.',
+    code: 'ag login'
+  },
+  {
+    title: 'Launch',
+    description: 'Initialize a new project and start defying gravity.',
+    code: 'ag init my-project\ncd my-project\nag start'
+  }
+];
+
 export function Quickstart() {
-  const steps = [
-    {
-      title: 'Install',
-      description: 'Get the CLI tool installed on your machine using our one-line installer.',
-      code: 'curl -fsSL https://antigravity.google/cli/install.sh | bash'
-    },
-    {
-      title: 'Authenticate',
-      description: 'Securely link your Google account to enable cloud features.',
-      code: 'ag login'
-    },
-    {
-      title: 'Launch',
-      description: 'Initialize a new project and start defying gravity.',
-      code: 'ag init my-project\ncd my-project\nag start'
-    }
-  ];
 
   return (
     <section id="quickstart" tabIndex={-1} style={{ padding: '8rem 0', background: 'var(--surface-color)', outline: 'none' }}>
@@ -157,7 +158,7 @@ export function Quickstart() {
             zIndex: 0
           }} className="step-line" />
 
-          {steps.map((step, index) => (
+          {STATIC_STEPS.map((step, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, x: -20 }}
