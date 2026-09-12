@@ -85,7 +85,6 @@ const SR_ONLY_CONTENT = (
 
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
-  const [text, setText] = useState('');
 
   const completedLines = useMemo(() => {
     return lines.slice(0, currentLine).map((line, i) => (
@@ -110,25 +109,14 @@ export function TerminalPreview() {
     if (currentLine >= lines.length) return;
 
     const fullText = lines[currentLine].cmd;
-    let charIndex = 0;
-    let completionTimeout: ReturnType<typeof setTimeout> | undefined;
+    const typingDurationMs = fullText.length * 100;
 
-    const typingInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setText(fullText.substring(0, charIndex));
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        completionTimeout = setTimeout(() => {
-          setCurrentLine(prev => prev + 1);
-          setText('');
-        }, 1500); // Wait before next command
-      }
-    }, 100); // Typing speed
+    const completionTimeout = setTimeout(() => {
+      setCurrentLine(prev => prev + 1);
+    }, typingDurationMs + 1500); // Typing duration + 1500ms pause
 
     return () => {
-      clearInterval(typingInterval);
-      if (completionTimeout) clearTimeout(completionTimeout);
+      clearTimeout(completionTimeout);
     };
   }, [currentLine]);
 
@@ -164,7 +152,17 @@ export function TerminalPreview() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 {TERMINAL_PROMPT}
                 <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
+                  {/* ⚡ Bolt Optimization: Use CSS animation instead of JS setInterval for typing to prevent unnecessary re-renders */ }
+                  <span
+                    key={currentLine}
+                    className="typing-text"
+                    style={{
+                      '--char-count': lines[currentLine].cmd.length,
+                      '--animation-duration': `${lines[currentLine].cmd.length * 0.1}s`
+                    } as React.CSSProperties}
+                  >
+                    {lines[currentLine].cmd}
+                  </span>
                   {TERMINAL_CURSOR}
                 </span>
               </div>
