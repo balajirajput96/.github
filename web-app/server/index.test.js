@@ -226,16 +226,36 @@ describe('Personal AI Platform API', () => {
       expect(res.body).toEqual({ error: 'Unauthorized: Invalid or missing API key.' });
     });
 
-    it('POST /api/assistant/chat uses Gemini when configured', async () => {
-      axios.post.mockResolvedValue({ data: { candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] } });
-      const res = await request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'Say hello' });
-      expect(res.statusCode).toBe(200);
-      expect(res.body.reply).toBe('Gemini response');
-      expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/v1beta/models/gemini-2.5-flash:generateContent'),
-        { contents: [{ parts: [{ text: 'Say hello' }] }] },
-        { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' } },
-      );
+    it('POST /api/assistant/chat uses Gemini when configured', (done) => {
+      const mockStream = require('stream').PassThrough();
+
+      axios.post.mockResolvedValue({ data: mockStream });
+
+      request(app)
+        .post('/api/assistant/chat')
+        .set('x-api-key', 'test-api-key')
+        .send({ prompt: 'Say hello' })
+        .expect(200)
+        .expect('Content-Type', /text\/event-stream/)
+        .end((err, res) => {
+          if (err) return done(err);
+
+          expect(axios.post).toHaveBeenCalledWith(
+            expect.stringContaining('/v1beta/models/gemini-2.5-flash:streamGenerateContent'),
+            { contents: [{ role: 'user', parts: [{ text: 'Say hello' }] }] },
+            { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' }, responseType: 'stream' },
+          );
+
+          const lines = res.text.split('\n\n').filter(Boolean);
+          expect(lines).toContain('data: {"type":"FINAL_RESPONSE","content":"Gemini response"}');
+          expect(lines).toContain('data: [DONE]');
+          done();
+        });
+
+      setTimeout(() => {
+        mockStream.emit('data', 'data: ' + JSON.stringify({ candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] }) + '\n');
+        mockStream.emit('end');
+      }, 50);
     });
 
     it('POST /api/assistant/chat returns 503 when Gemini is not configured', async () => {
