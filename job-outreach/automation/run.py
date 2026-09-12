@@ -86,10 +86,36 @@ def prompt(name):
 
 # ----------------------------------------------------------------- fetching
 def fetch_text(url, session=None):
+    from run_repo import is_safe_url
+    from urllib.parse import urljoin
     try:
         from bs4 import BeautifulSoup
         req = session if session else requests
-        html = req.get(url, timeout=45, headers={"User-Agent": "Mozilla/5.0"}).text
+
+        current_url = url
+        html = ""
+        for _ in range(4):
+            if not is_safe_url(current_url):
+                print(f"  ! fetch blocked (unsafe URL): {current_url}")
+                return ""
+
+            response = req.get(current_url, timeout=45, headers={"User-Agent": "Mozilla/5.0"}, allow_redirects=False)
+
+            if response.status_code in (301, 302, 303, 307, 308):
+                location = response.headers.get("Location")
+                if not location:
+                    return ""
+                current_url = urljoin(current_url, location)
+                continue
+
+            if response.status_code != 200:
+                return ""
+
+            html = response.text
+            break
+        else:
+            return ""
+
         soup = BeautifulSoup(html, "html.parser")
         for t in soup(["script", "style", "noscript"]):
             t.extract()
