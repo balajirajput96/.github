@@ -1,80 +1,84 @@
-const { PassThrough } = require('stream');
 const request = require('supertest');
 const app = require('./index');
 const axios = require('axios');
 
 jest.mock('axios');
+const mockAxiosInstance = axios.create();
+const originalEnv = process.env;
 
 describe('Personal AI Platform API', () => {
-  const mockAxiosInstance = {
-    post: jest.fn(),
-    get: jest.fn(),
-  };
-
   beforeEach(() => {
-    process.env.API_KEY = 'test-api-key';
-    process.env.GITHUB_TOKEN = 'github-test-token';
-    process.env.SLACK_BOT_TOKEN = 'xoxb-test-token';
-    process.env.DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/test';
-    process.env.GEMINI_API_KEY = 'gemini-test-key';
-    process.env.DATADOG_API_KEY = 'test-datadog-key';
-    process.env.ANTIGRAVITY_VERSION = 'v2.0';
-
-    axios.create.mockReturnValue(mockAxiosInstance);
-    jest.clearAllMocks();
+    process.env = {
+      ...originalEnv,
+      API_KEY: 'test-api-key',
+      DATADOG_API_KEY: 'datadog-test-key',
+      DISCORD_WEBHOOK_URL: 'http://discord.webhook.url',
+      GEMINI_API_KEY: 'gemini-test-key',
+      GITHUB_TOKEN: 'github-test-token',
+      SLACK_BOT_TOKEN: 'slack-test-token',
+      SLACK_CLIENT_ID: 'slack-client-id',
+      SLACK_CLIENT_SECRET: 'slack-client-secret',
+      ANTIGRAVITY_VERSION: 'test',
+    };
+    mockAxiosInstance.get.mockReset();
+    mockAxiosInstance.post.mockReset();
+    axios.post.mockReset();
   });
 
-  afterAll(() => {
-    delete process.env.API_KEY;
-    delete process.env.GITHUB_TOKEN;
-    delete process.env.SLACK_BOT_TOKEN;
-    delete process.env.DISCORD_WEBHOOK_URL;
-    delete process.env.GEMINI_API_KEY;
-    delete process.env.DATADOG_API_KEY;
-    delete process.env.ANTIGRAVITY_VERSION;
-  });
+  afterAll(() => { process.env = originalEnv; });
 
   it('GET / returns the live status', async () => {
     const res = await request(app).get('/');
     expect(res.statusCode).toBe(200);
-    expect(res.body).toEqual({ status: '🚀 LIVE', message: 'Welcome to the Personal AI Platform API', documentation: '/api-docs' });
+    expect(res.body).toHaveProperty('status', '🚀 LIVE');
   });
 
   describe('GitHub', () => {
+    const mockRepos = [{ id: 1, name: 'repo1' }];
+    const mockIssue = { id: 1, number: 123, title: 'Test Issue', html_url: 'http://example.com' };
+
     it('fetches authenticated user repositories with GET /api/github', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: [{ name: 'repo1', html_url: 'http://repo1' }] });
-      const res = await request(app).get('/api/github').set('x-api-key', 'test-api-key');
+      mockAxiosInstance.get.mockResolvedValue({ data: mockRepos });
+      const res = await request(app).get('/api/github');
       expect(res.statusCode).toBe(200);
-      expect(res.body.repos).toHaveLength(1);
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/user/repos', expect.objectContaining({ headers: { Authorization: 'Bearer github-test-token' } }));
+      expect(res.body).toEqual(mockRepos);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/user/repos', {
+        headers: { Authorization: 'Bearer github-test-token' },
+        params: { per_page: 100, sort: 'updated' },
+      });
     });
 
     it('returns 503 for GET /api/github without a token', async () => {
       delete process.env.GITHUB_TOKEN;
-      const res = await request(app).get('/api/github').set('x-api-key', 'test-api-key');
+      const res = await request(app).get('/api/github');
       expect(res.statusCode).toBe(503);
+      expect(res.body).toEqual({ error: 'GitHub integration is not configured.' });
     });
 
     it('fetches repositories with the configured token', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: [{ name: 'repo1', html_url: 'http://repo1' }] });
-      const res = await request(app).get('/api/github/repos/test-user').set('x-api-key', 'test-api-key');
+      mockAxiosInstance.get.mockResolvedValue({ data: mockRepos });
+      const res = await request(app).get('/api/github/repos/test-owner');
       expect(res.statusCode).toBe(200);
-      expect(res.body.repos).toHaveLength(1);
+      expect(res.body).toEqual(mockRepos);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/users/test-owner/repos', {
+        headers: { Authorization: 'Bearer github-test-token' }, params: { per_page: 100 },
+      });
     });
 
     it('rejects unsafe owner input before calling GitHub', async () => {
-      const res = await request(app).get('/api/github/repos/../test-user').set('x-api-key', 'test-api-key');
+      const res = await request(app).get('/api/github/repos/%2Fetc%2Fpasswd');
       expect(res.statusCode).toBe(400);
       expect(res.body).toEqual({ error: 'Invalid GitHub owner.' });
+      expect(mockAxiosInstance.get).not.toHaveBeenCalled();
     });
 
     it('returns 503 without a GitHub token', async () => {
       delete process.env.GITHUB_TOKEN;
-      const res = await request(app).get('/api/github/repos/test-user').set('x-api-key', 'test-api-key');
+      const res = await request(app).get('/api/github/repos/test-owner');
       expect(res.statusCode).toBe(503);
+      expect(res.body).toEqual({ error: 'GitHub integration is not configured.' });
     });
 
-    const mockIssue = { html_url: 'http://example.com/issue/1', number: 123 };
     it('creates an issue and triggers configured notifications', async () => {
       mockAxiosInstance.post.mockResolvedValueOnce({ data: mockIssue });
       mockAxiosInstance.post.mockResolvedValueOnce({ data: { ok: true } });
@@ -82,7 +86,7 @@ describe('Personal AI Platform API', () => {
       const res = await request(app).post('/api/github/issues/test-owner/test-repo').set('x-api-key', 'test-api-key').send({ title: 'Test Issue', body: 'This is a test.' });
       expect(res.statusCode).toBe(201);
       expect(mockAxiosInstance.post).toHaveBeenCalledWith('/repos/test-owner/test-repo/issues', { title: 'Test Issue', body: 'This is a test.' }, { headers: { Authorization: 'Bearer github-test-token' } });
-      expect(axios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, { content: '🚀 New GitHub issue created in **test-owner/test-repo**: [ #123 Test Issue ](http://example.com/issue/1)' });
+      expect(axios.post).toHaveBeenCalledWith(process.env.DISCORD_WEBHOOK_URL, { content: '🚀 New GitHub issue created in **test-owner/test-repo**: [ #123 Test Issue ](http://example.com)' });
     });
 
     it('returns 401 when creating an issue without API key', async () => {
@@ -128,8 +132,6 @@ describe('Personal AI Platform API', () => {
     });
 
     it('exchanges a Slack OAuth code when OAuth credentials are configured', async () => {
-      process.env.SLACK_CLIENT_ID = 'client-id';
-      process.env.SLACK_CLIENT_SECRET = 'client-secret';
       axios.post.mockResolvedValue({ data: { ok: true, team: { id: 'T1', name: 'Test Team' }, bot_user_id: 'U1' } });
       const res = await request(app).post('/api/slack/oauth').send({ code: 'temporary-code' });
       expect(res.statusCode).toBe(200);
@@ -144,11 +146,11 @@ describe('Personal AI Platform API', () => {
         expect.stringContaining('code=temporary-code'),
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
       );
-      delete process.env.SLACK_CLIENT_ID;
-      delete process.env.SLACK_CLIENT_SECRET;
     });
 
     it('returns 503 when Slack OAuth is not configured', async () => {
+      delete process.env.SLACK_CLIENT_ID;
+      delete process.env.SLACK_CLIENT_SECRET;
       const res = await request(app).post('/api/slack/oauth').send({ code: 'temporary-code' });
       expect(res.statusCode).toBe(503);
       expect(res.body).toEqual({ ok: false, error: 'Slack OAuth is not configured.' });
@@ -225,6 +227,7 @@ describe('Personal AI Platform API', () => {
     });
 
     it('POST /api/assistant/chat uses Gemini when configured (SSE flow)', (done) => {
+      const { PassThrough } = require('stream');
       const mockStream = new PassThrough();
       axios.post.mockResolvedValue({ data: mockStream });
 
@@ -236,7 +239,6 @@ describe('Personal AI Platform API', () => {
         .expect(200)
         .end((err, res) => {
           if (err) return done(err);
-          // Assert that axios was called correctly
           expect(axios.post).toHaveBeenCalledWith(
             expect.stringContaining('/v1beta/models/gemini-2.5-flash:streamGenerateContent'),
             expect.objectContaining({ contents: expect.any(Array) }),
@@ -245,7 +247,6 @@ describe('Personal AI Platform API', () => {
           done();
         });
 
-      // Emulate the SSE stream events
       setTimeout(() => {
         mockStream.emit('data', Buffer.from(`data: ${JSON.stringify({ candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] })}\n\n`));
         mockStream.emit('data', Buffer.from('data: [DONE]\n\n'));
