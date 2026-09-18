@@ -27,3 +27,8 @@
 **Vulnerability:** Use of `child_process.exec` with string interpolation for script paths could lead to path handling issues or command injection if directory names contain spaces or untrusted input.
 **Learning:** Using `exec` executes through a shell and parses the string as a command, making it brittle to spaces in `__dirname` and insecure if paths are user-controlled.
 **Prevention:** Always use `child_process.execFile` with arguments as an array rather than `exec` with interpolated command strings for executing local scripts.
+
+## 2026-09-18 - Express SSE Streaming Mocking Fix
+**Vulnerability:** Not a direct vulnerability, but pre-existing Jest tests for Express SSE streaming endpoints (`/api/assistant/chat`) failed because `axios.post` was improperly mocked, resulting in unresolved promises or skipped listeners causing a `502` fallback and CI build failure.
+**Learning:** The Express route handler needed time to attach `.on('data')` listeners to the `response.data` stream. A synchronous mock implementation caused the stream to end immediately.
+**Prevention:** When testing Express Server-Sent Events (SSE) streaming endpoints with a mocked `axios.post` in Jest, use `require('stream').PassThrough()` to simulate the response stream. Wrap the mock stream's `.emit('data', ...)` and `.emit('end')` calls in a `setTimeout` to give the asynchronous route handler enough time to attach `.on('data')` listeners, preventing test timeouts or 502 errors.
