@@ -85,7 +85,6 @@ const SR_ONLY_CONTENT = (
 
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
-  const [text, setText] = useState('');
 
   const completedLines = useMemo(() => {
     return lines.slice(0, currentLine).map((line, i) => (
@@ -110,26 +109,14 @@ export function TerminalPreview() {
     if (currentLine >= lines.length) return;
 
     const fullText = lines[currentLine].cmd;
-    let charIndex = 0;
-    let completionTimeout: ReturnType<typeof setTimeout> | undefined;
+    // CSS typing speed is 100ms per char. Plus 1500ms delay.
+    const typingDuration = fullText.length * 100;
 
-    const typingInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setText(fullText.substring(0, charIndex));
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        completionTimeout = setTimeout(() => {
-          setCurrentLine(prev => prev + 1);
-          setText('');
-        }, 1500); // Wait before next command
-      }
-    }, 100); // Typing speed
+    const completionTimeout = setTimeout(() => {
+      setCurrentLine(prev => prev + 1);
+    }, typingDuration + 1500);
 
-    return () => {
-      clearInterval(typingInterval);
-      if (completionTimeout) clearTimeout(completionTimeout);
-    };
+    return () => clearTimeout(completionTimeout);
   }, [currentLine]);
 
   return (
@@ -163,8 +150,14 @@ export function TerminalPreview() {
             {currentLine < lines.length && (
               <div style={{ display: 'flex', gap: '1rem' }}>
                 {TERMINAL_PROMPT}
-                <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
+                <span style={{ color: 'var(--fg-color)', display: 'flex' }}>
+                  <span
+                    key={currentLine}
+                    className="typing-text"
+                    style={{ '--char-count': lines[currentLine].cmd.length } as React.CSSProperties}
+                  >
+                    {lines[currentLine].cmd}
+                  </span>
                   {TERMINAL_CURSOR}
                 </span>
               </div>
