@@ -227,14 +227,35 @@ describe('Personal AI Platform API', () => {
     });
 
     it('POST /api/assistant/chat uses Gemini when configured', async () => {
-      axios.post.mockResolvedValue({ data: { candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] } });
-      const res = await request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'Say hello' });
+      const stream = require('stream').PassThrough();
+      axios.post.mockResolvedValue({ data: stream });
+
+      // Give time for listeners to be attached
+      setTimeout(() => {
+        stream.emit('data', 'data: {"candidates":[{"content":{"parts":[{"text":"Gemini response"}]}}]}\n\n');
+        stream.emit('data', 'data: [DONE]\n\n');
+        stream.emit('end');
+      }, 10);
+
+      const res = await request(app)
+        .post('/api/assistant/chat')
+        .set('x-api-key', 'test-api-key')
+        .send({ prompt: 'Say hello' })
+        .buffer(true)
+        .parse((res, cb) => {
+          let data = '';
+          res.on('data', chunk => { data += chunk.toString(); });
+          res.on('end', () => cb(null, data));
+        });
+
       expect(res.statusCode).toBe(200);
-      expect(res.body.reply).toBe('Gemini response');
+      // The response from index.js formats it like this:
+      // data: {"type":"FINAL_RESPONSE","content":"Gemini response"}
+      expect(res.body.toString()).toContain('"content":"Gemini response"');
       expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/v1beta/models/gemini-2.5-flash:generateContent'),
-        { contents: [{ parts: [{ text: 'Say hello' }] }] },
-        { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' } },
+        expect.stringContaining('/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse'),
+        { contents: [{ role: 'user', parts: [{ text: 'Say hello' }] }] },
+        { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' }, responseType: 'stream' },
       );
     });
 
