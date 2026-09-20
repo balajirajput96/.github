@@ -26,3 +26,6 @@
 ## 2024-05-19 - Extracted static arrays with JSX
 **Learning:** In React components like `Features.tsx`, static data arrays that also contain JSX elements (like icons) are recreated on every render if defined inside the functional component. This causes unnecessary allocations and diffing.
 **Action:** Always hoist static data structures—especially those containing React elements—outside of functional components unless they depend on component state or props.
+## 2024-05-20 - [Migrated JS interval typing animation to CSS steps()]
+**Learning:** High-frequency `setInterval` for string manipulation and re-rendering in React (e.g. `setText(fullText.substring(0, charIndex))` every 100ms) causes excessive CPU usage and render cycle jitter.
+**Action:** Replace JavaScript-driven incremental text updates with a CSS `steps()` animation, passing the character count dynamically via CSS variables (`--char-count`), to offload the animation to the compositor thread. Use `key={currentLine}` on the animated element to trigger restart between state transitions.
