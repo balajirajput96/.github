@@ -29,3 +29,6 @@
 ## 2024-05-20 - [Migrated JS interval typing animation to CSS steps()]
 **Learning:** High-frequency `setInterval` for string manipulation and re-rendering in React (e.g. `setText(fullText.substring(0, charIndex))` every 100ms) causes excessive CPU usage and render cycle jitter.
 **Action:** Replace JavaScript-driven incremental text updates with a CSS `steps()` animation, passing the character count dynamically via CSS variables (`--char-count`), to offload the animation to the compositor thread. Use `key={currentLine}` on the animated element to trigger restart between state transitions.
+## 2024-05-20 - [Updated tests for Gemini streaming endpoint]
+**Learning:** The Gemini API was updated to use a Server-Sent Events (SSE) stream (`streamGenerateContent?alt=sse`), but the associated tests were still expecting a traditional JSON response. This caused CI checks to fail.
+**Action:** Always verify test payloads and mock configurations when modifying an endpoint's return type or underlying external API call structure to match the new behavior.
