@@ -13,3 +13,6 @@
 ## 2024-07-14 - Playwright Verification with Client-Side Routing
 **Learning:** Using `file://` to load the built index.html for Playwright testing fails because TanStack Router requires a proper server for client-side routing to function, otherwise elements like 'text=Defy gravity' won't render.
 **Action:** Always start a local server (e.g. `pnpm preview` on port 4173) and test against `http://localhost:4173` when verifying frontend changes in apps using client-side routing.
+## 2024-09-21 - Polymorphic Button for Semantic Links
+**Learning:** Using <button> for navigation breaks native browser behaviors (like "Open in new tab") and removes semantic meaning for screen readers. Buttons should be for actions; links for navigation.
+**Action:** Always make Button components polymorphic (using discriminated unions in TS) to render as <a> tags when an href prop is provided, ensuring both visual consistency and accessible semantic HTML.
