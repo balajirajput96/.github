@@ -26,3 +26,7 @@
 **Vulnerability:** Node's `child_process.exec` was used to run external Python scripts. While not immediately exploitable as user input wasn't involved, `exec` relies on spawning a shell, increasing the risk of command injection if paths or inputs change in the future.
 **Learning:** Hardcoded paths using `__dirname` are safe from injection, but using `exec` can still break if the absolute directory path contains spaces.
 **Prevention:** Prefer `execFile` or `spawn` over `exec` to safely invoke scripts without spawning a shell, which mitigates injection risks and naturally handles spaces in file paths.
+## 2025-02-28 - [Defense in Depth] Handling stream responses in tests
+**Vulnerability:** Not a direct vulnerability, but a technical debt/stability issue discovered while updating tests.
+**Learning:** When testing Express endpoints that implement Server-Sent Events (SSE) by calling `.on('data', ...)` on a backend stream (e.g., from an Axios request with `responseType: 'stream'`), the mock object representing the response data must act like an `EventEmitter`. Returning a plain object instead of a stream-like object with an `on` method will cause runtime TypeErrors (`.on is not a function`), leading to 502 errors and test failures.
+**Prevention:** In Jest, explicitly mock stream responses by supplying an `on` function that synchronously yields the test `Buffer` chunks and end signals to accurately simulate the streaming behavior.
