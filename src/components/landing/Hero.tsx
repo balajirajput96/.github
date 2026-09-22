@@ -97,7 +97,7 @@ export function Hero() {
               marginTop: '2rem'
             }}
           >
-            <Button size="lg" href="#quickstart" onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+            <Button size="lg" href="#quickstart" onClick={(e) => {
               e.preventDefault();
               const el = document.getElementById('quickstart');
               if (el) {
@@ -107,7 +107,7 @@ export function Hero() {
             }}>
               Get Started
             </Button>
-            <Button variant="secondary" size="lg" href="#features" onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+            <Button variant="secondary" size="lg" href="#features" onClick={(e) => {
               e.preventDefault();
               const el = document.getElementById('features');
               if (el) {
