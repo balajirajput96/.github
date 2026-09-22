@@ -13,3 +13,6 @@
 ## 2024-07-14 - Playwright Verification with Client-Side Routing
 **Learning:** Using `file://` to load the built index.html for Playwright testing fails because TanStack Router requires a proper server for client-side routing to function, otherwise elements like 'text=Defy gravity' won't render.
 **Action:** Always start a local server (e.g. `pnpm preview` on port 4173) and test against `http://localhost:4173` when verifying frontend changes in apps using client-side routing.
+## 2024-05-24 - Semantic Links for Navigation Buttons
+**Learning:** Using generic `<button>` elements for navigation breaks native anchor functionality (e.g., middle click, open in new tab).
+**Action:** Refactor custom navigation `<button>` components into polymorphic elements that conditionally render as anchor `<a>` tags when an `href` prop is provided. When using JS for custom smooth scrolling with `scrollIntoView`, always call `e.preventDefault()` in the `onClick` handler to prevent the browser's default instant hash jump behavior.
