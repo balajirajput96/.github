@@ -113,24 +113,28 @@ function CodeSnippet({ code }: { code: string }) {
   );
 }
 
-export function Quickstart() {
-  const steps = [
+// PERFORMANCE OPTIMIZATION:
+// Extract static data arrays completely outside of functional components.
+// This prevents React from needlessly recreating the array on every render.
+const STEPS = [
     {
-      title: 'Install',
-      description: 'Get the CLI tool installed on your machine using our one-line installer.',
-      code: 'curl -fsSL https://antigravity.google/cli/install.sh | bash'
+      title: "Install",
+      description: "Get the CLI tool installed on your machine using our one-line installer.",
+      code: "curl -fsSL https://antigravity.google/cli/install.sh | bash"
     },
     {
-      title: 'Authenticate',
-      description: 'Securely link your Google account to enable cloud features.',
-      code: 'ag login'
+      title: "Authenticate",
+      description: "Securely link your Google account to enable cloud features.",
+      code: "ag login"
     },
     {
-      title: 'Launch',
-      description: 'Initialize a new project and start defying gravity.',
-      code: 'ag init my-project\ncd my-project\nag start'
+      title: "Launch",
+      description: "Initialize a new project and start defying gravity.",
+      code: "ag init my-project\ncd my-project\nag start"
     }
   ];
+
+export function Quickstart() {
 
   return (
     <section id="quickstart" tabIndex={-1} style={{ padding: '8rem 0', background: 'var(--surface-color)', outline: 'none' }}>
@@ -157,7 +161,7 @@ export function Quickstart() {
             zIndex: 0
           }} className="step-line" />
 
-          {steps.map((step, index) => (
+          {STEPS.map((step, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, x: -20 }}
