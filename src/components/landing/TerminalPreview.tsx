@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const lines = [
@@ -85,7 +85,6 @@ const SR_ONLY_CONTENT = (
 
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
-  const [text, setText] = useState('');
 
   const completedLines = useMemo(() => {
     return lines.slice(0, currentLine).map((line, i) => (
@@ -110,26 +109,19 @@ export function TerminalPreview() {
     if (currentLine >= lines.length) return;
 
     const fullText = lines[currentLine].cmd;
-    let charIndex = 0;
-    let completionTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    const typingInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setText(fullText.substring(0, charIndex));
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        completionTimeout = setTimeout(() => {
-          setCurrentLine(prev => prev + 1);
-          setText('');
-        }, 1500); // Wait before next command
-      }
-    }, 100); // Typing speed
+    // PERFORMANCE OPTIMIZATION:
+    // Moved typing animation from React state interval to CSS keyframes in styles.css.
+    // The previous implementation used setInterval to update state and trigger a re-render
+    // every 100ms. This offloads the animation to the browser compositor thread and prevents
+    // continuous React re-allocations and diffing while typing.
+    const animationDuration = fullText.length * 100;
 
-    return () => {
-      clearInterval(typingInterval);
-      if (completionTimeout) clearTimeout(completionTimeout);
-    };
+    const completionTimeout = setTimeout(() => {
+      setCurrentLine(prev => prev + 1);
+    }, animationDuration + 1500); // Wait for typing to finish + 1500ms pause
+
+    return () => clearTimeout(completionTimeout);
   }, [currentLine]);
 
   return (
@@ -164,7 +156,13 @@ export function TerminalPreview() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 {TERMINAL_PROMPT}
                 <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
+                  <span
+                    key={currentLine}
+                    className="typing-animation"
+                    style={{ '--char-count': lines[currentLine].cmd.length } as React.CSSProperties}
+                  >
+                    {lines[currentLine].cmd}
+                  </span>
                   {TERMINAL_CURSOR}
                 </span>
               </div>
