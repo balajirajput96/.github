@@ -26,3 +26,6 @@
 ## 2024-05-19 - Extracted static arrays with JSX
 **Learning:** In React components like `Features.tsx`, static data arrays that also contain JSX elements (like icons) are recreated on every render if defined inside the functional component. This causes unnecessary allocations and diffing.
 **Action:** Always hoist static data structures—especially those containing React elements—outside of functional components unless they depend on component state or props.
+## 2024-05-18 - CSS typing animations vs JS setInterval
+**Learning:** Migrating JS-driven typing animations (using `setInterval` and React state for substring manipulation) to CSS `@keyframes` with `steps()` significantly reduces React re-renders and CPU usage by offloading animation to the browser's compositor. Key trick: use `key={currentLine}` to force re-mounting and restart the CSS animation on state change.
+**Action:** Always prefer CSS animations for simple text typing effects instead of high-frequency React state updates.
