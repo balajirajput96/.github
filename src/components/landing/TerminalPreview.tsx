@@ -31,7 +31,7 @@ const TERMINAL_HEADER = (
 // PERFORMANCE OPTIMIZATION:
 // Extract purely static UI elements (prompt and cursor) completely outside
 // the component function. Because TerminalPreview uses a high-frequency
-// interval to update state (`text` and `currentLine`) for the typing animation,
+// interval to update state (\`text\` and \`currentLine\`) for the typing animation,
 // it re-renders constantly. Hoisting these elements prevents React from
 // continuously re-allocating and diffing these nodes and their inline style
 // objects on every frame, saving CPU cycles.
@@ -85,7 +85,6 @@ const SR_ONLY_CONTENT = (
 
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
-  const [text, setText] = useState('');
 
   const completedLines = useMemo(() => {
     return lines.slice(0, currentLine).map((line, i) => (
@@ -110,26 +109,13 @@ export function TerminalPreview() {
     if (currentLine >= lines.length) return;
 
     const fullText = lines[currentLine].cmd;
-    let charIndex = 0;
-    let completionTimeout: ReturnType<typeof setTimeout> | undefined;
+    const duration = fullText.length * 100 + 1500;
 
-    const typingInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setText(fullText.substring(0, charIndex));
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        completionTimeout = setTimeout(() => {
-          setCurrentLine(prev => prev + 1);
-          setText('');
-        }, 1500); // Wait before next command
-      }
-    }, 100); // Typing speed
+    const timeout = setTimeout(() => {
+      setCurrentLine(prev => prev + 1);
+    }, duration);
 
-    return () => {
-      clearInterval(typingInterval);
-      if (completionTimeout) clearTimeout(completionTimeout);
-    };
+    return () => clearTimeout(timeout);
   }, [currentLine]);
 
   return (
@@ -164,7 +150,19 @@ export function TerminalPreview() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 {TERMINAL_PROMPT}
                 <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
+                  <span
+                    key={currentLine}
+                    className="typing-animation"
+                    style={{
+                      display: 'inline-block',
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap',
+                      verticalAlign: 'bottom',
+                      '--char-count': lines[currentLine].cmd.length
+                    } as React.CSSProperties}
+                  >
+                    {lines[currentLine].cmd}
+                  </span>
                   {TERMINAL_CURSOR}
                 </span>
               </div>
