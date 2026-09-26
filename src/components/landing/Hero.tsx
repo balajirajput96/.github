@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { OrbitBackground } from './OrbitBackground';
 import { InstallCommand } from './InstallCommand';
 import { Button } from './Button';
+import React from 'react';
 
 export function Hero() {
   const containerVariants = {
@@ -21,6 +22,15 @@ export function Hero() {
       opacity: 1,
       y: 0,
       transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] as const }
+    }
+  };
+
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault();
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+      el.focus({ preventScroll: true });
     }
   };
 
@@ -97,22 +107,10 @@ export function Hero() {
               marginTop: '2rem'
             }}
           >
-            <Button size="lg" onClick={() => {
-              const el = document.getElementById('quickstart');
-              if (el) {
-                el.scrollIntoView({ behavior: 'smooth' });
-                el.focus({ preventScroll: true });
-              }
-            }}>
+            <Button size="lg" href="#quickstart" onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleSmoothScroll(e, 'quickstart')}>
               Get Started
             </Button>
-            <Button variant="secondary" size="lg" onClick={() => {
-              const el = document.getElementById('features');
-              if (el) {
-                el.scrollIntoView({ behavior: 'smooth' });
-                el.focus({ preventScroll: true });
-              }
-            }}>
+            <Button variant="secondary" size="lg" href="#features" onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleSmoothScroll(e, 'features')}>
               View Features
             </Button>
           </motion.div>
