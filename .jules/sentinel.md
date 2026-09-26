@@ -22,3 +22,8 @@
 **Vulnerability:** Timing attack vulnerability in `requireAuth` middleware due to unsafe string comparison.
 **Learning:** `crypto.timingSafeEqual` should be used instead of `!==` to compare secrets. Also, when using `crypto.timingSafeEqual` in Node.js to compare secrets, strictly ensure you check the byte lengths of the generated `Buffer` objects, rather than the lengths of the original strings, to avoid errors or timing leaks with multibyte characters.
 **Prevention:** Use `crypto.timingSafeEqual` for sensitive string comparisons, and always convert strings to Buffers first and check their byte lengths before comparison.
+
+## 2026-09-03 - Prevent SSRF via Redirect in Request Wrapping
+**Vulnerability:** The job outreach pipeline fetched external URLs using `requests.get()` where the library automatically followed redirects. Even if the initial URL was validated against internal/private IP space, a malicious server could return a 302 redirect to `http://127.0.0.1/admin`, bypassing the initial check and triggering an SSRF.
+**Learning:** Initial validation of user-provided URLs is insufficient if the underlying HTTP client automatically follows redirects. The target of the redirect is not inherently validated by the initial check.
+**Prevention:** Disable automatic redirects (`allow_redirects=False`) when fetching user-provided URLs. Manually handle HTTP redirects by extracting the `Location` header and re-validating the new target URL using the established safety checks (e.g., `is_safe_url`) before following it.
