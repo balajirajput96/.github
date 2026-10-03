@@ -22,3 +22,7 @@
 **Vulnerability:** Timing attack vulnerability in `requireAuth` middleware due to unsafe string comparison.
 **Learning:** `crypto.timingSafeEqual` should be used instead of `!==` to compare secrets. Also, when using `crypto.timingSafeEqual` in Node.js to compare secrets, strictly ensure you check the byte lengths of the generated `Buffer` objects, rather than the lengths of the original strings, to avoid errors or timing leaks with multibyte characters.
 **Prevention:** Use `crypto.timingSafeEqual` for sensitive string comparisons, and always convert strings to Buffers first and check their byte lengths before comparison.
+## 2024-10-24 - Prevent Command Injection with execFile
+**Vulnerability:** The Node.js `child_process.exec()` function was used to execute Python scripts. `exec` spawns a shell to run the command, which introduces the risk of shell injection if any part of the command string is eventually influenced by user input.
+**Learning:** Using `exec` with string concatenation is a common anti-pattern that can lead to command injection. Even when inputs appear static, future refactoring could inadvertently introduce user-controlled variables into the command string.
+**Prevention:** Always use `child_process.execFile()` or `child_process.spawn()` instead of `exec()`. These functions do not spawn a shell by default and take arguments as an array, ensuring they are passed directly to the executable without shell interpretation.
