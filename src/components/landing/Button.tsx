@@ -1,10 +1,20 @@
 import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
+type BaseProps = {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
-}
+};
+
+type ButtonAsButton = BaseProps & Omit<HTMLMotionProps<"button">, keyof BaseProps> & {
+  href?: never;
+};
+
+type ButtonAsLink = BaseProps & Omit<HTMLMotionProps<"a">, keyof BaseProps> & {
+  href: string;
+};
+
+export type ButtonProps = ButtonAsButton | ButtonAsLink;
 
 export function Button({ variant = 'primary', size = 'md', children, style, ...props }: ButtonProps) {
 
@@ -18,6 +28,7 @@ export function Button({ variant = 'primary', size = 'md', children, style, ...p
     fontFamily: 'var(--font-display)',
     letterSpacing: '0.5px',
     transition: 'background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+    textDecoration: 'none',
   };
 
   const sizes: Record<string, React.CSSProperties> = {
@@ -48,13 +59,29 @@ export function Button({ variant = 'primary', size = 'md', children, style, ...p
     }
   };
 
+  const combinedStyle = { ...baseStyle, ...sizes[size], ...variants[variant], ...style };
+
+  if (props.href) {
+    return (
+      <motion.a
+        whileHover={{ y: -2, scale: 1.02 }}
+        whileFocus={{ y: -2, scale: 1.02 }}
+        whileTap={{ y: 0, scale: 0.98 }}
+        style={combinedStyle}
+        {...(props as HTMLMotionProps<"a">)}
+      >
+        {children}
+      </motion.a>
+    );
+  }
+
   return (
     <motion.button
       whileHover={{ y: -2, scale: 1.02 }}
       whileFocus={{ y: -2, scale: 1.02 }}
       whileTap={{ y: 0, scale: 0.98 }}
-      style={{ ...baseStyle, ...sizes[size], ...variants[variant], ...style }}
-      {...props}
+      style={combinedStyle}
+      {...(props as HTMLMotionProps<"button">)}
     >
       {children}
     </motion.button>
