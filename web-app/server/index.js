@@ -46,10 +46,10 @@ const requireAuth = (req, res, next) => {
     return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key.' });
   }
 
-  const apiKeyBuffer = Buffer.from(apiKey);
-  const envKeyBuffer = Buffer.from(envKey);
+  const apiKeyHash = crypto.createHash('sha256').update(apiKey).digest();
+  const envKeyHash = crypto.createHash('sha256').update(envKey).digest();
 
-  if (apiKeyBuffer.length !== envKeyBuffer.length || !crypto.timingSafeEqual(apiKeyBuffer, envKeyBuffer)) {
+  if (!crypto.timingSafeEqual(apiKeyHash, envKeyHash)) {
     return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key.' });
   }
 
