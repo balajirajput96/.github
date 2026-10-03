@@ -3,27 +3,30 @@ import { OrbitBackground } from './OrbitBackground';
 import { InstallCommand } from './InstallCommand';
 import { Button } from './Button';
 
+// PERFORMANCE OPTIMIZATION:
+// Extract static objects outside of functional components
+// to prevent React from allocating new object instances on every render.
+const CONTAINER_VARIANTS = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const ITEM_VARIANTS = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] as const }
+  }
+};
+
 export function Hero() {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] as const }
-    }
-  };
-
   return (
     <section style={{
       position: 'relative',
@@ -38,12 +41,12 @@ export function Hero() {
 
       <div className="container" style={{ position: 'relative', zIndex: 10 }}>
         <motion.div
-          variants={containerVariants}
+          variants={CONTAINER_VARIANTS}
           initial="hidden"
           animate="visible"
           style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}
         >
-          <motion.div variants={itemVariants} style={{ marginBottom: '1.5rem' }}>
+          <motion.div variants={ITEM_VARIANTS} style={{ marginBottom: '1.5rem' }}>
             <span style={{
               display: 'inline-block',
               padding: '0.25rem 0.75rem',
@@ -60,7 +63,7 @@ export function Hero() {
           </motion.div>
 
           <motion.h1
-            variants={itemVariants}
+            variants={ITEM_VARIANTS}
             style={{
               fontSize: 'clamp(3rem, 8vw, 5.5rem)',
               fontWeight: 700,
@@ -72,7 +75,7 @@ export function Hero() {
           </motion.h1>
 
           <motion.p
-            variants={itemVariants}
+            variants={ITEM_VARIANTS}
             style={{
               fontSize: 'clamp(1.125rem, 2vw, 1.5rem)',
               color: 'var(--muted-color)',
@@ -84,12 +87,12 @@ export function Hero() {
             Install Google Antigravity CLI in seconds. Fast, extensible, cross-platform command line tools for modern developers.
           </motion.p>
 
-          <motion.div variants={itemVariants}>
+          <motion.div variants={ITEM_VARIANTS}>
             <InstallCommand />
           </motion.div>
 
           <motion.div
-            variants={itemVariants}
+            variants={ITEM_VARIANTS}
             style={{
               display: 'flex',
               gap: '1rem',
