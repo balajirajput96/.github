@@ -131,6 +131,20 @@ button {
   animation: blink 1s step-end infinite;
 }
 
+/* Typing Animation for Terminal */
+@keyframes typing {
+  from { width: 0; }
+  to { width: calc(var(--char-count) * 1ch); }
+}
+
+.typing-animation {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: bottom;
+  animation: typing calc(var(--char-count) * 0.1s) steps(var(--char-count), end) forwards;
+}
+
 /* Accessibility Utilities */
 .sr-only {
   position: absolute;
