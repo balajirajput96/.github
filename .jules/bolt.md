@@ -26,3 +26,7 @@
 ## 2024-05-19 - Extracted static arrays with JSX
 **Learning:** In React components like `Features.tsx`, static data arrays that also contain JSX elements (like icons) are recreated on every render if defined inside the functional component. This causes unnecessary allocations and diffing.
 **Action:** Always hoist static data structures—especially those containing React elements—outside of functional components unless they depend on component state or props.
+
+## 2025-02-14 - Cache static file reads in loops
+**Learning:** Reading static files repeatedly inside a processing loop causes unnecessary and redundant disk I/O bottlenecks.
+**Action:** Use decorators like `@functools.lru_cache` on functions that read static content from disk to turn O(N) disk I/O operations into O(1), improving overall loop performance.
