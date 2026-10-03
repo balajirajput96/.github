@@ -24,6 +24,15 @@ export function Hero() {
     }
   };
 
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault();
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+      el.focus({ preventScroll: true });
+    }
+  };
+
   return (
     <section style={{
       position: 'relative',
@@ -97,22 +106,10 @@ export function Hero() {
               marginTop: '2rem'
             }}
           >
-            <Button size="lg" onClick={() => {
-              const el = document.getElementById('quickstart');
-              if (el) {
-                el.scrollIntoView({ behavior: 'smooth' });
-                el.focus({ preventScroll: true });
-              }
-            }}>
+            <Button size="lg" href="#quickstart" onClick={(e) => handleNavClick(e, 'quickstart')}>
               Get Started
             </Button>
-            <Button variant="secondary" size="lg" onClick={() => {
-              const el = document.getElementById('features');
-              if (el) {
-                el.scrollIntoView({ behavior: 'smooth' });
-                el.focus({ preventScroll: true });
-              }
-            }}>
+            <Button variant="secondary" size="lg" href="#features" onClick={(e) => handleNavClick(e, 'features')}>
               View Features
             </Button>
           </motion.div>
