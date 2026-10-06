@@ -63,12 +63,16 @@ function LandingPage() {
              onBlur={(e) => e.currentTarget.style.color = 'var(--muted-color)'}>
             Quickstart
           </a>
-          <a href="https://github.com" style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)' }}
+          <a href="https://github.com/google/antigravity" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-color)'}
              onFocus={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
              onBlur={(e) => e.currentTarget.style.color = 'var(--muted-color)'}>
             GitHub
+            <svg style={{ width: '14px', height: '14px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            <span className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>(opens in a new tab)</span>
           </a>
         </nav>
       </header>
