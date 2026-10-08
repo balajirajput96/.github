@@ -227,14 +227,25 @@ describe('Personal AI Platform API', () => {
     });
 
     it('POST /api/assistant/chat uses Gemini when configured', async () => {
-      axios.post.mockResolvedValue({ data: { candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] } });
-      const res = await request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'Say hello' });
+      const { PassThrough } = require('stream');
+      const mockStream = new PassThrough();
+      axios.post.mockResolvedValue({ data: mockStream });
+
+      const resPromise = request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'Say hello' });
+
+      setTimeout(() => {
+        mockStream.emit('data', 'data: {"candidates":[{"content":{"parts":[{"text":"Gemini response"}]}}]}\n\n');
+        mockStream.emit('end');
+      }, 10);
+
+      const res = await resPromise;
       expect(res.statusCode).toBe(200);
-      expect(res.body.reply).toBe('Gemini response');
+      expect(res.text).toContain('"type":"FINAL_RESPONSE"');
+      expect(res.text).toContain('Gemini response');
       expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/v1beta/models/gemini-2.5-flash:generateContent'),
-        { contents: [{ parts: [{ text: 'Say hello' }] }] },
-        { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' } },
+        expect.stringContaining('/v1beta/models/gemini-2.5-flash:streamGenerateContent'),
+        { contents: [{ role: 'user', parts: [{ text: 'Say hello' }] }] },
+        { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' }, responseType: 'stream' },
       );
     });
 
