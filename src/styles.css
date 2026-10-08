@@ -143,3 +143,15 @@ button {
   white-space: nowrap;
   border: 0;
 }
+
+@keyframes typing-effect {
+  from { width: 0; }
+  to { width: calc(var(--char-count) * 1ch); }
+}
+
+.typing-animation {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typing-effect var(--typing-duration) steps(var(--char-count), end) forwards;
+}
