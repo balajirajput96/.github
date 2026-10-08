@@ -22,3 +22,7 @@
 **Vulnerability:** Timing attack vulnerability in `requireAuth` middleware due to unsafe string comparison.
 **Learning:** `crypto.timingSafeEqual` should be used instead of `!==` to compare secrets. Also, when using `crypto.timingSafeEqual` in Node.js to compare secrets, strictly ensure you check the byte lengths of the generated `Buffer` objects, rather than the lengths of the original strings, to avoid errors or timing leaks with multibyte characters.
 **Prevention:** Use `crypto.timingSafeEqual` for sensitive string comparisons, and always convert strings to Buffers first and check their byte lengths before comparison.
+## 2026-09-26 - Prevent API Key Length Leak in requireAuth Middleware
+**Vulnerability:** The requireAuth middleware was returning early when comparing API keys if the length didn't match, which could leak the API key length via a timing side-channel.
+**Learning:** crypto.timingSafeEqual requires buffers of the same length. Returning early on length mismatch defeats the purpose of constant-time comparison as attackers can deduce the length.
+**Prevention:** Hash the received key and the expected key (e.g., with SHA-256) and compare the hashes in constant time, so the length of the buffers passed to crypto.timingSafeEqual is always identical regardless of input length.
