@@ -113,25 +113,25 @@ function CodeSnippet({ code }: { code: string }) {
   );
 }
 
-export function Quickstart() {
-  const steps = [
-    {
-      title: 'Install',
-      description: 'Get the CLI tool installed on your machine using our one-line installer.',
-      code: 'curl -fsSL https://antigravity.google/cli/install.sh | bash'
-    },
-    {
-      title: 'Authenticate',
-      description: 'Securely link your Google account to enable cloud features.',
-      code: 'ag login'
-    },
-    {
-      title: 'Launch',
-      description: 'Initialize a new project and start defying gravity.',
-      code: 'ag init my-project\ncd my-project\nag start'
-    }
-  ];
+const steps = [
+  {
+    title: 'Install',
+    description: 'Get the CLI tool installed on your machine using our one-line installer.',
+    code: 'curl -fsSL https://antigravity.google/cli/install.sh | bash'
+  },
+  {
+    title: 'Authenticate',
+    description: 'Securely link your Google account to enable cloud features.',
+    code: 'ag login'
+  },
+  {
+    title: 'Launch',
+    description: 'Initialize a new project and start defying gravity.',
+    code: 'ag init my-project\ncd my-project\nag start'
+  }
+];
 
+export function Quickstart() {
   return (
     <section id="quickstart" tabIndex={-1} style={{ padding: '8rem 0', background: 'var(--surface-color)', outline: 'none' }}>
       <div className="container">
