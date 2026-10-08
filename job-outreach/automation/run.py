@@ -15,6 +15,7 @@ NEVER sends anything. Secrets come ONLY from environment (GitHub Actions Secrets
   OPENROUTER_API_KEY, GOOGLE_SA_JSON, SHEET_ID
 """
 import os, sys, json, hashlib, datetime, pathlib, re
+import functools
 import requests
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -80,6 +81,8 @@ def llm(system, user, session=None, json_out=True):
     return json.loads(content) if json_out else content
 
 
+# Cache prompt file reads to prevent redundant disk I/O when iterating over multiple URLs
+@functools.lru_cache(maxsize=None)
 def prompt(name):
     return (HERE / "prompts" / f"{name}.md").read_text(encoding="utf-8")
 
