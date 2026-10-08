@@ -17,3 +17,7 @@
 ## 2024-11-20 - Synchronizing keyboard focus with in-page scroll targets
 **Learning:** When implementing in-page navigation (like "Skip to main content" links or "Scroll to section" buttons using `scrollIntoView`), visually scrolling the page does not automatically move the browser's active keyboard focus to the new section. If focus is left behind, keyboard users (and screen readers) will resume navigation from the original button, effectively ignoring the visual scroll.
 **Action:** When scrolling to an element via JS or anchor links, ensure the target container (e.g., `<main>`, `<section>`) has `tabIndex={-1}` and `style={{ outline: 'none' }}`. Then, programmatically call `.focus({ preventScroll: true })` on the target element immediately after scrolling.
+
+## 2026-09-25 - Polymorphic Navigation Buttons
+**Learning:** React UI components (like Button) that function as navigation links must be polymorphic: they should conditionally render as anchor (<a>) tags when an href prop is provided. In TypeScript, implement this cleanly using a discriminated union for the props (e.g., href?: never for button vs href: string for anchor) to prevent prop collision errors while ensuring semantic HTML and native browser link behaviors.
+**Action:** Always check if navigational buttons should be semantically rendered as anchor tags for screen readers and keyboard navigation, rather than relying solely on onClick event handlers for routing.
