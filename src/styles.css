@@ -131,6 +131,12 @@ button {
   animation: blink 1s step-end infinite;
 }
 
+/* Typing Animation */
+@keyframes typing {
+  from { width: 0; }
+  to { width: calc(var(--char-count) * 1ch); }
+}
+
 /* Accessibility Utilities */
 .sr-only {
   position: absolute;
