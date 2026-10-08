@@ -85,7 +85,6 @@ const SR_ONLY_CONTENT = (
 
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
-  const [text, setText] = useState('');
 
   const completedLines = useMemo(() => {
     return lines.slice(0, currentLine).map((line, i) => (
@@ -110,26 +109,13 @@ export function TerminalPreview() {
     if (currentLine >= lines.length) return;
 
     const fullText = lines[currentLine].cmd;
-    let charIndex = 0;
-    let completionTimeout: ReturnType<typeof setTimeout> | undefined;
+    const duration = fullText.length * 100 + 1500;
 
-    const typingInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setText(fullText.substring(0, charIndex));
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        completionTimeout = setTimeout(() => {
-          setCurrentLine(prev => prev + 1);
-          setText('');
-        }, 1500); // Wait before next command
-      }
-    }, 100); // Typing speed
+    const timeout = setTimeout(() => {
+      setCurrentLine(prev => prev + 1);
+    }, duration);
 
-    return () => {
-      clearInterval(typingInterval);
-      if (completionTimeout) clearTimeout(completionTimeout);
-    };
+    return () => clearTimeout(timeout);
   }, [currentLine]);
 
   return (
@@ -163,8 +149,14 @@ export function TerminalPreview() {
             {currentLine < lines.length && (
               <div style={{ display: 'flex', gap: '1rem' }}>
                 {TERMINAL_PROMPT}
-                <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
+                <span style={{ color: 'var(--fg-color)', display: 'flex', alignItems: 'center' }}>
+                  <span
+                    key={currentLine}
+                    className="typing-animation"
+                    style={{ animationDuration: `${lines[currentLine].cmd.length * 100}ms` }}
+                  >
+                    {lines[currentLine].cmd}
+                  </span>
                   {TERMINAL_CURSOR}
                 </span>
               </div>
