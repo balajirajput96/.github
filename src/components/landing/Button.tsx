@@ -1,10 +1,15 @@
 import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
+type BaseProps = {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
-}
+};
+
+type ButtonProps = BaseProps & (
+  | (Omit<HTMLMotionProps<"a">, "href"> & { href: string })
+  | (HTMLMotionProps<"button"> & { href?: never })
+);
 
 export function Button({ variant = 'primary', size = 'md', children, style, ...props }: ButtonProps) {
 
@@ -48,13 +53,29 @@ export function Button({ variant = 'primary', size = 'md', children, style, ...p
     }
   };
 
+  if (props.href !== undefined) {
+    const anchorProps = props as HTMLMotionProps<"a">;
+    return (
+      <motion.a
+        whileHover={{ y: -2, scale: 1.02 }}
+        whileFocus={{ y: -2, scale: 1.02 }}
+        whileTap={{ y: 0, scale: 0.98 }}
+        style={{ ...baseStyle, ...sizes[size], ...variants[variant], ...style }}
+        {...anchorProps}
+      >
+        {children}
+      </motion.a>
+    );
+  }
+
+  const buttonProps = props as HTMLMotionProps<"button">;
   return (
     <motion.button
       whileHover={{ y: -2, scale: 1.02 }}
       whileFocus={{ y: -2, scale: 1.02 }}
       whileTap={{ y: 0, scale: 0.98 }}
       style={{ ...baseStyle, ...sizes[size], ...variants[variant], ...style }}
-      {...props}
+      {...buttonProps}
     >
       {children}
     </motion.button>
