@@ -22,3 +22,8 @@
 **Vulnerability:** Timing attack vulnerability in `requireAuth` middleware due to unsafe string comparison.
 **Learning:** `crypto.timingSafeEqual` should be used instead of `!==` to compare secrets. Also, when using `crypto.timingSafeEqual` in Node.js to compare secrets, strictly ensure you check the byte lengths of the generated `Buffer` objects, rather than the lengths of the original strings, to avoid errors or timing leaks with multibyte characters.
 **Prevention:** Use `crypto.timingSafeEqual` for sensitive string comparisons, and always convert strings to Buffers first and check their byte lengths before comparison.
+
+## 2026-10-04 - Replace exec with execFile and prevent stderr leakage
+**Vulnerability:** The application used `exec` to run local scripts, which spawns a shell and introduces risk of command injection if inputs were dynamic. Furthermore, returning `stderr` directly in the response leaked script execution details and stack traces.
+**Learning:** Using `exec` without a clear need for shell features is an anti-pattern. While the inputs in this specific instance were hardcoded, establishing a secure baseline using `execFile` is a crucial defense-in-depth practice. Additionally, error details returned to the client can leak sensitive architecture information.
+**Prevention:** Always use `execFile` or `spawn` instead of `exec` when shell interpolation is not required, as they invoke the executable directly, bypassing the shell. Log verbose error details internally, but return a generic, non-descriptive error message in the HTTP response.
