@@ -49,21 +49,35 @@ function LandingPage() {
         </div>
 
         <nav style={{ display: 'flex', gap: '2rem' }}>
-          <a href="#features" style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)' }}
+          <a href="#features" onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              e.preventDefault();
+              const el = document.getElementById('features');
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+                el.focus({ preventScroll: true });
+              }
+            }} style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)' }}
              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-color)'}
              onFocus={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
              onBlur={(e) => e.currentTarget.style.color = 'var(--muted-color)'}>
             Features
           </a>
-          <a href="#quickstart" style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)' }}
+          <a href="#quickstart" onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              e.preventDefault();
+              const el = document.getElementById('quickstart');
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+                el.focus({ preventScroll: true });
+              }
+            }} style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)' }}
              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-color)'}
              onFocus={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
              onBlur={(e) => e.currentTarget.style.color = 'var(--muted-color)'}>
             Quickstart
           </a>
-          <a href="https://github.com" style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)' }}
+          <a href="https://github.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.875rem', fontWeight: 500, transition: 'color 0.2s', color: 'var(--muted-color)' }}
              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-color)'}
              onFocus={(e) => e.currentTarget.style.color = 'var(--fg-color)'}
