@@ -17,3 +17,6 @@
 ## 2024-11-20 - Synchronizing keyboard focus with in-page scroll targets
 **Learning:** When implementing in-page navigation (like "Skip to main content" links or "Scroll to section" buttons using `scrollIntoView`), visually scrolling the page does not automatically move the browser's active keyboard focus to the new section. If focus is left behind, keyboard users (and screen readers) will resume navigation from the original button, effectively ignoring the visual scroll.
 **Action:** When scrolling to an element via JS or anchor links, ensure the target container (e.g., `<main>`, `<section>`) has `tabIndex={-1}` and `style={{ outline: 'none' }}`. Then, programmatically call `.focus({ preventScroll: true })` on the target element immediately after scrolling.
+## 2026-10-12 - [A11y: Polymorphic Button for Links]
+**Learning:** Using <button> elements with onClick window.location.href changes hurts accessibility by removing native anchor features like 'Open in New Tab' and keyboard navigation (tabbing).
+**Action:** Use polymorphic React components to dynamically render semantic <a> tags when an href is present, ensuring robust a11y support for navigational actions.
