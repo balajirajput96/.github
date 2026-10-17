@@ -83,7 +83,12 @@ const SR_ONLY_CONTENT = (
   </div>
 );
 
-export function TerminalPreview() {
+// PERFORMANCE OPTIMIZATION:
+// Extracted high-frequency state updates (text typing interval) into a localized
+// child component. By moving `useState` out of the parent `TerminalPreview`, we
+// prevent the entire section and its static layout wrappers from re-rendering
+// every 100ms. This localizes diffing overhead strictly to the changing terminal body.
+function AnimatedTerminalBody() {
   const [currentLine, setCurrentLine] = useState(0);
   const [text, setText] = useState('');
 
@@ -133,6 +138,39 @@ export function TerminalPreview() {
   }, [currentLine]);
 
   return (
+    <div style={{
+      padding: '1.5rem',
+      fontFamily: 'var(--font-code)',
+      fontSize: '0.875rem',
+      lineHeight: 1.6,
+      minHeight: '320px'
+    }}>
+      <AnimatePresence>
+        {completedLines}
+      </AnimatePresence>
+
+      {currentLine < lines.length && (
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          {TERMINAL_PROMPT}
+          <span style={{ color: 'var(--fg-color)' }}>
+            {text}
+            {TERMINAL_CURSOR}
+          </span>
+        </div>
+      )}
+
+      {currentLine >= lines.length && (
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          {TERMINAL_PROMPT}
+          {TERMINAL_CURSOR}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function TerminalPreview() {
+  return (
     <section style={{ padding: '8rem 0' }}>
       <div className="container">
         {SR_ONLY_CONTENT}
@@ -149,34 +187,7 @@ export function TerminalPreview() {
           {TERMINAL_HEADER}
 
           {/* Terminal Body */}
-          <div style={{
-            padding: '1.5rem',
-            fontFamily: 'var(--font-code)',
-            fontSize: '0.875rem',
-            lineHeight: 1.6,
-            minHeight: '320px'
-          }}>
-            <AnimatePresence>
-              {completedLines}
-            </AnimatePresence>
-
-            {currentLine < lines.length && (
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                {TERMINAL_PROMPT}
-                <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
-                  {TERMINAL_CURSOR}
-                </span>
-              </div>
-            )}
-
-            {currentLine >= lines.length && (
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                {TERMINAL_PROMPT}
-                {TERMINAL_CURSOR}
-              </div>
-            )}
-          </div>
+          <AnimatedTerminalBody />
         </div>
       </div>
     </section>

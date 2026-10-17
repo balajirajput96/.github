@@ -26,3 +26,6 @@
 ## 2024-05-19 - Extracted static arrays with JSX
 **Learning:** In React components like `Features.tsx`, static data arrays that also contain JSX elements (like icons) are recreated on every render if defined inside the functional component. This causes unnecessary allocations and diffing.
 **Action:** Always hoist static data structures—especially those containing React elements—outside of functional components unless they depend on component state or props.
+## 2024-05-18 - [Localize Interval State in React]
+**Learning:** High-frequency `setInterval` updates (like typing animations) that call `useState` at the top level of a component cause the entire layout to needlessly re-render.
+**Action:** Always extract frequently-updating state and its associated UI into a smaller, localized child component to strictly limit diffing overhead to the necessary elements.
