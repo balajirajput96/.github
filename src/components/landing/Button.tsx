@@ -1,12 +1,22 @@
 import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
+type BaseButtonProps = {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
-}
+};
 
-export function Button({ variant = 'primary', size = 'md', children, style, ...props }: ButtonProps) {
+type ButtonAsButton = BaseButtonProps & Omit<HTMLMotionProps<"button">, keyof BaseButtonProps> & {
+  href?: never;
+};
+
+type ButtonAsAnchor = BaseButtonProps & Omit<HTMLMotionProps<"a">, keyof BaseButtonProps> & {
+  href: string;
+};
+
+type ButtonProps = ButtonAsButton | ButtonAsAnchor;
+
+export function Button({ variant = 'primary', size = 'md', children, style, href, ...props }: ButtonProps) {
 
   const baseStyle: React.CSSProperties = {
     display: 'inline-flex',
@@ -18,6 +28,7 @@ export function Button({ variant = 'primary', size = 'md', children, style, ...p
     fontFamily: 'var(--font-display)',
     letterSpacing: '0.5px',
     transition: 'background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+    textDecoration: 'none',
   };
 
   const sizes: Record<string, React.CSSProperties> = {
@@ -48,13 +59,29 @@ export function Button({ variant = 'primary', size = 'md', children, style, ...p
     }
   };
 
+  const commonProps = {
+    whileHover: { y: -2, scale: 1.02 },
+    whileFocus: { y: -2, scale: 1.02 },
+    whileTap: { y: 0, scale: 0.98 },
+    style: { ...baseStyle, ...sizes[size], ...variants[variant], ...style },
+  };
+
+  if (href) {
+    return (
+      <motion.a
+        href={href}
+        {...commonProps}
+        {...(props as HTMLMotionProps<"a">)}
+      >
+        {children}
+      </motion.a>
+    );
+  }
+
   return (
     <motion.button
-      whileHover={{ y: -2, scale: 1.02 }}
-      whileFocus={{ y: -2, scale: 1.02 }}
-      whileTap={{ y: 0, scale: 0.98 }}
-      style={{ ...baseStyle, ...sizes[size], ...variants[variant], ...style }}
-      {...props}
+      {...commonProps}
+      {...(props as HTMLMotionProps<"button">)}
     >
       {children}
     </motion.button>

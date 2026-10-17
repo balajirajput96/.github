@@ -13,3 +13,6 @@
 ## 2024-07-14 - Playwright Verification with Client-Side Routing
 **Learning:** Using `file://` to load the built index.html for Playwright testing fails because TanStack Router requires a proper server for client-side routing to function, otherwise elements like 'text=Defy gravity' won't render.
 **Action:** Always start a local server (e.g. `pnpm preview` on port 4173) and test against `http://localhost:4173` when verifying frontend changes in apps using client-side routing.
+## 2024-09-23 - Polymorphic Navigation Buttons
+**Learning:** Navigation buttons that change the URL or navigate via hash links should use the semantic `<a>` tag rather than a `<button>` tag to allow native link-preview behavior and be accessible for screen readers, while preserving styles.
+**Action:** When designing a UI Button component in React, implement a polymorphic prop type (e.g. `href?: string`) to conditionally render an `<a>` instead of a `<button>`. For smooth scrolling hashes, include an `onClick` that prevents default navigation.
