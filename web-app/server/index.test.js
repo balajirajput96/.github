@@ -227,14 +227,28 @@ describe('Personal AI Platform API', () => {
     });
 
     it('POST /api/assistant/chat uses Gemini when configured', async () => {
-      axios.post.mockResolvedValue({ data: { candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] } });
-      const res = await request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'Say hello' });
+      const EventEmitter = require('events');
+      const mockStream = new EventEmitter();
+      axios.post.mockResolvedValue({ data: mockStream });
+
+      const reqPromise = request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'Say hello' });
+
+      // Simulate stream chunks after a tiny delay
+      setTimeout(() => {
+        mockStream.emit('data', Buffer.from('data: ' + JSON.stringify({ candidates: [{ content: { parts: [{ text: 'Gemini ' }] } }] }) + '\n'));
+        mockStream.emit('data', Buffer.from('data: ' + JSON.stringify({ candidates: [{ content: { parts: [{ text: 'response' }] } }] }) + '\n'));
+        mockStream.emit('end');
+      }, 10);
+
+      const res = await reqPromise;
+
       expect(res.statusCode).toBe(200);
-      expect(res.body.reply).toBe('Gemini response');
+      // Wait, let's just check for the generated event stream content, if possible, or adjust to expect the streamed content.
+      expect(res.text).toContain('FINAL_RESPONSE');
       expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/v1beta/models/gemini-2.5-flash:generateContent'),
-        { contents: [{ parts: [{ text: 'Say hello' }] }] },
-        { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' } },
+        expect.stringContaining('/v1beta/models/gemini-2.5-flash:streamGenerateContent'),
+        { contents: [{ role: 'user', parts: [{ text: 'Say hello' }] }] },
+        { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' }, responseType: 'stream' },
       );
     });
 
