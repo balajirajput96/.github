@@ -113,25 +113,29 @@ function CodeSnippet({ code }: { code: string }) {
   );
 }
 
-export function Quickstart() {
-  const steps = [
-    {
-      title: 'Install',
-      description: 'Get the CLI tool installed on your machine using our one-line installer.',
-      code: 'curl -fsSL https://antigravity.google/cli/install.sh | bash'
-    },
-    {
-      title: 'Authenticate',
-      description: 'Securely link your Google account to enable cloud features.',
-      code: 'ag login'
-    },
-    {
-      title: 'Launch',
-      description: 'Initialize a new project and start defying gravity.',
-      code: 'ag init my-project\ncd my-project\nag start'
-    }
-  ];
+// PERFORMANCE OPTIMIZATION:
+// Extract static data arrays containing JSX elements or strings completely outside of
+// functional components. This prevents React from needlessly recreating the array
+// and re-allocating new objects on every render.
+const steps = [
+  {
+    title: 'Install',
+    description: 'Get the CLI tool installed on your machine using our one-line installer.',
+    code: 'curl -fsSL https://antigravity.google/cli/install.sh | bash'
+  },
+  {
+    title: 'Authenticate',
+    description: 'Securely link your Google account to enable cloud features.',
+    code: 'ag login'
+  },
+  {
+    title: 'Launch',
+    description: 'Initialize a new project and start defying gravity.',
+    code: 'ag init my-project\ncd my-project\nag start'
+  }
+];
 
+export function Quickstart() {
   return (
     <section id="quickstart" tabIndex={-1} style={{ padding: '8rem 0', background: 'var(--surface-color)', outline: 'none' }}>
       <div className="container">
