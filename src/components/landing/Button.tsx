@@ -1,12 +1,17 @@
 import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
+type BaseProps = {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
-}
+};
 
-export function Button({ variant = 'primary', size = 'md', children, style, ...props }: ButtonProps) {
+type ButtonProps = BaseProps & (
+  | (Omit<HTMLMotionProps<"a">, "href"> & { href: string })
+  | (HTMLMotionProps<"button"> & { href?: never })
+);
+
+export function Button({ variant = 'primary', size = 'md', children, style, href, ...props }: ButtonProps) {
 
   const baseStyle: React.CSSProperties = {
     display: 'inline-flex',
@@ -48,13 +53,30 @@ export function Button({ variant = 'primary', size = 'md', children, style, ...p
     }
   };
 
+  const mergedStyle = { ...baseStyle, ...sizes[size], ...variants[variant], ...style };
+
+  if (href !== undefined) {
+    return (
+      <motion.a
+        href={href}
+        whileHover={{ y: -2, scale: 1.02 }}
+        whileFocus={{ y: -2, scale: 1.02 }}
+        whileTap={{ y: 0, scale: 0.98 }}
+        style={mergedStyle}
+        {...(props as Omit<HTMLMotionProps<"a">, "href">)}
+      >
+        {children}
+      </motion.a>
+    );
+  }
+
   return (
     <motion.button
       whileHover={{ y: -2, scale: 1.02 }}
       whileFocus={{ y: -2, scale: 1.02 }}
       whileTap={{ y: 0, scale: 0.98 }}
-      style={{ ...baseStyle, ...sizes[size], ...variants[variant], ...style }}
-      {...props}
+      style={mergedStyle}
+      {...(props as HTMLMotionProps<"button">)}
     >
       {children}
     </motion.button>
