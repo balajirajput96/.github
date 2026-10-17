@@ -97,7 +97,8 @@ export function Hero() {
               marginTop: '2rem'
             }}
           >
-            <Button size="lg" onClick={() => {
+            <Button href="#quickstart" size="lg" onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              e.preventDefault();
               const el = document.getElementById('quickstart');
               if (el) {
                 el.scrollIntoView({ behavior: 'smooth' });
@@ -106,7 +107,8 @@ export function Hero() {
             }}>
               Get Started
             </Button>
-            <Button variant="secondary" size="lg" onClick={() => {
+            <Button href="#features" variant="secondary" size="lg" onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              e.preventDefault();
               const el = document.getElementById('features');
               if (el) {
                 el.scrollIntoView({ behavior: 'smooth' });
