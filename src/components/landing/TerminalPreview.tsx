@@ -85,14 +85,14 @@ const SR_ONLY_CONTENT = (
 
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
-  const [text, setText] = useState('');
 
   const completedLines = useMemo(() => {
     return lines.slice(0, currentLine).map((line, i) => (
       <motion.div
         key={i}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
         style={{ marginBottom: '1rem' }}
       >
         <div style={{ display: 'flex', gap: '1rem' }}>
@@ -109,27 +109,19 @@ export function TerminalPreview() {
   useEffect(() => {
     if (currentLine >= lines.length) return;
 
+    // PERFORMANCE OPTIMIZATION (Bolt):
+    // Previously, a setInterval updated a React state (`text`) every 100ms for every character typed.
+    // This caused O(N) React re-renders on the main thread, where N is the number of characters.
+    // We replaced this with a native CSS `steps()` animation. Now, we only trigger one timeout
+    // per line to wait for the CSS animation to complete, reducing re-renders for the typing effect by 100%.
     const fullText = lines[currentLine].cmd;
-    let charIndex = 0;
-    let completionTimeout: ReturnType<typeof setTimeout> | undefined;
+    const totalDuration = (fullText.length * 100) + 1500;
 
-    const typingInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setText(fullText.substring(0, charIndex));
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        completionTimeout = setTimeout(() => {
-          setCurrentLine(prev => prev + 1);
-          setText('');
-        }, 1500); // Wait before next command
-      }
-    }, 100); // Typing speed
+    const timer = setTimeout(() => {
+      setCurrentLine(prev => prev + 1);
+    }, totalDuration);
 
-    return () => {
-      clearInterval(typingInterval);
-      if (completionTimeout) clearTimeout(completionTimeout);
-    };
+    return () => clearTimeout(timer);
   }, [currentLine]);
 
   return (
@@ -163,9 +155,13 @@ export function TerminalPreview() {
             {currentLine < lines.length && (
               <div style={{ display: 'flex', gap: '1rem' }}>
                 {TERMINAL_PROMPT}
-                <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
-                  {TERMINAL_CURSOR}
+                <span style={{ display: 'flex', alignItems: 'center' }}>
+                  <span key={`typing-${currentLine}`} className="typing-animation" style={{ color: 'var(--fg-color)', '--char-count': lines[currentLine].cmd.length, '--typing-duration': `${lines[currentLine].cmd.length * 100}ms` } as React.CSSProperties}>
+                    {lines[currentLine].cmd}
+                  </span>
+                  <span style={{ marginLeft: '4px' }}>
+                    {TERMINAL_CURSOR}
+                  </span>
                 </span>
               </div>
             )}
