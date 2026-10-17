@@ -29,6 +29,9 @@ else:
         pass
 logger = setup_logger(__name__)
 
+# PERFORMANCE OPTIMIZATION: Use a shared requests.Session for connection pooling to reduce API latency
+http_session = requests.Session()
+
 app = FastAPI(title="AI Automation Platform")
 
 
@@ -86,7 +89,7 @@ def get_github_repos():
     }
 
     try:
-        response = requests.get(
+        response = http_session.get(
             "https://api.github.com/user/repos",
             headers=headers,
             params={"per_page": 100},
@@ -149,7 +152,7 @@ def create_jira_issue(issue_title: str, issue_url: str):
         }
     }
     try:
-        response = requests.post(
+        response = http_session.post(
             f"https://{jira_domain}/rest/api/3/issue",
             headers={"Accept": "application/json", "Content-Type": "application/json"},
             json=payload,

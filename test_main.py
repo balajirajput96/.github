@@ -47,7 +47,7 @@ def test_github_repositories_filters_invalid_items(monkeypatch):
         "json": lambda self: [{"name": "repo-a"}, {"bad": "item"}, {"name": "repo-b"}],
         "raise_for_status": lambda self: None,
     })()
-    with patch("main.requests.get", return_value=fake_response) as mock_get:
+    with patch("main.http_session.get", return_value=fake_response) as mock_get:
         response = client.get("/github-repos")
     assert response.status_code == 200
     assert response.json() == {"repositories": ["repo-a", "repo-b"]}
