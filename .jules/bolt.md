@@ -26,3 +26,10 @@
 ## 2024-05-19 - Extracted static arrays with JSX
 **Learning:** In React components like `Features.tsx`, static data arrays that also contain JSX elements (like icons) are recreated on every render if defined inside the functional component. This causes unnecessary allocations and diffing.
 **Action:** Always hoist static data structures—especially those containing React elements—outside of functional components unless they depend on component state or props.
+
+## 2026-09-21 - [Dynamic CSS Animation Width and Timing in React]
+**Learning:** When migrating a JavaScript-driven typing animation (where width increases character by character over time) to a pure CSS animation using  and , you can't hardcode the animation duration or step count if the text content changes dynamically. Hardcoding causes visual slicing or incorrect typing speeds depending on the line length.
+**Action:** In React, dynamically calculate and pass the text length as a custom CSS property (e.g., ) via the  prop. Then, in the CSS , use  to derive the final  (e.g., ) and the animation duration/steps (e.g., ). Always use a  prop on the animated element when the text changes to force React to remount it and cleanly restart the CSS animation.
+## 2026-09-21 - [Dynamic CSS Animation Width and Timing in React]
+**Learning:** When migrating a JavaScript-driven typing animation (where width increases character by character over time) to a pure CSS animation using `@keyframes` and `steps()`, you cannot hardcode the animation duration or step count if the text content changes dynamically. Hardcoding causes visual slicing or incorrect typing speeds depending on the line length.
+**Action:** In React, dynamically calculate and pass the text length as a custom CSS property (e.g., `--char-count`) via the `style` prop. Then, in the CSS `@keyframes`, use `calc()` to derive the final `width` (e.g., `calc(var(--char-count) * 1ch)`) and the animation duration/steps (e.g., `animation: typing calc(var(--char-count) * 0.1s) steps(var(--char-count), end)`). Always use a `key` prop on the animated element when the text changes to force React to remount it and cleanly restart the CSS animation.
