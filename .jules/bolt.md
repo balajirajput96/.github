@@ -26,3 +26,7 @@
 ## 2024-05-19 - Extracted static arrays with JSX
 **Learning:** In React components like `Features.tsx`, static data arrays that also contain JSX elements (like icons) are recreated on every render if defined inside the functional component. This causes unnecessary allocations and diffing.
 **Action:** Always hoist static data structures—especially those containing React elements—outside of functional components unless they depend on component state or props.
+
+## 2024-05-19 - Extracted static arrays with objects
+**Learning:** In React components like `Quickstart.tsx`, static data arrays (e.g. `steps`) that do not depend on any state are unnecessarily re-created on every render if defined inside the component. This causes unnecessary memory allocations.
+**Action:** Extract completely static data arrays (like lists of configuration steps) completely outside of functional components to prevent them from being needlessly recreated on every render.
