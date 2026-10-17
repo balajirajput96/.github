@@ -1,10 +1,14 @@
 import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
+type BaseProps = {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
-}
+};
+
+type ButtonProps = BaseProps &
+  (| (Omit<HTMLMotionProps<"a">, "href"> & { href: string })
+   | (HTMLMotionProps<"button"> & { href?: never }));
 
 export function Button({ variant = 'primary', size = 'md', children, style, ...props }: ButtonProps) {
 
@@ -48,13 +52,28 @@ export function Button({ variant = 'primary', size = 'md', children, style, ...p
     }
   };
 
+  const commonProps = {
+    whileHover: { y: -2, scale: 1.02 },
+    whileFocus: { y: -2, scale: 1.02 },
+    whileTap: { y: 0, scale: 0.98 },
+    style: { ...baseStyle, ...sizes[size], ...variants[variant], ...style }
+  };
+
+  if ('href' in props && props.href !== undefined) {
+    return (
+      <motion.a
+        {...commonProps}
+        {...(props as HTMLMotionProps<"a">)}
+      >
+        {children}
+      </motion.a>
+    );
+  }
+
   return (
     <motion.button
-      whileHover={{ y: -2, scale: 1.02 }}
-      whileFocus={{ y: -2, scale: 1.02 }}
-      whileTap={{ y: 0, scale: 0.98 }}
-      style={{ ...baseStyle, ...sizes[size], ...variants[variant], ...style }}
-      {...props}
+      {...commonProps}
+      {...(props as HTMLMotionProps<"button">)}
     >
       {children}
     </motion.button>
