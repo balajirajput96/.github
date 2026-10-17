@@ -30,9 +30,7 @@ const TERMINAL_HEADER = (
 
 // PERFORMANCE OPTIMIZATION:
 // Extract purely static UI elements (prompt and cursor) completely outside
-// the component function. Because TerminalPreview uses a high-frequency
-// interval to update state (`text` and `currentLine`) for the typing animation,
-// it re-renders constantly. Hoisting these elements prevents React from
+// the component function. Hoisting these elements prevents React from
 // continuously re-allocating and diffing these nodes and their inline style
 // objects on every frame, saving CPU cycles.
 const TERMINAL_PROMPT = (
@@ -67,9 +65,8 @@ const SR_ONLY_STYLE = {
 
 // PERFORMANCE OPTIMIZATION:
 // Extract static SR-only JSX block outside of the component.
-// Because TerminalPreview triggers frequent state-driven re-renders (setInterval
-// for typing animation), this prevents React from needlessly recreating and diffing
-// this static block of elements and their mapped lists on every animation frame.
+// This prevents React from needlessly recreating and diffing
+// this static block of elements and their mapped lists on every render.
 const SR_ONLY_CONTENT = (
   <div style={SR_ONLY_STYLE}>
     Terminal preview showing Antigravity CLI commands:
@@ -85,7 +82,6 @@ const SR_ONLY_CONTENT = (
 
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
-  const [text, setText] = useState('');
 
   const completedLines = useMemo(() => {
     return lines.slice(0, currentLine).map((line, i) => (
@@ -109,27 +105,13 @@ export function TerminalPreview() {
   useEffect(() => {
     if (currentLine >= lines.length) return;
 
-    const fullText = lines[currentLine].cmd;
-    let charIndex = 0;
-    let completionTimeout: ReturnType<typeof setTimeout> | undefined;
+    const duration = lines[currentLine].cmd.length * 100;
 
-    const typingInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setText(fullText.substring(0, charIndex));
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        completionTimeout = setTimeout(() => {
-          setCurrentLine(prev => prev + 1);
-          setText('');
-        }, 1500); // Wait before next command
-      }
-    }, 100); // Typing speed
+    const completionTimeout = setTimeout(() => {
+      setCurrentLine(prev => prev + 1);
+    }, duration + 1500); // Wait before next command
 
-    return () => {
-      clearInterval(typingInterval);
-      if (completionTimeout) clearTimeout(completionTimeout);
-    };
+    return () => clearTimeout(completionTimeout);
   }, [currentLine]);
 
   return (
@@ -163,8 +145,29 @@ export function TerminalPreview() {
             {currentLine < lines.length && (
               <div style={{ display: 'flex', gap: '1rem' }}>
                 {TERMINAL_PROMPT}
-                <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
+                {/*
+                  ⚡ BOLT PERFORMANCE OPTIMIZATION:
+                  Replaced React state-driven typing animation (setInterval + setText)
+                  with a pure CSS keyframe animation using steps().
+
+                  Impact: Eliminates ~10 unnecessary React component re-renders per second
+                  during the typing sequence. The browser's compositor thread now handles
+                  the animation natively, significantly reducing main-thread CPU usage
+                  and preventing unnecessary diffing/garbage collection.
+                */}
+                <span style={{ color: 'var(--fg-color)', display: 'flex' }}>
+                  <span
+                    key={currentLine}
+                    style={{
+                      display: 'inline-block',
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap',
+                      animation: `typing ${lines[currentLine].cmd.length * 0.1}s steps(${lines[currentLine].cmd.length}, end) forwards`,
+                      '--char-count': lines[currentLine].cmd.length,
+                    } as React.CSSProperties}
+                  >
+                    {lines[currentLine].cmd}
+                  </span>
                   {TERMINAL_CURSOR}
                 </span>
               </div>
