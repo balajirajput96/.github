@@ -24,6 +24,17 @@ export function Hero() {
     }
   };
 
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+      el.focus({ preventScroll: true });
+      // Update URL hash without jumping
+      window.history.pushState(null, '', `#${id}`);
+    }
+  };
+
   return (
     <section style={{
       position: 'relative',
@@ -97,22 +108,10 @@ export function Hero() {
               marginTop: '2rem'
             }}
           >
-            <Button size="lg" onClick={() => {
-              const el = document.getElementById('quickstart');
-              if (el) {
-                el.scrollIntoView({ behavior: 'smooth' });
-                el.focus({ preventScroll: true });
-              }
-            }}>
+            <Button size="lg" href="#quickstart" onClick={(e) => handleSmoothScroll(e, 'quickstart')}>
               Get Started
             </Button>
-            <Button variant="secondary" size="lg" onClick={() => {
-              const el = document.getElementById('features');
-              if (el) {
-                el.scrollIntoView({ behavior: 'smooth' });
-                el.focus({ preventScroll: true });
-              }
-            }}>
+            <Button variant="secondary" size="lg" href="#features" onClick={(e) => handleSmoothScroll(e, 'features')}>
               View Features
             </Button>
           </motion.div>
