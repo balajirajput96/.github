@@ -226,16 +226,27 @@ describe('Personal AI Platform API', () => {
       expect(res.body).toEqual({ error: 'Unauthorized: Invalid or missing API key.' });
     });
 
-    it('POST /api/assistant/chat uses Gemini when configured', async () => {
-      axios.post.mockResolvedValue({ data: { candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] } });
-      const res = await request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'Say hello' });
-      expect(res.statusCode).toBe(200);
-      expect(res.body.reply).toBe('Gemini response');
-      expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/v1beta/models/gemini-2.5-flash:generateContent'),
-        { contents: [{ parts: [{ text: 'Say hello' }] }] },
-        { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' } },
-      );
+    it('POST /api/assistant/chat uses Gemini when configured', (done) => {
+      const { EventEmitter } = require('events');
+      const mockStream = new EventEmitter();
+      axios.post.mockResolvedValue({ data: mockStream });
+
+      request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'Say hello' })
+        .expect(200)
+        .expect((res) => {
+          expect(res.text).toContain('Gemini response');
+          expect(axios.post).toHaveBeenCalledWith(
+            expect.stringContaining('/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse'),
+            { contents: [{ role: 'user', parts: [{ text: 'Say hello' }] }] },
+            { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' }, responseType: 'stream' },
+          );
+        })
+        .end(done);
+
+      setTimeout(() => {
+        mockStream.emit('data', Buffer.from('data: ' + JSON.stringify({ candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] }) + '\n'));
+        mockStream.emit('end');
+      }, 10);
     });
 
     it('POST /api/assistant/chat returns 503 when Gemini is not configured', async () => {
