@@ -26,3 +26,9 @@
 ## 2024-05-19 - Extracted static arrays with JSX
 **Learning:** In React components like `Features.tsx`, static data arrays that also contain JSX elements (like icons) are recreated on every render if defined inside the functional component. This causes unnecessary allocations and diffing.
 **Action:** Always hoist static data structures—especially those containing React elements—outside of functional components unless they depend on component state or props.
+## 2026-09-22 - Replacing continuous setInterval state updates with CSS
+**Learning:** Using `setInterval` with `useState` to drive character-by-character typing animations causes extreme re-rendering churn, especially since every React render rebuilds the Virtual DOM for components.
+**Action:** Replace `useState` char-by-char tracking with a single CSS `@keyframes` that animates `max-width` using `steps()` to create a pure CSS typing effect, lowering main-thread CPU overhead and drastically reducing React re-renders.
+## 2026-09-22 - Mocking stream responses in Jest tests
+**Learning:** When testing Axios requests that use `responseType: 'stream'` and listen to `on('data')` / `on('end')` events (like LLM SSE streams), returning a plain object from the mocked `axios.post` will cause the test or application code to crash with `.on is not a function`.
+**Action:** Use Node's native `EventEmitter` to mock the response stream (`const mockStream = new EventEmitter()`) and explicitly emit `data` (as Buffers) and `end` events within a small `setTimeout` to accurately simulate the async stream parsing in tests.
