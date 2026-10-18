@@ -26,3 +26,7 @@
 ## 2024-05-19 - Extracted static arrays with JSX
 **Learning:** In React components like `Features.tsx`, static data arrays that also contain JSX elements (like icons) are recreated on every render if defined inside the functional component. This causes unnecessary allocations and diffing.
 **Action:** Always hoist static data structures—especially those containing React elements—outside of functional components unless they depend on component state or props.
+
+## 2025-02-14 - Fix state extraction lifecycle bugs
+**Learning:** Extracting high-frequency interval updates into a separate child component effectively prevents the parent from continuously re-rendering. However, without explicit lifecycle management (like passing a dynamic `key` prop to the child when its data changes), the child will retain stale internal state, causing visual flicker. Furthermore, any callback props passed from the parent (like `onComplete`) must be wrapped in `useCallback` to maintain referential stability and prevent infinite loops or premature effect resets.
+**Action:** When extracting localized state, always evaluate the child's lifecycle. Pass a dynamic `key` if it needs to cleanly reset, and rigorously use `useCallback` for all parent handlers to prevent unintentional effect triggers in the child.
