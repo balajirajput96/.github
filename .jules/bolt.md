@@ -26,3 +26,7 @@
 ## 2024-05-19 - Extracted static arrays with JSX
 **Learning:** In React components like `Features.tsx`, static data arrays that also contain JSX elements (like icons) are recreated on every render if defined inside the functional component. This causes unnecessary allocations and diffing.
 **Action:** Always hoist static data structures—especially those containing React elements—outside of functional components unless they depend on component state or props.
+
+## 2023-10-29 - [React Child Component Key Reset]
+**Learning:** Extracting complex, high-frequency state into child components successfully stops parent re-renders. However, if the child's internal state depends on props changing (e.g., an animated line transitioning to the next line), React will only re-render the child, not reset its initial state.
+**Action:** When extracting localized animation state to a child component, always pass a dynamic `key` (like `currentLine`) from the parent so React completely unmounts the old instance and mounts a fresh one, cleanly resetting all internal `useState` and `useEffect` variables without writing complex reset logic.
