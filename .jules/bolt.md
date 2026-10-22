@@ -26,3 +26,6 @@
 ## 2024-05-19 - Extracted static arrays with JSX
 **Learning:** In React components like `Features.tsx`, static data arrays that also contain JSX elements (like icons) are recreated on every render if defined inside the functional component. This causes unnecessary allocations and diffing.
 **Action:** Always hoist static data structures—especially those containing React elements—outside of functional components unless they depend on component state or props.
+## 2024-10-24 - [Optimize AIAssistant Chat Re-renders]
+**Learning:** Re-rendering expensive `ReactMarkdown` components for all past chat messages on every keystroke in `AIAssistant.jsx` causes severe input lag. Additionally, directly mutating state objects (e.g., `last.text += ...`) breaks React's shallow comparison, rendering `React.memo` ineffective.
+**Action:** Always extract complex list items (like Markdown messages) into separate `React.memo` components, and ensure state updates clone the modified objects (e.g., `const last = { ...prevLast }`) rather than mutating them to maintain referential integrity.
