@@ -3,6 +3,35 @@ import { Box, Typography, Paper, TextField, Button, Avatar } from '@mui/material
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+// PERFORMANCE OPTIMIZATION: Memoize message components to prevent re-rendering expensive ReactMarkdown for all past messages on every user keystroke.
+const MessageItem = React.memo(({ message }) => {
+  return (
+    <Box sx={{ display: 'flex', justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start', mb: 2 }}>
+      {message.sender === 'ai' && <Avatar sx={{ mr: 2, bgcolor: message.isStreaming ? 'secondary.main' : 'primary.main' }}>🤖</Avatar>}
+      <Box
+        sx={{
+          bgcolor: message.sender === 'user' ? 'primary.main' : 'grey.100',
+          color: message.sender === 'user' ? 'primary.contrastText' : 'text.primary',
+          p: 2,
+          borderRadius: 2,
+          maxWidth: '80%',
+          '& p': { m: 0, mb: 1 },
+          '& p:last-child': { mb: 0 },
+          '& pre': { bgcolor: 'grey.900', color: 'grey.100', p: 1, borderRadius: 1, overflowX: 'auto' },
+          '& code': { bgcolor: 'grey.300', color: 'error.main', p: 0.5, borderRadius: 1, fontSize: '0.85em' },
+        }}
+      >
+        {message.sender === 'user' ? (
+          <Typography sx={{ whiteSpace: 'pre-wrap' }}>{message.text}</Typography>
+        ) : (
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+        )}
+        {message.isStreaming && <span style={{ marginLeft: 4, animation: 'blink 1s step-end infinite' }}>▌</span>}
+      </Box>
+    </Box>
+  );
+});
+
 const initialMessages = [
   { sender: 'ai', text: 'Hello! I\'m your AI assistant. You can give me commands in Hindi or English. Try asking about Pharma QA roles, status of connectors, or automation workflows!' },
   { sender: 'ai', text: 'नमस्ते! मैं आपका AI असिस्टेंट हूँ। आप मुझसे हिंदी या अंग्रेजी में फार्मा जॉब्स और ऑटोमेशन के बारे में पूछ सकते हैं।' },
@@ -60,7 +89,8 @@ function AIAssistant() {
       const data = await res.json();
       setMessages((prev) => {
         const newMessages = [...prev];
-        const last = newMessages[newMessages.length - 1];
+        const last = { ...newMessages[newMessages.length - 1] };
+        newMessages[newMessages.length - 1] = last;
         last.text = `**Job Automation Completed!**
 
 \`\`\`text
@@ -72,7 +102,8 @@ ${data.output || data.error}
     } catch (err) {
       setMessages((prev) => {
         const newMessages = [...prev];
-        const last = newMessages[newMessages.length - 1];
+        const last = { ...newMessages[newMessages.length - 1] };
+        newMessages[newMessages.length - 1] = last;
         last.text = `**Error**: ${err.message}`;
         last.isStreaming = false;
         return newMessages;
@@ -125,7 +156,8 @@ ${data.output || data.error}
               if (data.type === 'FINAL_RESPONSE' && data.content) {
                 setMessages((prev) => {
                   const newMessages = [...prev];
-                  const last = newMessages[newMessages.length - 1];
+                  const last = { ...newMessages[newMessages.length - 1] };
+        newMessages[newMessages.length - 1] = last;
                   last.text += data.content;
                   return newMessages;
                 });
@@ -139,7 +171,8 @@ ${data.output || data.error}
       
       setMessages((prev) => {
         const newMessages = [...prev];
-        const last = newMessages[newMessages.length - 1];
+        const last = { ...newMessages[newMessages.length - 1] };
+        newMessages[newMessages.length - 1] = last;
         last.isStreaming = false;
         return newMessages;
       });
@@ -147,7 +180,8 @@ ${data.output || data.error}
     } catch (err) {
       setMessages((prev) => {
         const newMessages = [...prev];
-        const last = newMessages[newMessages.length - 1];
+        const last = { ...newMessages[newMessages.length - 1] };
+        newMessages[newMessages.length - 1] = last;
         last.text = `**Error**: ${err.message}`;
         last.isStreaming = false;
         return newMessages;
@@ -175,29 +209,7 @@ ${data.output || data.error}
       <Paper sx={{ mt: 3, p: 2, height: '65vh', display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ flexGrow: 1, overflow: 'auto', p: 1 }}>
           {messages.map((message, index) => (
-            <Box key={index} sx={{ display: 'flex', justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start', mb: 2 }}>
-              {message.sender === 'ai' && <Avatar sx={{ mr: 2, bgcolor: message.isStreaming ? 'secondary.main' : 'primary.main' }}>🤖</Avatar>}
-              <Box
-                sx={{
-                  bgcolor: message.sender === 'user' ? 'primary.main' : 'grey.100',
-                  color: message.sender === 'user' ? 'primary.contrastText' : 'text.primary',
-                  p: 2,
-                  borderRadius: 2,
-                  maxWidth: '80%',
-                  '& p': { m: 0, mb: 1 },
-                  '& p:last-child': { mb: 0 },
-                  '& pre': { bgcolor: 'grey.900', color: 'grey.100', p: 1, borderRadius: 1, overflowX: 'auto' },
-                  '& code': { bgcolor: 'grey.300', color: 'error.main', p: 0.5, borderRadius: 1, fontSize: '0.85em' },
-                }}
-              >
-                {message.sender === 'user' ? (
-                  <Typography sx={{ whiteSpace: 'pre-wrap' }}>{message.text}</Typography>
-                ) : (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
-                )}
-                {message.isStreaming && <span style={{ marginLeft: 4, animation: 'blink 1s step-end infinite' }}>▌</span>}
-              </Box>
-            </Box>
+            <MessageItem key={index} message={message} />
           ))}
           <div ref={messagesEndRef} />
         </Box>
