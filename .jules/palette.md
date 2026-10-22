@@ -17,3 +17,6 @@
 ## 2024-11-20 - Synchronizing keyboard focus with in-page scroll targets
 **Learning:** When implementing in-page navigation (like "Skip to main content" links or "Scroll to section" buttons using `scrollIntoView`), visually scrolling the page does not automatically move the browser's active keyboard focus to the new section. If focus is left behind, keyboard users (and screen readers) will resume navigation from the original button, effectively ignoring the visual scroll.
 **Action:** When scrolling to an element via JS or anchor links, ensure the target container (e.g., `<main>`, `<section>`) has `tabIndex={-1}` and `style={{ outline: 'none' }}`. Then, programmatically call `.focus({ preventScroll: true })` on the target element immediately after scrolling.
+## 2026-10-22 - [Polymorphic Framer Motion Buttons]
+**Learning:** When creating polymorphic buttons for navigation (switching between `<a>` and `<button>`) using Framer Motion in this design system, standard `as` props cause strict TypeScript assignability errors.
+**Action:** Use a discriminated union type `BaseProps & (| (Omit<HTMLMotionProps<"a">, "href"> & { href: string }) | (HTMLMotionProps<"button"> & { href?: never }))` to ensure accessible navigation elements are correctly typed and rendered.
