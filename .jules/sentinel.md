@@ -26,3 +26,8 @@
 **Vulnerability:** The application uses `child_process.exec` in `/api/jobs/run` and `/api/resume/download` endpoints, which runs the given command in a shell environment. This could potentially expose the application to command injection if variables are added in the future, and is generally an insecure practice compared to using `execFile`.
 **Learning:** `child_process.execFile` should be preferred over `exec` to run scripts or binaries securely, as it does not spawn a shell, mitigating the risk of shell injection attacks.
 **Prevention:** Always use `execFile` instead of `exec` when executing scripts, passing arguments as a secure array.
+
+## 2024-05-24 - Prevent Information Leakage in API Error Responses
+**Vulnerability:** The `/api/jobs/run` and `/api/jobs/db` endpoints returned raw `stderr` and `err.message` in their 500 error responses, exposing potentially sensitive internal paths and database details.
+**Learning:** Explicitly logging verbose error details internally while ensuring error messages returned to the client are generic prevents information leakage.
+**Prevention:** Always sanitize error responses returned by the API by removing verbose error properties or replacing them with generic, non-descriptive error messages.

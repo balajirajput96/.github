@@ -444,7 +444,9 @@ app.get('/api/jobs/run', requireAuth, (req, res) => {
   execFile('python3', [scriptPath], (error, stdout, stderr) => {
     if (error) {
       console.error(`exec error: ${error}`);
-      return res.status(500).json({ error: 'Failed to run Pharma Job Automation script', details: stderr });
+      // SECURITY ENHANCEMENT: Removed stderr from error response to prevent information leakage
+      console.error(`stderr: ${stderr}`);
+      return res.status(500).json({ error: 'Failed to run Pharma Job Automation script' });
     }
     res.json({ success: true, output: stdout });
   });
@@ -484,7 +486,9 @@ app.get('/api/jobs/db', requireAuth, (req, res) => {
 
   db.all("SELECT * FROM jobs", [], (err, rows) => {
     if (err) {
-      return res.status(500).json({ error: err.message });
+      // SECURITY ENHANCEMENT: Removed err.message from error response to prevent information leakage
+      console.error(`Database query failed: ${err.message}`);
+      return res.status(500).json({ error: 'Failed to retrieve jobs from the database.' });
     }
     res.json({ jobs: rows });
   });
