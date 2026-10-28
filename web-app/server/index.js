@@ -202,7 +202,7 @@ app.get('/api/slack/channels', async (req, res) => {
   }
 });
 
-app.post('/api/slack/oauth', async (req, res) => {
+app.post('/api/slack/oauth', requireAuth, async (req, res) => {
   const { code } = req.body || {};
   if (!code || typeof code !== 'string') {
     return res.status(400).json({ ok: false, error: 'OAuth code is required.' });
@@ -233,7 +233,7 @@ app.post('/api/slack/oauth', async (req, res) => {
   }
 });
 
-app.post('/api/slack/test-message', async (req, res) => {
+app.post('/api/slack/test-message', requireAuth, async (req, res) => {
   const channel = process.env.SLACK_CHANNEL_ID || '#general';
   const text = '🔔 Test notification from Personal AI Automation Hub.';
   if (!process.env.SLACK_BOT_TOKEN) {
