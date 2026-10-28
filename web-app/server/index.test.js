@@ -131,9 +131,21 @@ describe('Personal AI Platform API', () => {
       expect(Array.isArray(res.body.channels)).toBe(true);
     });
 
+    it('returns 401 when starting OAuth without API key', async () => {
+      const res = await request(app).post('/api/slack/oauth').send({ code: 'temporary-code' });
+      expect(res.statusCode).toBe(401);
+      expect(res.body).toEqual({ error: 'Unauthorized: Invalid or missing API key.' });
+    });
+
+    it('returns 401 when sending a test message without API key', async () => {
+      const res = await request(app).post('/api/slack/test-message');
+      expect(res.statusCode).toBe(401);
+      expect(res.body).toEqual({ error: 'Unauthorized: Invalid or missing API key.' });
+    });
+
     it('exchanges a Slack OAuth code when OAuth credentials are configured', async () => {
       axios.post.mockResolvedValue({ data: { ok: true, team: { id: 'T1', name: 'Test Team' }, bot_user_id: 'U1' } });
-      const res = await request(app).post('/api/slack/oauth').send({ code: 'temporary-code' });
+      const res = await request(app).post('/api/slack/oauth').set('x-api-key', 'test-api-key').send({ code: 'temporary-code' });
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual({
         ok: true,
@@ -151,14 +163,14 @@ describe('Personal AI Platform API', () => {
     it('returns 503 when Slack OAuth is not configured', async () => {
       delete process.env.SLACK_CLIENT_ID;
       delete process.env.SLACK_CLIENT_SECRET;
-      const res = await request(app).post('/api/slack/oauth').send({ code: 'temporary-code' });
+      const res = await request(app).post('/api/slack/oauth').set('x-api-key', 'test-api-key').send({ code: 'temporary-code' });
       expect(res.statusCode).toBe(503);
       expect(res.body).toEqual({ ok: false, error: 'Slack OAuth is not configured.' });
     });
 
     it('handles POST /api/slack/test-message', async () => {
       mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
-      const res = await request(app).post('/api/slack/test-message');
+      const res = await request(app).post('/api/slack/test-message').set('x-api-key', 'test-api-key');
       expect(res.statusCode).toBe(200);
       expect(res.body.ok).toBe(true);
     });
@@ -227,14 +239,22 @@ describe('Personal AI Platform API', () => {
     });
 
     it('POST /api/assistant/chat uses Gemini when configured', async () => {
-      axios.post.mockResolvedValue({ data: { candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] } });
+
+      const mockStream = new (require('events').EventEmitter)();
+      mockStream.on = function(event, cb) { require('events').EventEmitter.prototype.on.call(this, event, cb); return this; };
+      axios.post.mockResolvedValue({ data: mockStream });
+      setTimeout(() => {
+        mockStream.emit('data', Buffer.from('data: ' + JSON.stringify({ candidates: [{ content: { parts: [{ text: 'Gemini response' }] } }] }) + '\n\n'));
+        mockStream.emit('end');
+      }, 10);
+
       const res = await request(app).post('/api/assistant/chat').set('x-api-key', 'test-api-key').send({ prompt: 'Say hello' });
       expect(res.statusCode).toBe(200);
-      expect(res.body.reply).toBe('Gemini response');
+      expect(res.text).toContain('Gemini response');
       expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/v1beta/models/gemini-2.5-flash:generateContent'),
-        { contents: [{ parts: [{ text: 'Say hello' }] }] },
-        { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' } },
+        expect.stringContaining('/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse'),
+        { contents: [{ role: 'user', parts: [{ text: 'Say hello' }] }] },
+        { params: { key: 'gemini-test-key' }, headers: { 'Content-Type': 'application/json' }, responseType: 'stream' },
       );
     });
 

@@ -26,3 +26,7 @@
 **Vulnerability:** The application uses `child_process.exec` in `/api/jobs/run` and `/api/resume/download` endpoints, which runs the given command in a shell environment. This could potentially expose the application to command injection if variables are added in the future, and is generally an insecure practice compared to using `execFile`.
 **Learning:** `child_process.execFile` should be preferred over `exec` to run scripts or binaries securely, as it does not spawn a shell, mitigating the risk of shell injection attacks.
 **Prevention:** Always use `execFile` instead of `exec` when executing scripts, passing arguments as a secure array.
+## 2024-10-28 - Authenticate external Slack API proxies
+**Vulnerability:** Unauthenticated access to the Slack OAuth and test message endpoints (`/api/slack/oauth` and `/api/slack/test-message`) could allow malicious actors to abuse the application's configured integrations as an outbound proxy.
+**Learning:** Any endpoint that performs third-party operations (like OAuth flow or test messages) on behalf of callers must enforce application-level authentication before invoking the provider API.
+**Prevention:** Require a private `x-api-key` matching `API_KEY` on all external proxy routes and cover both authenticated and rejected requests with automated tests.
