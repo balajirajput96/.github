@@ -26,3 +26,6 @@
 ## 2024-05-19 - Extracted static arrays with JSX
 **Learning:** In React components like `Features.tsx`, static data arrays that also contain JSX elements (like icons) are recreated on every render if defined inside the functional component. This causes unnecessary allocations and diffing.
 **Action:** Always hoist static data structures—especially those containing React elements—outside of functional components unless they depend on component state or props.
+## 2025-02-14 - Optimize TerminalPreview by localizing typing animation state
+**Learning:** The rapid state updates (every 100ms) for the typing animation were causing the entire `TerminalPreview` component to re-render continuously, unnecessarily diffing the static parts of the terminal UI.
+**Action:** Extract the typing animation logic (`text` state and `setInterval`) into a new localized child component (`TypingLine`) to drastically reduce re-renders of the main `TerminalPreview` component. It now only re-renders when a full line finishes typing, rather than on every keystroke, saving CPU cycles and improving performance.
