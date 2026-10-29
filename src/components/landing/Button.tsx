@@ -1,10 +1,21 @@
 import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
+type BaseProps = {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
-}
+  style?: React.CSSProperties;
+};
+
+type ButtonAsButtonProps = BaseProps & Omit<HTMLMotionProps<"button">, keyof BaseProps | "href"> & {
+  href?: never;
+};
+
+type ButtonAsLinkProps = BaseProps & Omit<HTMLMotionProps<"a">, keyof BaseProps> & {
+  href: string;
+};
+
+type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
 
 export function Button({ variant = 'primary', size = 'md', children, style, ...props }: ButtonProps) {
 
@@ -48,13 +59,30 @@ export function Button({ variant = 'primary', size = 'md', children, style, ...p
     }
   };
 
+  if (props.href !== undefined) {
+    const { href, ...rest } = props as ButtonAsLinkProps;
+    return (
+      <motion.a
+        href={href}
+        whileHover={{ y: -2, scale: 1.02 }}
+        whileFocus={{ y: -2, scale: 1.02 }}
+        whileTap={{ y: 0, scale: 0.98 }}
+        style={{ ...baseStyle, ...sizes[size], ...variants[variant], ...style, textDecoration: 'none' }}
+        {...rest}
+      >
+        {children}
+      </motion.a>
+    );
+  }
+
+  const { href: _href, ...rest } = props as ButtonAsButtonProps;
   return (
     <motion.button
       whileHover={{ y: -2, scale: 1.02 }}
       whileFocus={{ y: -2, scale: 1.02 }}
       whileTap={{ y: 0, scale: 0.98 }}
       style={{ ...baseStyle, ...sizes[size], ...variants[variant], ...style }}
-      {...props}
+      {...rest}
     >
       {children}
     </motion.button>
