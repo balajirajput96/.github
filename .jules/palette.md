@@ -17,3 +17,7 @@
 ## 2024-11-20 - Synchronizing keyboard focus with in-page scroll targets
 **Learning:** When implementing in-page navigation (like "Skip to main content" links or "Scroll to section" buttons using `scrollIntoView`), visually scrolling the page does not automatically move the browser's active keyboard focus to the new section. If focus is left behind, keyboard users (and screen readers) will resume navigation from the original button, effectively ignoring the visual scroll.
 **Action:** When scrolling to an element via JS or anchor links, ensure the target container (e.g., `<main>`, `<section>`) has `tabIndex={-1}` and `style={{ outline: 'none' }}`. Then, programmatically call `.focus({ preventScroll: true })` on the target element immediately after scrolling.
+
+## 2024-11-20 - Polymorphic navigation buttons and native browser behavior
+**Learning:** Using `<button>` tags mapped to `window.location.href` for navigation completely breaks native browser accessibility and usability (e.g., middle-clicking to open a new tab, right-clicking to copy link, status bar URL previews on hover).
+**Action:** When using generic Button components for navigation, convert them into polymorphic components that return a semantic `<a>` tag whenever an `href` prop is provided (e.g., `if (props.href) return <a {...props} />`). Additionally, ensure external navigation links always use `target="_blank" rel="noopener noreferrer"` for security.
