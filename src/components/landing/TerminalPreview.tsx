@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const lines = [
@@ -83,9 +83,50 @@ const SR_ONLY_CONTENT = (
   </div>
 );
 
+// PERFORMANCE OPTIMIZATION:
+// Extract the typing animation state and interval logic into a separate child component.
+// Since the typing text updates every 100ms, putting it in the parent `TerminalPreview`
+// caused the entire component (and its `completedLines` useMemo) to re-evaluate on every tick.
+// By localizing this state here, only `TypingCommand` re-renders during the animation.
+function TypingCommand({ command, onComplete }: { command: string, onComplete: () => void }) {
+  const [text, setText] = useState('');
+
+  useEffect(() => {
+    let charIndex = 0;
+    let completionTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    const typingInterval = setInterval(() => {
+      if (charIndex <= command.length) {
+        setText(command.substring(0, charIndex));
+        charIndex++;
+      } else {
+        clearInterval(typingInterval);
+        completionTimeout = setTimeout(() => {
+          onComplete();
+        }, 1500); // Wait before next command
+      }
+    }, 100); // Typing speed
+
+    return () => {
+      clearInterval(typingInterval);
+      if (completionTimeout) clearTimeout(completionTimeout);
+    };
+  }, [command, onComplete]);
+
+  return (
+    <>
+      {text}
+      {TERMINAL_CURSOR}
+    </>
+  );
+}
+
 export function TerminalPreview() {
   const [currentLine, setCurrentLine] = useState(0);
-  const [text, setText] = useState('');
+
+  const handleLineComplete = useCallback(() => {
+    setCurrentLine(prev => prev + 1);
+  }, []);
 
   const completedLines = useMemo(() => {
     return lines.slice(0, currentLine).map((line, i) => (
@@ -104,32 +145,6 @@ export function TerminalPreview() {
         </div>
       </motion.div>
     ));
-  }, [currentLine]);
-
-  useEffect(() => {
-    if (currentLine >= lines.length) return;
-
-    const fullText = lines[currentLine].cmd;
-    let charIndex = 0;
-    let completionTimeout: ReturnType<typeof setTimeout> | undefined;
-
-    const typingInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setText(fullText.substring(0, charIndex));
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        completionTimeout = setTimeout(() => {
-          setCurrentLine(prev => prev + 1);
-          setText('');
-        }, 1500); // Wait before next command
-      }
-    }, 100); // Typing speed
-
-    return () => {
-      clearInterval(typingInterval);
-      if (completionTimeout) clearTimeout(completionTimeout);
-    };
   }, [currentLine]);
 
   return (
@@ -164,8 +179,11 @@ export function TerminalPreview() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 {TERMINAL_PROMPT}
                 <span style={{ color: 'var(--fg-color)' }}>
-                  {text}
-                  {TERMINAL_CURSOR}
+                  <TypingCommand
+                    key={currentLine}
+                    command={lines[currentLine].cmd}
+                    onComplete={handleLineComplete}
+                  />
                 </span>
               </div>
             )}
